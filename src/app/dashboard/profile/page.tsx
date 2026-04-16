@@ -1,0 +1,277 @@
+"use client";
+import { useState } from "react";
+import { useAuthStore } from "@/store/auth-store";
+import { updateUserProfile } from "@/lib/firestore";
+import { getInitials, getStreakLevel, formatDate } from "@/lib/utils";
+import { TRANSLATIONS } from "@/lib/bible-data";
+import type { BibleTranslation } from "@/types";
+import {
+  User, Edit2, Save, X, Flame, Star, Trophy, BookOpen,
+  Bell, BellOff, ChevronRight, Shield, Check, Camera,
+} from "lucide-react";
+import toast from "react-hot-toast";
+
+export default function ProfilePage() {
+  const { user, setUser } = useAuthStore();
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({
+    displayName: user?.displayName || "",
+    bio: user?.bio || "",
+    preferredTranslation: user?.preferredTranslation || "KJV",
+    notificationsEnabled: user?.notificationsEnabled ?? true,
+  });
+  const [saving, setSaving] = useState(false);
+
+  if (!user) return null;
+
+  const streakLevel = getStreakLevel(user.currentStreak);
+
+  async function handleSave() {
+    if (!user) return;
+    setSaving(true);
+    try {
+      await updateUserProfile(user.uid, {
+        displayName: form.displayName,
+        bio: form.bio,
+        preferredTranslation: form.preferredTranslation as BibleTranslation,
+        notificationsEnabled: form.notificationsEnabled,
+      });
+      setUser({ ...user, ...form, preferredTranslation: form.preferredTranslation as BibleTranslation });
+      setEditing(false);
+      toast.success("Profile updated!");
+    } catch {
+      toast.error("Failed to update profile");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const STATS = [
+    { label: "Days Read", value: user.totalDaysRead, icon: "📖", color: "var(--gold)" },
+    { label: "Current Streak", value: `${user.currentStreak}d`, icon: "🔥", color: "#f97316" },
+    { label: "Longest Streak", value: `${user.longestStreak}d`, icon: "⭐", color: "#a855f7" },
+    { label: "Friends", value: user.friendIds?.length || 0, icon: "👥", color: "#22c55e" },
+    { label: "Groups", value: user.groupIds?.length || 0, icon: "🏛️", color: "#0891b2" },
+    { label: "Badges", value: user.badges.length, icon: "🏆", color: "#eab308" },
+  ];
+
+  const MILESTONE_BADGES = [
+    { streak: 7, name: "Week Warrior", icon: "🔥", desc: "Read for 7 consecutive days" },
+    { streak: 30, name: "Monthly Devotee", icon: "⭐", desc: "Read for 30 consecutive days" },
+    { streak: 100, name: "Century Scholar", icon: "💎", desc: "Read for 100 consecutive days" },
+    { streak: 365, name: "Year of Faith", icon: "👑", desc: "Read for 365 consecutive days" },
+  ];
+
+  return (
+    <div className="max-w-3xl mx-auto px-4 md:px-6 py-6 space-y-6">
+      {/* Profile header */}
+      <div className="card p-6 relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-24"
+          style={{ background: "linear-gradient(135deg, rgba(139,0,0,0.3) 0%, rgba(212,175,55,0.15) 100%)" }} />
+
+        <div className="relative flex flex-col md:flex-row items-start md:items-end gap-5 pt-6">
+          {/* Avatar */}
+          <div className="relative">
+            <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-bold text-gray-900 overflow-hidden"
+              style={{ background: "linear-gradient(135deg, #D4AF37, #F59E0B)", boxShadow: "0 0 20px rgba(212,175,55,0.3)" }}>
+              {user.photoURL
+                ? <img src={user.photoURL} alt={user.displayName} className="w-20 h-20 object-cover" />
+                : getInitials(user.displayName)}
+            </div>
+            <button className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center text-gray-900 border-2 border-[var(--bg-card)]"
+              style={{ background: "linear-gradient(135deg, #D4AF37, #F59E0B)" }}>
+              <Camera size={12} />
+            </button>
+          </div>
+
+          <div className="flex-1">
+            {editing ? (
+              <input type="text" value={form.displayName}
+                onChange={(e) => setForm((f) => ({ ...f, displayName: e.target.value }))}
+                className="input-field text-xl font-display font-bold mb-1 py-1.5 w-full max-w-xs" />
+            ) : (
+              <h1 className="text-2xl font-display font-bold text-page">{user.displayName}</h1>
+            )}
+            <p className="text-secondary-page text-sm">@{user.username}</p>
+            <div className="flex items-center gap-3 mt-2">
+              <span className={`text-sm font-semibold ${streakLevel.color}`}>
+                {streakLevel.emoji} {streakLevel.label}
+              </span>
+              {user.currentStreak > 0 && (
+                <div className="flex items-center gap-1 text-sm text-orange-400 font-semibold">
+                  <Flame size={14} /> {user.currentStreak} day streak
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Edit button */}
+          <div className="flex gap-2">
+            {editing ? (
+              <>
+                <button onClick={() => setEditing(false)} className="btn-ghost text-sm py-2 px-4">
+                  <X size={15} /> Cancel
+                </button>
+                <button onClick={handleSave} disabled={saving} className="btn-gold text-sm py-2 px-4">
+                  {saving ? "Saving..." : <><Save size={15} /> Save</>}
+                </button>
+              </>
+            ) : (
+              <button onClick={() => setEditing(true)} className="btn-ghost text-sm py-2 px-4">
+                <Edit2 size={15} /> Edit
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Bio */}
+        <div className="mt-4 pt-4 border-t border-page">
+          {editing ? (
+            <textarea value={form.bio} onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))}
+              placeholder="Write a short bio..." rows={2}
+              className="input-field resize-none text-sm w-full" />
+          ) : (
+            <p className="text-sm text-secondary-page leading-relaxed">
+              {user.bio || <span className="text-muted-page italic">No bio yet — add one to let friends know about you!</span>}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Stats grid */}
+      <div>
+        <h2 className="text-base font-semibold text-page mb-3 flex items-center gap-2">
+          <Star size={15} style={{ color: "var(--gold)" }} />
+          My Stats
+        </h2>
+        <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+          {STATS.map((stat) => (
+            <div key={stat.label} className="card p-3 text-center">
+              <div className="text-xl mb-1">{stat.icon}</div>
+              <p className="text-lg font-display font-bold" style={{ color: stat.color }}>{stat.value}</p>
+              <p className="text-xs text-muted-page mt-0.5 leading-tight">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Streak milestone tracker */}
+      <div className="card p-5">
+        <h2 className="text-base font-semibold text-page mb-4 flex items-center gap-2">
+          <Flame size={15} className="text-orange-400" />
+          Streak Milestones
+        </h2>
+        <div className="space-y-3">
+          {MILESTONE_BADGES.map((milestone) => {
+            const earned = user.currentStreak >= milestone.streak || user.badges.some((b) => b.id === `streak_${milestone.streak}`);
+            const progress = Math.min(100, (user.currentStreak / milestone.streak) * 100);
+            return (
+              <div key={milestone.streak} className={`p-4 rounded-xl flex items-center gap-4 transition-all ${earned ? "" : "opacity-70"}`}
+                style={{ background: earned ? "linear-gradient(135deg, rgba(212,175,55,0.1), rgba(139,0,0,0.08))" : "var(--bg-secondary)", border: earned ? "1px solid rgba(212,175,55,0.3)" : "1px solid transparent" }}>
+                <div className="text-2xl">{milestone.icon}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold text-sm text-page">{milestone.name}</span>
+                    {earned && <span className="badge-gold text-xs">Earned!</span>}
+                  </div>
+                  <p className="text-xs text-muted-page mb-2">{milestone.desc}</p>
+                  {!earned && (
+                    <div className="progress-gold">
+                      <div className="progress-gold-fill" style={{ width: `${progress}%` }} />
+                    </div>
+                  )}
+                </div>
+                <div className="text-right flex-shrink-0">
+                  {earned ? (
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(212,175,55,0.2)" }}>
+                      <Check size={16} style={{ color: "var(--gold)" }} />
+                    </div>
+                  ) : (
+                    <span className="text-xs text-muted-page">{milestone.streak}d</span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Earned badges */}
+      {user.badges.length > 0 && (
+        <div className="card p-5">
+          <h2 className="text-base font-semibold text-page mb-4 flex items-center gap-2">
+            <Trophy size={15} style={{ color: "var(--gold)" }} />
+            My Badges ({user.badges.length})
+          </h2>
+          <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
+            {user.badges.map((badge) => (
+              <div key={badge.id} className="flex flex-col items-center gap-2 p-3 rounded-xl text-center cursor-pointer hover:opacity-80 transition-all"
+                style={{ background: "var(--bg-secondary)" }}
+                title={badge.description}>
+                <span className="text-2xl">{badge.icon}</span>
+                <span className="text-xs font-medium text-secondary-page leading-tight">{badge.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Settings */}
+      <div className="card p-5">
+        <h2 className="text-base font-semibold text-page mb-4 flex items-center gap-2">
+          <Shield size={15} style={{ color: "var(--gold)" }} />
+          Preferences
+        </h2>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-page">Preferred Translation</p>
+              <p className="text-xs text-muted-page">Default Bible translation</p>
+            </div>
+            {editing ? (
+              <select value={form.preferredTranslation}
+                onChange={(e) => setForm((f) => ({ ...f, preferredTranslation: e.target.value as BibleTranslation }))}
+                className="input-field w-32 py-1.5 text-sm">
+                {TRANSLATIONS.map((t) => (
+                  <option key={t.id} value={t.id}>{t.id}</option>
+                ))}
+              </select>
+            ) : (
+              <span className="badge-gold">{user.preferredTranslation}</span>
+            )}
+          </div>
+
+          <div className="h-px" style={{ background: "var(--border)" }} />
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {user.notificationsEnabled ? <Bell size={16} style={{ color: "var(--gold)" }} /> : <BellOff size={16} className="text-muted-page" />}
+              <div>
+                <p className="text-sm font-medium text-page">Reading Reminders</p>
+                <p className="text-xs text-muted-page">Daily notifications to read</p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                if (editing) setForm((f) => ({ ...f, notificationsEnabled: !f.notificationsEnabled }));
+              }}
+              className={`relative w-12 h-6 rounded-full transition-all ${(editing ? form.notificationsEnabled : user.notificationsEnabled) ? "" : "bg-gray-600"}`}
+              style={(editing ? form.notificationsEnabled : user.notificationsEnabled) ? { background: "linear-gradient(90deg, #D4AF37, #F59E0B)" } : {}}>
+              <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${(editing ? form.notificationsEnabled : user.notificationsEnabled) ? "translate-x-6" : "translate-x-0.5"}`} />
+            </button>
+          </div>
+
+          <div className="h-px" style={{ background: "var(--border)" }} />
+
+          <div className="flex items-center justify-between py-1">
+            <div>
+              <p className="text-sm font-medium text-page">Account Email</p>
+              <p className="text-xs text-muted-page">{user.email}</p>
+            </div>
+            <ChevronRight size={16} className="text-muted-page" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
