@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Bible database files (hosted as GitHub Release assets, not committed to repo)
+*.db
+data/*.db
+server/data/*.db
