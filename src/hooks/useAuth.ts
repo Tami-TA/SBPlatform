@@ -1,30 +1,24 @@
 "use client";
-import { useEffect } from "react";
-import { onAuthStateChanged, signOut as firebaseSignOut } from "firebase/auth";
-import { auth } from "@/lib/firebase";
-import { getUserProfile } from "@/lib/firestore";
 import { useAuthStore } from "@/store/auth-store";
 
 export function useAuth() {
   const { user, firebaseUser, loading, setUser, setFirebaseUser, setLoading } =
     useAuthStore();
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
-      setFirebaseUser(fbUser);
-      if (fbUser) {
-        const profile = await getUserProfile(fbUser.uid);
-        setUser(profile);
-      } else {
-        setUser(null);
-      }
-      setLoading(false);
-    });
-    return unsubscribe;
-  }, [setUser, setFirebaseUser, setLoading]);
-
   const signOut = async () => {
-    await firebaseSignOut(auth);
+    const isDemo =
+      !process.env.NEXT_PUBLIC_FIREBASE_API_KEY ||
+      process.env.NEXT_PUBLIC_FIREBASE_API_KEY === "placeholder-api-key" ||
+      (process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "").startsWith("placeholder");
+
+    if (isDemo) {
+      const { demoLogout } = await import("@/lib/demo-store");
+      demoLogout();
+    } else {
+      const { auth } = await import("@/lib/firebase");
+      const { signOut: firebaseSignOut } = await import("firebase/auth");
+      await firebaseSignOut(auth);
+    }
     setUser(null);
     setFirebaseUser(null);
   };
