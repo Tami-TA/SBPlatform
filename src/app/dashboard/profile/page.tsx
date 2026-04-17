@@ -2,14 +2,39 @@
 import { useState } from "react";
 import { useAuthStore } from "@/store/auth-store";
 import { updateUserProfile } from "@/lib/firestore";
-import { getInitials, getStreakLevel, formatDate } from "@/lib/utils";
+import { getInitials, getStreakLevel } from "@/lib/utils";
 import { TRANSLATIONS } from "@/lib/bible-data";
 import type { BibleTranslation } from "@/types";
 import {
-  User, Edit2, Save, X, Flame, Star, Trophy, BookOpen,
+  Edit2, Save, X, Flame, Star, Trophy, BookOpen,
   Bell, BellOff, ChevronRight, Shield, Check, Camera,
+  Users, BookMarked, Zap, Award, ListChecks,
 } from "lucide-react";
 import toast from "react-hot-toast";
+
+const STAT_ICONS: Record<string, React.ElementType> = {
+  "Days Read": BookOpen,
+  "Current Streak": Flame,
+  "Longest Streak": Star,
+  "Friends": Users,
+  "Groups": Users,
+  "Badges": Trophy,
+};
+
+const MILESTONE_ICONS: Record<number, React.ElementType> = {
+  7: Flame,
+  30: Star,
+  100: Zap,
+  365: Award,
+};
+
+const BADGE_ICONS: Record<string, React.ElementType> = {
+  streak_1: BookOpen, streak_7: Flame, streak_30: Star,
+  streak_100: Zap, streak_365: Award,
+  reading_10: BookMarked, reading_50: Star, reading_200: BookOpen,
+  social_friend: Users, social_group: Users,
+  achievement_plan: ListChecks, achievement_longest_7: Trophy,
+};
 
 export default function ProfilePage() {
   const { user, setUser } = useAuthStore();
@@ -47,44 +72,45 @@ export default function ProfilePage() {
   }
 
   const STATS = [
-    { label: "Days Read", value: user.totalDaysRead, icon: "📖", color: "var(--gold)" },
-    { label: "Current Streak", value: `${user.currentStreak}d`, icon: "🔥", color: "#f97316" },
-    { label: "Longest Streak", value: `${user.longestStreak}d`, icon: "⭐", color: "#a855f7" },
-    { label: "Friends", value: user.friendIds?.length || 0, icon: "👥", color: "#22c55e" },
-    { label: "Groups", value: user.groupIds?.length || 0, icon: "🏛️", color: "#0891b2" },
-    { label: "Badges", value: user.badges.length, icon: "🏆", color: "#eab308" },
+    { label: "Days Read", value: user.totalDaysRead, color: "var(--gold)" },
+    { label: "Current Streak", value: `${user.currentStreak}d`, color: "#f97316" },
+    { label: "Longest Streak", value: `${user.longestStreak}d`, color: "#a855f7" },
+    { label: "Friends", value: user.friendIds?.length || 0, color: "#22c55e" },
+    { label: "Groups", value: user.groupIds?.length || 0, color: "#0891b2" },
+    { label: "Badges", value: user.badges.length, color: "#eab308" },
   ];
 
-  const MILESTONE_BADGES = [
-    { streak: 7, name: "Week Warrior", icon: "🔥", desc: "Read for 7 consecutive days" },
-    { streak: 30, name: "Monthly Devotee", icon: "⭐", desc: "Read for 30 consecutive days" },
-    { streak: 100, name: "Century Scholar", icon: "💎", desc: "Read for 100 consecutive days" },
-    { streak: 365, name: "Year of Faith", icon: "👑", desc: "Read for 365 consecutive days" },
+  const MILESTONES = [
+    { streak: 7, name: "Week Warrior", desc: "Read for 7 consecutive days" },
+    { streak: 30, name: "Monthly Devotee", desc: "Read for 30 consecutive days" },
+    { streak: 100, name: "Century Scholar", desc: "Read for 100 consecutive days" },
+    { streak: 365, name: "Year of Faith", desc: "Read for 365 consecutive days" },
   ];
 
   return (
     <div className="max-w-3xl mx-auto px-4 md:px-6 py-6 space-y-6">
       {/* Profile header */}
       <div className="card p-6 relative overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 h-24"
-          style={{ background: "linear-gradient(135deg, rgba(139,0,0,0.3) 0%, rgba(212,175,55,0.15) 100%)" }} />
+        <div className="absolute top-0 left-0 right-0 h-20"
+          style={{ background: "linear-gradient(135deg, rgba(29,78,216,0.18) 0%, rgba(212,175,55,0.12) 100%)" }} />
 
-        <div className="relative flex flex-col md:flex-row items-start md:items-end gap-5 pt-6">
+        <div className="relative flex flex-col md:flex-row items-start md:items-end gap-5 pt-4">
           {/* Avatar */}
-          <div className="relative">
+          <div className="relative flex-shrink-0">
             <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-bold text-gray-900 overflow-hidden"
-              style={{ background: "linear-gradient(135deg, #D4AF37, #F59E0B)", boxShadow: "0 0 20px rgba(212,175,55,0.3)" }}>
+              style={{ background: "linear-gradient(135deg, #D4AF37, #F59E0B)", boxShadow: "0 0 20px rgba(212,175,55,0.25)" }}>
               {user.photoURL
                 ? <img src={user.photoURL} alt={user.displayName} className="w-20 h-20 object-cover" />
                 : getInitials(user.displayName)}
             </div>
             <button className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center text-gray-900 border-2 border-[var(--bg-card)]"
-              style={{ background: "linear-gradient(135deg, #D4AF37, #F59E0B)" }}>
+              style={{ background: "linear-gradient(135deg, #D4AF37, #F59E0B)" }}
+              title="Change photo">
               <Camera size={12} />
             </button>
           </div>
 
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             {editing ? (
               <input type="text" value={form.displayName}
                 onChange={(e) => setForm((f) => ({ ...f, displayName: e.target.value }))}
@@ -92,11 +118,9 @@ export default function ProfilePage() {
             ) : (
               <h1 className="text-2xl font-display font-bold text-page">{user.displayName}</h1>
             )}
-            <p className="text-secondary-page text-sm">@{user.username}</p>
+            <p className="text-sm text-secondary-page">@{user.username}</p>
             <div className="flex items-center gap-3 mt-2">
-              <span className={`text-sm font-semibold ${streakLevel.color}`}>
-                {streakLevel.emoji} {streakLevel.label}
-              </span>
+              <span className={`text-sm font-semibold ${streakLevel.color}`}>{streakLevel.label}</span>
               {user.currentStreak > 0 && (
                 <div className="flex items-center gap-1 text-sm text-orange-400 font-semibold">
                   <Flame size={14} /> {user.currentStreak} day streak
@@ -105,8 +129,7 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Edit button */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-shrink-0">
             {editing ? (
               <>
                 <button onClick={() => setEditing(false)} className="btn-ghost text-sm py-2 px-4">
@@ -124,7 +147,6 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Bio */}
         <div className="mt-4 pt-4 border-t border-page">
           {editing ? (
             <textarea value={form.bio} onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))}
@@ -132,7 +154,7 @@ export default function ProfilePage() {
               className="input-field resize-none text-sm w-full" />
           ) : (
             <p className="text-sm text-secondary-page leading-relaxed">
-              {user.bio || <span className="text-muted-page italic">No bio yet — add one to let friends know about you!</span>}
+              {user.bio || <span className="text-muted-page italic">No bio yet — add one to let friends know about you.</span>}
             </p>
           )}
         </div>
@@ -140,54 +162,67 @@ export default function ProfilePage() {
 
       {/* Stats grid */}
       <div>
-        <h2 className="text-base font-semibold text-page mb-3 flex items-center gap-2">
-          <Star size={15} style={{ color: "var(--gold)" }} />
-          My Stats
-        </h2>
+        <h2 className="text-sm font-semibold text-secondary-page mb-3 uppercase tracking-wider">Stats</h2>
         <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-          {STATS.map((stat) => (
-            <div key={stat.label} className="card p-3 text-center">
-              <div className="text-xl mb-1">{stat.icon}</div>
-              <p className="text-lg font-display font-bold" style={{ color: stat.color }}>{stat.value}</p>
-              <p className="text-xs text-muted-page mt-0.5 leading-tight">{stat.label}</p>
-            </div>
-          ))}
+          {STATS.map((stat) => {
+            const IconComp = STAT_ICONS[stat.label] || Star;
+            return (
+              <div key={stat.label} className="card p-3 text-center">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center mx-auto mb-2"
+                  style={{ background: `${stat.color}18` }}>
+                  <IconComp size={16} style={{ color: stat.color }} />
+                </div>
+                <p className="text-lg font-display font-bold" style={{ color: stat.color }}>{stat.value}</p>
+                <p className="text-xs text-muted-page mt-0.5 leading-tight">{stat.label}</p>
+              </div>
+            );
+          })}
         </div>
       </div>
 
       {/* Streak milestone tracker */}
       <div className="card p-5">
-        <h2 className="text-base font-semibold text-page mb-4 flex items-center gap-2">
+        <h2 className="text-sm font-semibold text-page mb-4 flex items-center gap-2">
           <Flame size={15} className="text-orange-400" />
           Streak Milestones
         </h2>
         <div className="space-y-3">
-          {MILESTONE_BADGES.map((milestone) => {
-            const earned = user.currentStreak >= milestone.streak || user.badges.some((b) => b.id === `streak_${milestone.streak}`);
+          {MILESTONES.map((milestone) => {
+            const earned = user.currentStreak >= milestone.streak ||
+              user.badges.some((b) => b.id === `streak_${milestone.streak}`);
             const progress = Math.min(100, (user.currentStreak / milestone.streak) * 100);
+            const IconComp = MILESTONE_ICONS[milestone.streak] || Star;
             return (
-              <div key={milestone.streak} className={`p-4 rounded-xl flex items-center gap-4 transition-all ${earned ? "" : "opacity-70"}`}
-                style={{ background: earned ? "linear-gradient(135deg, rgba(212,175,55,0.1), rgba(139,0,0,0.08))" : "var(--bg-secondary)", border: earned ? "1px solid rgba(212,175,55,0.3)" : "1px solid transparent" }}>
-                <div className="text-2xl">{milestone.icon}</div>
+              <div key={milestone.streak}
+                className={`p-4 rounded-xl flex items-center gap-4 transition-all ${earned ? "" : "opacity-70"}`}
+                style={{
+                  background: earned ? "rgba(212,175,55,0.08)" : "var(--bg-secondary)",
+                  border: earned ? "1px solid rgba(212,175,55,0.25)" : "1px solid transparent",
+                }}>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: earned ? "rgba(212,175,55,0.15)" : "var(--border)" }}>
+                  <IconComp size={18} style={{ color: earned ? "var(--gold)" : "var(--text-muted)" }} />
+                </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-0.5">
                     <span className="font-semibold text-sm text-page">{milestone.name}</span>
-                    {earned && <span className="badge-gold text-xs">Earned!</span>}
+                    {earned && <span className="badge-gold text-xs">Earned</span>}
                   </div>
-                  <p className="text-xs text-muted-page mb-2">{milestone.desc}</p>
+                  <p className="text-xs text-muted-page">{milestone.desc}</p>
                   {!earned && (
-                    <div className="progress-gold">
+                    <div className="progress-gold mt-2">
                       <div className="progress-gold-fill" style={{ width: `${progress}%` }} />
                     </div>
                   )}
                 </div>
-                <div className="text-right flex-shrink-0">
+                <div className="flex-shrink-0">
                   {earned ? (
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(212,175,55,0.2)" }}>
-                      <Check size={16} style={{ color: "var(--gold)" }} />
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center"
+                      style={{ background: "rgba(212,175,55,0.15)" }}>
+                      <Check size={14} style={{ color: "var(--gold)" }} />
                     </div>
                   ) : (
-                    <span className="text-xs text-muted-page">{milestone.streak}d</span>
+                    <span className="text-xs text-muted-page font-medium">{milestone.streak}d</span>
                   )}
                 </div>
               </div>
@@ -199,26 +234,33 @@ export default function ProfilePage() {
       {/* Earned badges */}
       {user.badges.length > 0 && (
         <div className="card p-5">
-          <h2 className="text-base font-semibold text-page mb-4 flex items-center gap-2">
+          <h2 className="text-sm font-semibold text-page mb-4 flex items-center gap-2">
             <Trophy size={15} style={{ color: "var(--gold)" }} />
             My Badges ({user.badges.length})
           </h2>
           <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
-            {user.badges.map((badge) => (
-              <div key={badge.id} className="flex flex-col items-center gap-2 p-3 rounded-xl text-center cursor-pointer hover:opacity-80 transition-all"
-                style={{ background: "var(--bg-secondary)" }}
-                title={badge.description}>
-                <span className="text-2xl">{badge.icon}</span>
-                <span className="text-xs font-medium text-secondary-page leading-tight">{badge.name}</span>
-              </div>
-            ))}
+            {user.badges.map((badge) => {
+              const IconComp = BADGE_ICONS[badge.id] || Trophy;
+              return (
+                <div key={badge.id}
+                  className="flex flex-col items-center gap-2 p-3 rounded-xl text-center hover:opacity-80 transition-all"
+                  style={{ background: "var(--bg-secondary)" }}
+                  title={badge.description}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                    style={{ background: "rgba(212,175,55,0.12)" }}>
+                    <IconComp size={18} style={{ color: "var(--gold)" }} />
+                  </div>
+                  <span className="text-xs font-medium text-secondary-page leading-tight">{badge.name}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
 
-      {/* Settings */}
+      {/* Preferences */}
       <div className="card p-5">
-        <h2 className="text-base font-semibold text-page mb-4 flex items-center gap-2">
+        <h2 className="text-sm font-semibold text-page mb-4 flex items-center gap-2">
           <Shield size={15} style={{ color: "var(--gold)" }} />
           Preferences
         </h2>
@@ -245,19 +287,19 @@ export default function ProfilePage() {
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {user.notificationsEnabled ? <Bell size={16} style={{ color: "var(--gold)" }} /> : <BellOff size={16} className="text-muted-page" />}
+              {user.notificationsEnabled
+                ? <Bell size={16} style={{ color: "var(--gold)" }} />
+                : <BellOff size={16} className="text-muted-page" />}
               <div>
                 <p className="text-sm font-medium text-page">Reading Reminders</p>
                 <p className="text-xs text-muted-page">Daily notifications to read</p>
               </div>
             </div>
             <button
-              onClick={() => {
-                if (editing) setForm((f) => ({ ...f, notificationsEnabled: !f.notificationsEnabled }));
-              }}
-              className={`relative w-12 h-6 rounded-full transition-all ${(editing ? form.notificationsEnabled : user.notificationsEnabled) ? "" : "bg-gray-600"}`}
+              onClick={() => { if (editing) setForm((f) => ({ ...f, notificationsEnabled: !f.notificationsEnabled })); }}
+              className={`relative w-11 h-6 rounded-full transition-all ${(editing ? form.notificationsEnabled : user.notificationsEnabled) ? "" : "bg-gray-600"}`}
               style={(editing ? form.notificationsEnabled : user.notificationsEnabled) ? { background: "linear-gradient(90deg, #D4AF37, #F59E0B)" } : {}}>
-              <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${(editing ? form.notificationsEnabled : user.notificationsEnabled) ? "translate-x-6" : "translate-x-0.5"}`} />
+              <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${(editing ? form.notificationsEnabled : user.notificationsEnabled) ? "translate-x-5" : "translate-x-0.5"}`} />
             </button>
           </div>
 
@@ -268,7 +310,7 @@ export default function ProfilePage() {
               <p className="text-sm font-medium text-page">Account Email</p>
               <p className="text-xs text-muted-page">{user.email}</p>
             </div>
-            <ChevronRight size={16} className="text-muted-page" />
+            <ChevronRight size={15} className="text-muted-page" />
           </div>
         </div>
       </div>

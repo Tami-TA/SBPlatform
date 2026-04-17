@@ -52,12 +52,12 @@ export function getInitials(name: string): string {
     .slice(0, 2);
 }
 
-export function getStreakLevel(streak: number): { label: string; color: string; emoji: string } {
-  if (streak >= 365) return { label: "Legendary", color: "text-purple-400", emoji: "👑" };
-  if (streak >= 100) return { label: "Diamond", color: "text-blue-400", emoji: "💎" };
-  if (streak >= 30) return { label: "Gold", color: "text-yellow-400", emoji: "⭐" };
-  if (streak >= 7) return { label: "Silver", color: "text-gray-300", emoji: "🔥" };
-  return { label: "Beginner", color: "text-orange-400", emoji: "🌱" };
+export function getStreakLevel(streak: number): { label: string; color: string } {
+  if (streak >= 365) return { label: "Legendary", color: "text-purple-400" };
+  if (streak >= 100) return { label: "Diamond", color: "text-blue-400" };
+  if (streak >= 30) return { label: "Gold", color: "text-yellow-400" };
+  if (streak >= 7) return { label: "Silver", color: "text-gray-300" };
+  return { label: "Beginner", color: "text-orange-400" };
 }
 
 export function formatVerseRef(bookName: string, chapter: number, verse?: number, verseEnd?: number): string {

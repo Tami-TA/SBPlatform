@@ -176,7 +176,7 @@ export default function FriendsPage() {
                           <span className="font-semibold text-orange-400">{friend.currentStreak}</span>
                         </div>
                       )}
-                      <span className={`text-xs ${level.color}`}>{level.emoji}</span>
+                      <span className={`text-xs font-medium ${level.color}`}>{level.label}</span>
                     </div>
                   </div>
                 );
@@ -264,7 +264,7 @@ export default function FriendsPage() {
                             <Flame size={11} /> {result.currentStreak} day streak
                           </span>
                         )}
-                        <span className={`text-xs ${level.color}`}>{level.emoji} {level.label}</span>
+                        <span className={`text-xs font-medium ${level.color}`}>{level.label}</span>
                       </div>
                     </div>
                     <button

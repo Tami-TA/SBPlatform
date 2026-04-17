@@ -32,7 +32,7 @@ export default function BiblePage() {
   const [selectedBook, setSelectedBook] = useState(searchParams.get("book") || "JHN");
   const [selectedChapter, setSelectedChapter] = useState(parseInt(searchParams.get("chapter") || "1"));
   const [chapter, setChapter] = useState<BibleChapter | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const [showBookSelector, setShowBookSelector] = useState(false);
   const [showTranslationSelector, setShowTranslationSelector] = useState(false);
@@ -79,15 +79,19 @@ export default function BiblePage() {
     try {
       const data = await fetchChapter(selectedBook, selectedChapter, translation);
       setChapter(data);
-      if (user) await updateStreak(user.uid);
     } catch {
-      toast.error("Failed to load chapter. The Bible database may not be ready.");
+      toast.error("Failed to load chapter.");
     } finally {
       setLoading(false);
     }
-  }, [selectedBook, selectedChapter, translation, user]);
+  }, [selectedBook, selectedChapter, translation]);
 
   useEffect(() => { loadChapter(); }, [loadChapter]);
+
+  // Update streak separately so it doesn't cause chapter re-fetches
+  useEffect(() => {
+    if (user && chapter) updateStreak(user.uid).catch(() => {});
+  }, [user, chapter]);
 
   useEffect(() => {
     if (!user) return;

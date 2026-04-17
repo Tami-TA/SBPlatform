@@ -10,7 +10,7 @@ export async function fetchChapter(
 ): Promise<BibleChapter | null> {
   try {
     const url = `${LOCAL_API}?translation=${translation}&book=${bookId}&chapter=${chapter}`;
-    const res = await fetch(url, { cache: "force-cache" });
+    const res = await fetch(url);
     if (!res.ok) return null;
 
     const data = await res.json();
@@ -68,7 +68,7 @@ export async function fetchVerse(
     const parts = verseId.split(".");
     const [bookId, chapterStr, verseStr] = parts;
     const url = `${LOCAL_API}?translation=${translation}&book=${bookId}&chapter=${chapterStr}&verse=${verseStr}`;
-    const res = await fetch(url, { cache: "force-cache" });
+    const res = await fetch(url);
     if (!res.ok) return null;
 
     const data = await res.json();
