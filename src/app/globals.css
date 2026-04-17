@@ -222,6 +222,13 @@ h1, h2, h3 {
 }
 .input-field::placeholder { color: var(--text-muted); }
 .input-field:focus { border-color: rgba(212, 175, 55, 0.6); box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.12); }
+/* Allow Tailwind padding utilities to override the shorthand via compound specificity */
+.input-field.pl-8  { padding-left: 2rem; }
+.input-field.pl-9  { padding-left: 2.25rem; }
+.input-field.pl-10 { padding-left: 2.5rem; }
+.input-field.pl-12 { padding-left: 3rem; }
+.input-field.pr-8  { padding-right: 2rem; }
+.input-field.pr-10 { padding-right: 2.5rem; }
 
 /* ── Navigation ── */
 .nav-item {
