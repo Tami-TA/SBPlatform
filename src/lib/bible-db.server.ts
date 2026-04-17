@@ -93,6 +93,27 @@ export function getAvailableTranslations(): TranslationInfo[] {
   }));
 }
 
+export function getAllDbTranslations(): Array<{ id: string; dbId: string; name: string }> {
+  const db = getDb();
+  if (!db) return Object.entries(TRANSLATION_MAP).map(([id, { dbId, name }]) => ({ id, dbId, name }));
+
+  // Build reverse map from dbId to app-facing abbreviation
+  const reverseMap: Record<string, string> = {};
+  for (const [appId, { dbId }] of Object.entries(TRANSLATION_MAP)) {
+    reverseMap[dbId] = appId;
+  }
+
+  const rows = db.prepare(
+    "SELECT id, shortName, englishName FROM Translation ORDER BY id ASC"
+  ).all() as { id: string; shortName?: string; englishName?: string }[];
+
+  return rows.map((r) => {
+    const appId = reverseMap[r.id] ?? r.id.replace(/^eng_/, "").toUpperCase();
+    const name = r.englishName || r.shortName || appId;
+    return { id: appId, dbId: r.id, name };
+  });
+}
+
 export function isTranslationAvailable(translation: string): boolean {
   const entry = TRANSLATION_MAP[translation.toUpperCase()];
   if (!entry) return false;

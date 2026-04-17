@@ -14,11 +14,11 @@
  *   }
  */
 
-import { getAvailableTranslations } from "@/lib/bible-db.server";
+import { getAllDbTranslations } from "@/lib/bible-db.server";
 
 export const runtime = "nodejs"; // required — better-sqlite3 is a Node.js native module
 
 export async function GET() {
-  const translations = getAvailableTranslations();
+  const translations = getAllDbTranslations();
   return Response.json({ translations });
 }

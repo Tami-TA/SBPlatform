@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/store/auth-store";
 import { fetchChapter, searchBible } from "@/lib/bible-api";
-import { BIBLE_BOOKS, TRANSLATIONS } from "@/lib/bible-data";
+import { BIBLE_BOOKS } from "@/lib/bible-data";
 import { saveHighlight, getUserHighlights, saveBookmark, saveAnnotation, updateStreak } from "@/lib/firestore";
 import { formatVerseRef, shareVerse } from "@/lib/utils";
 import type { BibleChapter, BibleTranslation, HighlightColor, Highlight, BibleVerse } from "@/types";
@@ -40,6 +40,21 @@ export default function BiblePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<BibleVerse[]>([]);
   const [searching, setSearching] = useState(false);
+
+  const [availableTranslations, setAvailableTranslations] = useState<Array<{ id: string; name: string }>>([
+    { id: "KJV", name: "King James Version" },
+  ]);
+
+  useEffect(() => {
+    fetch("/api/bible/translations")
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data.translations) && data.translations.length > 0) {
+          setAvailableTranslations(data.translations);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const [selectedVerse, setSelectedVerse] = useState<number | null>(null);
   const [toolbarPos, setToolbarPos] = useState<{ top: number; left: number } | null>(null);
@@ -288,14 +303,14 @@ export default function BiblePage() {
             <h3 className="font-semibold text-sm text-page">Translation</h3>
             <button onClick={() => setShowTranslationSelector(false)}><X size={16} className="text-muted-page" /></button>
           </div>
-          <div className="p-2">
-            {TRANSLATIONS.map((t) => (
+          <div className="p-2 max-h-80 overflow-y-auto">
+            {availableTranslations.map((t) => (
               <button key={t.id} onClick={() => { setTranslation(t.id as BibleTranslation); setShowTranslationSelector(false); }}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-all ${translation === t.id ? "font-semibold" : "text-secondary-page hover:text-page"}`}
                 style={{ background: translation === t.id ? "rgba(212,175,55,0.15)" : "transparent" }}>
-                <span>{t.name}</span>
-                <span className={`text-xs font-bold ${translation === t.id ? "" : "text-muted-page"}`}
-                  style={{ color: translation === t.id ? "var(--gold)" : undefined }}>{t.id}</span>
+                <span className="truncate">{t.name}</span>
+                <span className="text-xs font-bold ml-2 flex-shrink-0"
+                  style={{ color: translation === t.id ? "var(--gold)" : "var(--text-muted)" }}>{t.id}</span>
               </button>
             ))}
           </div>
