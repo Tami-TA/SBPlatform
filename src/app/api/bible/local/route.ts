@@ -16,14 +16,14 @@ import type { NextRequest } from "next/server";
 
 // Map app translation IDs → bible-api.com translation slugs
 const TRANSLATION_MAP: Record<string, string> = {
-  KJV: "kjv",
-  ASV: "asv",
-  WEB: "web",
-  YLT: "ylt",
-  BBE: "bbe",
-  DBY: "darby",
-  BSB: "kjv", // not available — fallback
-  NET: "kjv", // not available — fallback
+  KJV:   "kjv",
+  ASV:   "asv",
+  WEB:   "web",
+  WEBBE: "webbe",
+  YLT:   "ylt",
+  BBE:   "bbe",
+  DBY:   "darby",
+  OEB:   "oeb-us",
 };
 
 // Map 3-letter book IDs → bible-api.com URL slugs

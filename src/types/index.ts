@@ -90,11 +90,11 @@ export type BibleTranslation =
   | "KJV"
   | "ASV"
   | "WEB"
+  | "WEBBE"
   | "YLT"
   | "BBE"
-  | "BSB"
-  | "NET"
-  | "DBY";
+  | "DBY"
+  | "OEB";
 
 export interface BibleBook {
   id: string;

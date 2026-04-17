@@ -72,14 +72,14 @@ export const BIBLE_BOOKS: BibleBook[] = [
 ];
 
 export const TRANSLATIONS: { id: BibleTranslation; name: string }[] = [
-  { id: "KJV", name: "King James Version" },
-  { id: "ASV", name: "American Standard Version" },
-  { id: "WEB", name: "World English Bible" },
-  { id: "YLT", name: "Young's Literal Translation" },
-  { id: "BBE", name: "Bible in Basic English" },
-  { id: "BSB", name: "Berean Standard Bible" },
-  { id: "NET", name: "NET Bible" },
-  { id: "DBY", name: "Darby Translation" },
+  { id: "KJV",   name: "King James Version" },
+  { id: "ASV",   name: "American Standard Version" },
+  { id: "WEB",   name: "World English Bible" },
+  { id: "WEBBE", name: "World English Bible (British)" },
+  { id: "YLT",   name: "Young's Literal Translation" },
+  { id: "BBE",   name: "Bible in Basic English" },
+  { id: "DBY",   name: "Darby Translation" },
+  { id: "OEB",   name: "Open English Bible" },
 ];
 
 export const VERSE_OF_THE_DAY_POOL = [
