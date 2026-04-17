@@ -88,12 +88,13 @@ export interface GroupMessage {
 
 export type BibleTranslation =
   | "KJV"
-  | "NKJV"
-  | "ESV"
-  | "NIV"
-  | "AMP"
-  | "NRSV"
-  | "ASV";
+  | "ASV"
+  | "WEB"
+  | "YLT"
+  | "BBE"
+  | "BSB"
+  | "NET"
+  | "DBY";
 
 export interface BibleBook {
   id: string;

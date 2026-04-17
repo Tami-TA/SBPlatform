@@ -2,18 +2,18 @@
 
 import { useState, useMemo } from "react";
 import {
-  BookOpen, Map, GitBranch, Calendar, Scroll, Lightbulb,
-  Search, Bookmark, ChevronRight, ChevronDown, Info, Users, Clock,
+  BookOpen, GitBranch, Calendar, Scroll, Lightbulb,
+  Search, Bookmark, ChevronRight, Info, Users, Clock,
   Globe, Zap
 } from "lucide-react";
 import { OT_BOOKS_CONTEXT } from "@/lib/context-data";
-import type { OTBookContext, MapLocation, GenealogyNode, KeyEvent, CulturalNote } from "@/lib/context-types";
+import type { OTBookContext, GenealogyNode, KeyEvent, CulturalNote } from "@/lib/context-types";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
 const SECTION_IDS = [
   "overview", "author", "timePeriod", "historicalSetting",
-  "map", "genealogy", "keyEvents", "culturalNotes",
+  "genealogy", "keyEvents", "culturalNotes",
 ] as const;
 type SectionId = typeof SECTION_IDS[number];
 
@@ -22,7 +22,6 @@ const SECTION_LABELS: Record<SectionId, string> = {
   author: "Author Info",
   timePeriod: "Time Period",
   historicalSetting: "Historical Setting",
-  map: "Map",
   genealogy: "Family Trees",
   keyEvents: "Key Events",
   culturalNotes: "Cultural Notes",
@@ -33,78 +32,12 @@ const SECTION_ICONS: Record<SectionId, React.FC<{ className?: string }>> = {
   author: Users,
   timePeriod: Clock,
   historicalSetting: Globe,
-  map: Map,
   genealogy: GitBranch,
   keyEvents: Calendar,
   culturalNotes: Scroll,
 };
 
 // ─── sub-components ─────────────────────────────────────────────────────────
-
-function SvgMap({ locations }: { locations: MapLocation[] }) {
-  const [hovered, setHovered] = useState<string | null>(null);
-
-  const typeColors: Record<MapLocation["type"], string> = {
-    city: "#3b82f6",
-    region: "#10b981",
-    journey: "#f59e0b",
-    battle: "#ef4444",
-    exile: "#8b5cf6",
-  };
-
-  return (
-    <div className="relative w-full overflow-x-auto">
-      <svg viewBox="0 0 400 300" className="w-full max-w-2xl mx-auto border border-white/10 rounded-lg bg-slate-900">
-        {/* basic geography shapes */}
-        <ellipse cx="160" cy="165" rx="30" ry="40" fill="#1e3a5f" opacity="0.5" />
-        <ellipse cx="175" cy="175" rx="18" ry="12" fill="#1e3a5f" opacity="0.4" />
-        <rect x="265" y="160" width="40" height="30" rx="4" fill="#1e3a5f" opacity="0.4" />
-        <path d="M130 130 Q160 90 200 110 Q250 100 280 140 Q300 160 295 190 Q270 220 240 215 Q200 220 170 210 Q140 200 130 180 Z" fill="#1e4a3a" opacity="0.3" />
-        {/* Nile */}
-        <path d="M140 250 Q130 230 125 200 Q120 180 115 165 Q110 150 118 135" stroke="#3b82f6" strokeWidth="1.5" fill="none" opacity="0.4" />
-        {/* Mediterranean */}
-        <rect x="100" y="110" width="200" height="20" rx="2" fill="#1a4070" opacity="0.3" />
-
-        {locations.map((loc) => {
-          const color = typeColors[loc.type];
-          const isHov = hovered === loc.name;
-          return (
-            <g key={loc.name} onMouseEnter={() => setHovered(loc.name)} onMouseLeave={() => setHovered(null)}>
-              <circle cx={loc.svgX} cy={loc.svgY} r={isHov ? 7 : 5} fill={color} opacity={0.85} className="cursor-pointer transition-all" />
-              <text
-                x={loc.svgX + 7}
-                y={loc.svgY + 4}
-                fontSize="7"
-                fill="#e2e8f0"
-                className="pointer-events-none select-none"
-              >
-                {loc.name}
-              </text>
-            </g>
-          );
-        })}
-        {hovered && (() => {
-          const loc = locations.find(l => l.name === hovered);
-          if (!loc) return null;
-          return (
-            <g>
-              <rect x={loc.svgX - 40} y={loc.svgY - 30} width="120" height="22" rx="3" fill="#1e293b" opacity="0.95" />
-              <text x={loc.svgX - 36} y={loc.svgY - 15} fontSize="7" fill="#94a3b8">{loc.description}</text>
-            </g>
-          );
-        })()}
-      </svg>
-      <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-400">
-        {Object.entries(typeColors).map(([type, color]) => (
-          <span key={type} className="flex items-center gap-1 capitalize">
-            <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
-            {type}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 function GenealogyTree({ nodes }: { nodes: GenealogyNode[] }) {
   const roots = nodes.filter(n => !n.parentId);
@@ -393,27 +326,6 @@ export default function ContextPage() {
               </div>
             )}
 
-            {activeSection === "map" && (
-              <div className="max-w-2xl space-y-4">
-                {book.mapLocations.length > 0 ? (
-                  <>
-                    <SvgMap locations={book.mapLocations} />
-                    {deepStudy && (
-                      <ul className="space-y-2 mt-2">
-                        {book.mapLocations.map(loc => (
-                          <li key={loc.name} className="flex items-start gap-3 text-sm">
-                            <span className="font-semibold text-slate-300 w-40 flex-shrink-0">{loc.name}</span>
-                            <span className="text-slate-400">{loc.description}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </>
-                ) : (
-                  <EmptyState message="No map locations recorded for this book." />
-                )}
-              </div>
-            )}
 
             {activeSection === "genealogy" && (
               <div className="max-w-2xl space-y-4">

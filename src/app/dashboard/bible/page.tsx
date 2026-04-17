@@ -434,7 +434,7 @@ export default function BiblePage() {
               <BookOpen size={48} className="mx-auto mb-4 text-muted-page" />
               <p className="text-secondary-page mb-2">Could not load this chapter.</p>
               <p className="text-sm text-muted-page mb-4">
-                You may need to configure a Bible API key in your environment variables.
+                Could not load from the local Bible database. Try a different translation or chapter.
               </p>
               <button onClick={loadChapter} className="btn-gold text-sm px-6 py-2">Try Again</button>
             </div>

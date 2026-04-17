@@ -71,14 +71,15 @@ export const BIBLE_BOOKS: BibleBook[] = [
   { id: "REV", name: "Revelation", abbreviation: "Rev", chapters: 22, testament: "NT", order: 66 },
 ];
 
-export const TRANSLATIONS: { id: BibleTranslation; name: string; apiId: string }[] = [
-  { id: "KJV", name: "King James Version", apiId: "de4e12af7f28f599-02" },
-  { id: "ASV", name: "American Standard Version", apiId: "06125adad2d5898a-01" },
-  { id: "NKJV", name: "New King James Version", apiId: "de4e12af7f28f599-02" }, // fallback KJV
-  { id: "ESV", name: "English Standard Version", apiId: "de4e12af7f28f599-02" },
-  { id: "NIV", name: "New International Version", apiId: "de4e12af7f28f599-02" },
-  { id: "AMP", name: "Amplified Bible", apiId: "de4e12af7f28f599-02" },
-  { id: "NRSV", name: "New Revised Standard Version", apiId: "de4e12af7f28f599-02" },
+export const TRANSLATIONS: { id: BibleTranslation; name: string }[] = [
+  { id: "KJV", name: "King James Version" },
+  { id: "ASV", name: "American Standard Version" },
+  { id: "WEB", name: "World English Bible" },
+  { id: "YLT", name: "Young's Literal Translation" },
+  { id: "BBE", name: "Bible in Basic English" },
+  { id: "BSB", name: "Berean Standard Bible" },
+  { id: "NET", name: "NET Bible" },
+  { id: "DBY", name: "Darby Translation" },
 ];
 
 export const VERSE_OF_THE_DAY_POOL = [
