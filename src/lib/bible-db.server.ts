@@ -50,24 +50,24 @@ const DB_PATH = path.join(process.cwd(), "data", "bible.eng.db");
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let _db: any = null;
-let _dbMissing = false;
 let _checkedTranslations: Set<string> | null = null;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getDb(): any | null {
-  if (_dbMissing) return null;
   if (_db) return _db;
-  if (!fs.existsSync(DB_PATH)) { _dbMissing = true; return null; }
+  if (!fs.existsSync(DB_PATH)) return null;
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const Database = require("better-sqlite3");
   try {
     _db = new Database(DB_PATH, { readonly: true });
   } catch {
-    _dbMissing = true;
     return null;
   }
   return _db;
 }
+
+// Pre-warm connection when module first loads so first user request is instant
+try { getDb(); } catch { /* ignore */ }
 
 /** Return the set of translation DB IDs that actually exist in the DB. */
 function getAvailableDbIds(): Set<string> {
