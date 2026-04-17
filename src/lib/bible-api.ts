@@ -46,10 +46,10 @@ export async function searchBible(
     const results = data.searchResults ?? data.results ?? [];
     if (!data.available || !results.length) return [];
 
-    return results.map((r: { bookNum: number; chapter: number; verse: number; text: string; bookId?: string }) => ({
-      id: `${r.bookId || r.bookNum}.${r.chapter}.${r.verse}`,
-      bookId: r.bookId || String(r.bookNum),
-      bookName: r.bookId || String(r.bookNum),
+    return results.map((r: { bookId: string; chapter: number; verse: number; text: string }) => ({
+      id: `${r.bookId}.${r.chapter}.${r.verse}`,
+      bookId: r.bookId,
+      bookName: r.bookId,
       chapter: r.chapter,
       verse: r.verse,
       text: r.text,
