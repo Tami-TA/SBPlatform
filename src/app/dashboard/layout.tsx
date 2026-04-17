@@ -115,9 +115,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={toggleTheme} className="flex-1 btn-ghost text-sm py-2 px-3 flex items-center justify-center gap-2">
-              {theme === "dark" ? <Sun size={14} /> : <Moon size={14} />}
-              {theme === "dark" ? "Light" : "Dark"}
+            <button onClick={toggleTheme} className="flex-1 btn-ghost text-sm py-2 px-3 flex items-center justify-center gap-2" aria-label="Toggle theme">
+              <span className={`toggle-track ${theme === "dark" ? "" : "on"}`} aria-hidden>
+                <span className="toggle-thumb" />
+              </span>
+              {theme === "dark" ? <Moon size={13} /> : <Sun size={13} />}
             </button>
             <button onClick={handleSignOut} className="btn-ghost text-sm py-2 px-3 flex items-center justify-center gap-2 flex-1" title="Sign out">
               <LogOut size={14} />
@@ -172,9 +174,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <span className="text-sm font-bold text-orange-400">{user.currentStreak}</span>
               </div>
             )}
-            <button onClick={toggleTheme} className="w-9 h-9 rounded-xl flex items-center justify-center text-muted-page hover:text-page transition-colors"
-              style={{ background: "var(--bg-secondary)" }}>
-              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+            <button onClick={toggleTheme} className="flex items-center gap-2 px-3 py-1.5 rounded-xl transition-colors text-muted-page hover:text-page"
+              style={{ background: "var(--bg-secondary)" }} aria-label="Toggle theme">
+              {theme === "dark" ? <Moon size={14} /> : <Sun size={14} />}
+              <span className={`toggle-track ${theme === "dark" ? "" : "on"}`} aria-hidden>
+                <span className="toggle-thumb" />
+              </span>
             </button>
             <button className="w-9 h-9 rounded-xl flex items-center justify-center text-muted-page hover:text-page relative transition-colors"
               style={{ background: "var(--bg-secondary)" }}>

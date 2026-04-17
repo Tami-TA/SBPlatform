@@ -73,7 +73,8 @@ export default function DashboardPage() {
       {/* Top row: Streak + Verse of Day */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Streak card */}
-        <div className="card p-5" style={{ background: "linear-gradient(135deg, rgba(139,0,0,0.08) 0%, var(--bg-card) 100%)" }}>
+        <div className="card p-5 relative overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(29,78,216,0.08) 0%, var(--bg-card) 100%)" }}>
+          <div className="absolute -top-4 -right-4 w-20 h-20 star-shape opacity-5" style={{ background: "var(--cobalt)" }} />
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-page flex items-center gap-2">
               <Flame size={18} className="text-orange-400" />
@@ -124,8 +125,8 @@ export default function DashboardPage() {
 
         {/* Verse of the Day — spans 2 cols */}
         <div className="lg:col-span-2 card-gold p-5 relative overflow-hidden">
-          <div className="absolute top-3 right-3 w-16 h-16 opacity-5 animate-spin-slow"
-            style={{ clipPath: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)", background: "#D4AF37" }} />
+          <div className="absolute top-2 right-2 w-14 h-14 star-shape opacity-10 animate-spin-slow"
+            style={{ background: "#D4AF37" }} />
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Star size={16} fill="var(--gold)" style={{ color: "var(--gold)" }} />
@@ -230,7 +231,8 @@ export default function DashboardPage() {
         </div>
 
         {/* Badges */}
-        <div className="card p-5">
+        <div className="card p-5 relative overflow-hidden">
+          <div className="absolute -bottom-4 -right-4 w-24 h-24 star-shape opacity-5" style={{ background: "var(--gold)" }} />
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-page flex items-center gap-2">
               <Award size={16} style={{ color: "var(--gold)" }} />
@@ -248,9 +250,13 @@ export default function DashboardPage() {
           ) : (
             <div className="grid grid-cols-3 gap-3">
               {user.badges.slice(0, 6).map((badge) => (
-                <div key={badge.id} className="flex flex-col items-center gap-1.5 p-3 rounded-xl text-center"
-                  style={{ background: "var(--bg-secondary)" }}>
-                  <span className="text-2xl">{badge.icon}</span>
+                <div key={badge.id} className="flex flex-col items-center gap-1.5 p-3 rounded-xl text-center relative overflow-hidden"
+                  style={{ background: "var(--bg-secondary)", border: "1px solid rgba(212,175,55,0.2)" }}>
+                  <div className="relative">
+                    <div className="w-10 h-10 star-shape flex items-center justify-center mx-auto"
+                      style={{ background: "linear-gradient(135deg, rgba(212,175,55,0.3), rgba(245,158,11,0.2))" }} />
+                    <span className="text-xl absolute inset-0 flex items-center justify-center">{badge.icon}</span>
+                  </div>
                   <span className="text-xs font-medium text-secondary-page leading-tight">{badge.name}</span>
                 </div>
               ))}
