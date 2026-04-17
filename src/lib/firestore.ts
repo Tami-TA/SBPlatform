@@ -337,6 +337,19 @@ export async function saveAnnotation(annotation: Omit<Annotation, "id" | "create
   return ref.id;
 }
 
+export async function getGroupAnnotations(groupId: string): Promise<Annotation[]> {
+  if (IS_DEMO) return [];
+  const { db, fs } = await fdb();
+  const q = fs.query(
+    fs.collection(db, "annotations"),
+    fs.where("groupId", "==", groupId),
+    fs.orderBy("createdAt", "desc"),
+    fs.limit(50)
+  );
+  const snap = await fs.getDocs(q);
+  return snap.docs.map((d) => ({ ...d.data(), id: d.id } as Annotation));
+}
+
 export async function getVerseAnnotations(bookId: string, chapter: number, verse: number): Promise<Annotation[]> {
   if (IS_DEMO) {
     const { demoGetAnnotations } = await import("./demo-store");

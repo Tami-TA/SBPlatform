@@ -3,11 +3,11 @@ import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore } from "@/store/auth-store";
-import { getGroup, subscribeToGroupMessages, sendGroupMessage } from "@/lib/firestore";
-import type { Group, GroupMessage } from "@/types";
+import { getGroup, subscribeToGroupMessages, sendGroupMessage, getGroupAnnotations } from "@/lib/firestore";
+import type { Group, GroupMessage, Annotation } from "@/types";
 import {
   ArrowLeft, Send, BookOpen, Users, MessageCircle, Heart, Reply,
-  Loader2, BookMarked, ChevronRight, Star,
+  Loader2, BookMarked, ChevronRight, StickyNote,
 } from "lucide-react";
 import { timeAgo, getInitials } from "@/lib/utils";
 import toast from "react-hot-toast";
@@ -17,14 +17,16 @@ export default function GroupDetailPage() {
   const { user } = useAuthStore();
   const [group, setGroup] = useState<Group | null>(null);
   const [messages, setMessages] = useState<GroupMessage[]>([]);
+  const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [newMessage, setNewMessage] = useState("");
-  const [activeTab, setActiveTab] = useState<"chat" | "bible" | "members" | "plans">("chat");
+  const [activeTab, setActiveTab] = useState<"chat" | "bible" | "notes" | "members" | "plans">("chat");
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!id) return;
     getGroup(id).then(setGroup);
+    getGroupAnnotations(id).then(setAnnotations);
     const unsub = subscribeToGroupMessages(id, setMessages);
     return unsub;
   }, [id]);
@@ -65,6 +67,7 @@ export default function GroupDetailPage() {
   const TABS = [
     { id: "chat", label: "Discussion", icon: MessageCircle },
     { id: "bible", label: "Community Bible", icon: BookOpen },
+    { id: "notes", label: "Shared Notes", icon: StickyNote },
     { id: "members", label: "Members", icon: Users },
     { id: "plans", label: "Reading Plan", icon: BookMarked },
   ] as const;
@@ -134,7 +137,7 @@ export default function GroupDetailPage() {
                         )}
                         <div className={`px-4 py-2.5 rounded-2xl ${isMe ? "rounded-br-sm" : "rounded-bl-sm"} text-sm leading-relaxed`}
                           style={isMe
-                            ? { background: "linear-gradient(135deg, #8B0000, #B91C1C)", color: "white" }
+                            ? { background: "linear-gradient(135deg, var(--cobalt-dark), var(--cobalt))", color: "white" }
                             : { background: "var(--bg-secondary)", color: "var(--text-primary)" }}>
                           {msg.content}
                         </div>
@@ -194,6 +197,86 @@ export default function GroupDetailPage() {
           </div>
         )}
 
+        {activeTab === "notes" && (
+          <div className="flex-1 overflow-y-auto p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-secondary-page">
+                {annotations.length} shared annotation{annotations.length !== 1 ? "s" : ""}
+              </h3>
+              <Link href={`/dashboard/bible?groupId=${id}`}
+                className="text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors"
+                style={{ background: "rgba(212,175,55,0.12)", color: "var(--gold)", border: "1px solid rgba(212,175,55,0.3)" }}>
+                <BookOpen size={12} /> Add Note in Bible
+              </Link>
+            </div>
+
+            {annotations.length === 0 ? (
+              <div className="text-center py-16">
+                <StickyNote size={40} className="mx-auto mb-4 text-muted-page" />
+                <h3 className="text-base font-semibold text-page mb-2">No shared notes yet</h3>
+                <p className="text-sm text-secondary-page mb-6">Open the Community Bible to add annotations visible to the whole group</p>
+                <Link href={`/dashboard/bible?groupId=${id}`} className="btn-gold inline-flex">
+                  Open Community Bible
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {annotations.map((ann) => {
+                  const typeColors: Record<string, string> = {
+                    note: "rgba(96,165,250,0.15)",
+                    question: "rgba(251,146,60,0.15)",
+                    insight: "rgba(212,175,55,0.15)",
+                    prayer: "rgba(167,139,250,0.15)",
+                  };
+                  const typeBorders: Record<string, string> = {
+                    note: "rgba(96,165,250,0.4)",
+                    question: "rgba(251,146,60,0.4)",
+                    insight: "rgba(212,175,55,0.4)",
+                    prayer: "rgba(167,139,250,0.4)",
+                  };
+                  return (
+                    <div key={ann.id} className="card p-4">
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-gray-900 flex-shrink-0"
+                            style={{ background: "linear-gradient(135deg, #D4AF37, #F59E0B)" }}>
+                            {getInitials(ann.username)}
+                          </div>
+                          <div>
+                            <span className="text-sm font-medium text-page">@{ann.username}</span>
+                            <span className="text-xs text-muted-page ml-2">
+                              {timeAgo(ann.createdAt instanceof Date ? ann.createdAt : new Date())}
+                            </span>
+                          </div>
+                        </div>
+                        <span className="text-xs px-2.5 py-1 rounded-full capitalize flex-shrink-0"
+                          style={{ background: typeColors[ann.type] || "var(--bg-secondary)", border: `1px solid ${typeBorders[ann.type] || "var(--border)"}`, color: "var(--text-secondary)" }}>
+                          {ann.type}
+                        </span>
+                      </div>
+
+                      <Link href={`/dashboard/bible?book=${ann.verseRef.bookId}&chapter=${ann.verseRef.chapter}`}
+                        className="text-xs font-semibold mb-2 block hover:underline"
+                        style={{ color: "var(--gold)" }}>
+                        {ann.verseRef.bookName} {ann.verseRef.chapter}:{ann.verseRef.verse}
+                      </Link>
+
+                      <p className="text-sm text-secondary-page leading-relaxed">{ann.content}</p>
+
+                      {ann.likes.length > 0 && (
+                        <div className="flex items-center gap-1 mt-2">
+                          <Heart size={12} className="text-red-400" />
+                          <span className="text-xs text-muted-page">{ann.likes.length}</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
         {activeTab === "members" && (
           <div className="flex-1 overflow-y-auto p-5">
             <h3 className="text-sm font-semibold text-secondary-page mb-3">
@@ -225,14 +308,14 @@ export default function GroupDetailPage() {
           <div className="flex-1 overflow-y-auto p-6">
             <div className="max-w-lg mx-auto text-center">
               <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
-                style={{ background: "rgba(139,0,0,0.12)" }}>
-                <BookMarked size={28} style={{ color: "#e05050" }} />
+                style={{ background: "rgba(29,78,216,0.12)" }}>
+                <BookMarked size={28} style={{ color: "var(--cobalt-light)" }} />
               </div>
               <h3 className="text-lg font-display font-bold text-page mb-2">Group Reading Plan</h3>
               <p className="text-secondary-page text-sm mb-6">
                 Follow a reading plan together and track each member&apos;s progress.
               </p>
-              <Link href="/dashboard/plans" className="btn-crimson mx-auto inline-flex">
+              <Link href="/dashboard/plans" className="btn-cobalt mx-auto inline-flex">
                 Browse Plans <ChevronRight size={16} />
               </Link>
             </div>
