@@ -1,24 +1,16 @@
 /**
  * GET /api/bible/translations
- *
- * Return the list of Bible translations and whether each is available
- * in the local SQLite database.
- * SERVER-SIDE ONLY — no "use client".
- *
- * Response:
- *   {
- *     "translations": [
- *       { "id": "KJV", "name": "King James Version", "abbreviation": "KJV", "available": true },
- *       ...
- *     ]
- *   }
+ * Returns the list of supported Bible translations.
  */
 
-import { getAllDbTranslations } from "@/lib/bible-db.server";
-
-export const runtime = "nodejs"; // required — better-sqlite3 is a Node.js native module
-
 export async function GET() {
-  const translations = getAllDbTranslations();
+  const translations = [
+    { id: "KJV", name: "King James Version",          abbreviation: "KJV", available: true },
+    { id: "ASV", name: "American Standard Version",   abbreviation: "ASV", available: true },
+    { id: "WEB", name: "World English Bible",          abbreviation: "WEB", available: true },
+    { id: "YLT", name: "Young's Literal Translation", abbreviation: "YLT", available: true },
+    { id: "BBE", name: "Bible in Basic English",       abbreviation: "BBE", available: true },
+    { id: "DBY", name: "Darby Translation",            abbreviation: "DBY", available: true },
+  ];
   return Response.json({ translations });
 }
