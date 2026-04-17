@@ -14,7 +14,11 @@ export async function fetchChapter(
     if (!res.ok) return null;
 
     const data = await res.json();
-    if (!data.available || !data.verses?.length) return null;
+    if (!data.available) {
+      console.error("[fetchChapter] API error:", data.error);
+      return null;
+    }
+    if (!data.verses?.length) return null;
 
     const verses: BibleVerse[] = data.verses.map((v: { verse: number; text: string }) => ({
       id: `${bookId}.${chapter}.${v.verse}`,

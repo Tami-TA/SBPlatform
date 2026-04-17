@@ -73,7 +73,7 @@ try { getDb(); } catch { /* ignore */ }
 function getAvailableDbIds(): Set<string> {
   if (_checkedTranslations) return _checkedTranslations;
   const db = getDb();
-  if (!db) { _checkedTranslations = new Set(); return _checkedTranslations; }
+  if (!db) return new Set(); // don't cache a failure — retry next call
   const rows = db.prepare("SELECT id FROM Translation").all() as { id: string }[];
   _checkedTranslations = new Set(rows.map(r => r.id));
   return _checkedTranslations;

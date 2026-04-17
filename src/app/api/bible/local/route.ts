@@ -24,7 +24,8 @@ export async function GET(request: NextRequest) {
   const query        = searchParams.get("q");
 
   if (!isTranslationAvailable(translation)) {
-    return Response.json({ available: false, error: "Translation not available" });
+    console.error(`[bible/local] Translation not available: "${translation}"`);
+    return Response.json({ available: false, error: `Translation "${translation}" is not available in the local database` });
   }
 
   // Search mode
@@ -57,5 +58,8 @@ export async function GET(request: NextRequest) {
 
   // Full chapter
   const verses = getChapter(translation, bookId, chapter);
+  if (!verses.length) {
+    console.error(`[bible/local] No verses found for ${translation}/${bookId}/${chapter}`);
+  }
   return Response.json({ available: true, translation, book: bookId, chapter, verses });
 }
