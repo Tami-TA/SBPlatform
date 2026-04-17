@@ -8,11 +8,12 @@ import {
   markDayComplete,
 } from "@/lib/firestore";
 import type { ReadingPlan, UserPlanProgress } from "@/types";
-import { PRESET_READING_PLANS } from "@/lib/bible-data";
+import { PRESET_READING_PLANS, getPlanDayReading } from "@/lib/bible-data";
 import {
   ListChecks, Plus, Check, ChevronRight, BookOpen, Users,
-  Clock, Star, Trophy, Loader2, X, Target,
+  Clock, Star, Trophy, Loader2, X, Target, ArrowRight,
 } from "lucide-react";
+import Link from "next/link";
 import toast from "react-hot-toast";
 
 export default function PlansPage() {
@@ -111,12 +112,14 @@ export default function PlansPage() {
                 const todayNum = prog.currentDay;
                 const todayDone = prog.completedDays.includes(todayNum);
 
+                const dayReading = getPlanDayReading(prog.planName, todayNum);
+
                 return (
                   <div key={prog.id} className="card p-5">
                     <div className="flex items-start justify-between mb-4">
                       <div>
                         <h3 className="font-semibold text-page text-base mb-1">{prog.planName}</h3>
-                        <p className="text-xs text-muted-page">Started on {prog.startDate}</p>
+                        <p className="text-xs text-muted-page">Started {prog.startDate} · Day {todayNum} of {durationEstimate}</p>
                       </div>
                       <div className="text-right">
                         <p className="text-2xl font-display font-bold text-gold-gradient">{pct}%</p>
@@ -130,30 +133,48 @@ export default function PlansPage() {
                     </div>
 
                     {/* Today's reading */}
-                    <div className={`p-3 rounded-xl flex items-center justify-between ${todayDone ? "" : "border"}`}
+                    <div className="p-3 rounded-xl border"
                       style={todayDone
-                        ? { background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)" }
+                        ? { background: "rgba(34,197,94,0.08)", borderColor: "rgba(34,197,94,0.3)" }
                         : { background: "var(--bg-secondary)", borderColor: "var(--border)" }}>
-                      <div className="flex items-center gap-3">
-                        {todayDone
-                          ? <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(34,197,94,0.2)" }}>
-                              <Check size={16} className="text-green-500" />
-                            </div>
-                          : <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "rgba(212,175,55,0.15)" }}>
-                              <BookOpen size={16} style={{ color: "var(--gold)" }} />
-                            </div>
-                        }
-                        <div>
-                          <p className="text-sm font-medium text-page">Day {todayNum}</p>
-                          <p className="text-xs text-muted-page">{todayDone ? "Completed today!" : "Today's reading"}</p>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          {todayDone
+                            ? <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(34,197,94,0.2)" }}>
+                                <Check size={16} className="text-green-500" />
+                              </div>
+                            : <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(212,175,55,0.15)" }}>
+                                <BookOpen size={16} style={{ color: "var(--gold)" }} />
+                              </div>
+                          }
+                          <div>
+                            <p className="text-sm font-medium text-page">
+                              {todayDone ? "Day complete!" : `Day ${todayNum}`}
+                            </p>
+                            {dayReading && (
+                              <p className="text-xs font-semibold mt-0.5" style={{ color: "var(--gold)" }}>
+                                {dayReading.label}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {dayReading && !todayDone && (
+                            <Link
+                              href={`/dashboard/bible?book=${dayReading.bookId}&chapter=${dayReading.chapter}`}
+                              className="text-xs px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors"
+                              style={{ background: "rgba(212,175,55,0.12)", color: "var(--gold)", border: "1px solid rgba(212,175,55,0.3)" }}>
+                              Read <ArrowRight size={11} />
+                            </Link>
+                          )}
+                          {!todayDone && (
+                            <button onClick={() => handleMarkDay(prog.id, todayNum)}
+                              className="btn-gold text-xs px-4 py-2">
+                              Mark Done
+                            </button>
+                          )}
                         </div>
                       </div>
-                      {!todayDone && (
-                        <button onClick={() => handleMarkDay(prog.id, todayNum)}
-                          className="btn-gold text-xs px-4 py-2">
-                          Mark Done
-                        </button>
-                      )}
                     </div>
 
                     {/* Recent days grid */}
@@ -199,7 +220,7 @@ export default function PlansPage() {
                   <div key={plan.name} className="card p-5">
                     <div className="flex items-start justify-between mb-3">
                       <div className="w-11 h-11 rounded-2xl flex items-center justify-center"
-                        style={{ background: "linear-gradient(135deg, rgba(139,0,0,0.15), rgba(212,175,55,0.15))" }}>
+                        style={{ background: "linear-gradient(135deg, rgba(29,78,216,0.15), rgba(212,175,55,0.15))" }}>
                         <BookOpen size={20} style={{ color: "var(--gold)" }} />
                       </div>
                       <span className="badge-gold">{plan.duration} days</span>

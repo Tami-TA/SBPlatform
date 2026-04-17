@@ -142,3 +142,75 @@ export const PRESET_READING_PLANS = [
     tags: ["epistles", "theology"],
   },
 ];
+
+// ── Daily reading calculator ─────────────────────────────────────────────────
+
+export interface DayReading {
+  label: string; // human-readable: "Matthew 1–3"
+  bookId: string;
+  chapter: number;
+}
+
+// Ordered list of chapters for each plan
+const PLAN_CHAPTER_SEQUENCE: Record<string, Array<{ bookId: string; bookName: string; chapter: number }>> = {};
+
+function buildSequence(bookIds: string[]): Array<{ bookId: string; bookName: string; chapter: number }> {
+  const seq: Array<{ bookId: string; bookName: string; chapter: number }> = [];
+  for (const id of bookIds) {
+    const book = BIBLE_BOOKS.find((b) => b.id === id);
+    if (!book) continue;
+    for (let ch = 1; ch <= book.chapters; ch++) {
+      seq.push({ bookId: id, bookName: book.name, chapter: ch });
+    }
+  }
+  return seq;
+}
+
+// Bible in a Year: all 66 books in canonical order
+PLAN_CHAPTER_SEQUENCE["Bible in a Year"] = buildSequence(BIBLE_BOOKS.map((b) => b.id));
+
+// New Testament in 30 Days: NT books only
+PLAN_CHAPTER_SEQUENCE["New Testament in 30 Days"] = buildSequence(
+  BIBLE_BOOKS.filter((b) => b.testament === "NT").map((b) => b.id)
+);
+
+// Psalms & Proverbs: interleave psalms (2/day) and proverbs (1 chapter every 2 days)
+PLAN_CHAPTER_SEQUENCE["Psalms & Proverbs"] = buildSequence(["PSA", "PRO"]);
+
+// Gospel Journey: four Gospels
+PLAN_CHAPTER_SEQUENCE["Gospel Journey"] = buildSequence(["MAT", "MRK", "LUK", "JHN"]);
+
+// Epistles Study: all NT epistles
+PLAN_CHAPTER_SEQUENCE["Epistles Study"] = buildSequence([
+  "ROM", "1CO", "2CO", "GAL", "EPH", "PHP", "COL",
+  "1TH", "2TH", "1TI", "2TI", "TIT", "PHM",
+  "HEB", "JAS", "1PE", "2PE", "1JN", "2JN", "3JN", "JUD",
+]);
+
+export function getPlanDayReading(planName: string, dayNumber: number): DayReading | null {
+  const seq = PLAN_CHAPTER_SEQUENCE[planName];
+  if (!seq || seq.length === 0) return null;
+
+  const plan = PRESET_READING_PLANS.find((p) => p.name === planName);
+  const duration = plan?.duration ?? 30;
+
+  const chaptersPerDay = seq.length / duration;
+  const startIdx = Math.floor((dayNumber - 1) * chaptersPerDay);
+  const endIdx = Math.min(seq.length - 1, Math.floor(dayNumber * chaptersPerDay) - 1);
+
+  if (startIdx >= seq.length) return null;
+
+  const first = seq[startIdx];
+  const last = seq[endIdx] ?? first;
+
+  let label: string;
+  if (first.bookId === last.bookId) {
+    label = first.chapter === last.chapter
+      ? `${first.bookName} ${first.chapter}`
+      : `${first.bookName} ${first.chapter}–${last.chapter}`;
+  } else {
+    label = `${first.bookName} ${first.chapter} – ${last.bookName} ${last.chapter}`;
+  }
+
+  return { label, bookId: first.bookId, chapter: first.chapter };
+}
