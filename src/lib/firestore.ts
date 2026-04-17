@@ -265,6 +265,26 @@ export async function getPublicReadingPlans(): Promise<ReadingPlan[]> {
   return snap.docs.map((d) => ({ ...d.data(), id: d.id } as ReadingPlan));
 }
 
+export async function getUserReadingPlans(userId: string): Promise<ReadingPlan[]> {
+  if (IS_DEMO) return [];
+  const { db, fs } = await fdb();
+  const q = fs.query(fs.collection(db, "readingPlans"), fs.where("createdBy", "==", userId));
+  const snap = await fs.getDocs(q);
+  return snap.docs.map((d) => ({ ...d.data(), id: d.id } as ReadingPlan));
+}
+
+export async function updateReadingPlan(planId: string, data: Partial<Omit<ReadingPlan, "id" | "createdAt" | "createdBy" | "completionCount">>): Promise<void> {
+  if (IS_DEMO) return;
+  const { db, fs } = await fdb();
+  await fs.updateDoc(fs.doc(db, "readingPlans", planId), data);
+}
+
+export async function deleteReadingPlan(planId: string): Promise<void> {
+  if (IS_DEMO) return;
+  const { db, fs } = await fdb();
+  await fs.deleteDoc(fs.doc(db, "readingPlans", planId));
+}
+
 export async function startReadingPlan(userId: string, planId: string, planName: string): Promise<string> {
   if (IS_DEMO) {
     const { demoStartPlan } = await import("./demo-store");

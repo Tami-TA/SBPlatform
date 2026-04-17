@@ -4,6 +4,10 @@ import { useAuthStore } from "@/store/auth-store";
 import {
   getPublicReadingPlans,
   getUserPlanProgress,
+  getUserReadingPlans,
+  createReadingPlan,
+  updateReadingPlan,
+  deleteReadingPlan,
   startReadingPlan,
   markDayComplete,
 } from "@/lib/firestore";
@@ -11,23 +15,38 @@ import type { ReadingPlan, UserPlanProgress } from "@/types";
 import { PRESET_READING_PLANS, getPlanDayReading } from "@/lib/bible-data";
 import {
   ListChecks, Plus, Check, ChevronRight, BookOpen, Users,
-  Clock, Star, Trophy, Loader2, X, Target, ArrowRight,
+  Star, Loader2, Target, ArrowRight, Pencil, Trash2, Globe, Lock,
 } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
+
+interface PlanForm {
+  name: string;
+  description: string;
+  duration: number;
+  isPublic: boolean;
+}
+
+const DEFAULT_FORM: PlanForm = { name: "", description: "", duration: 30, isPublic: false };
 
 export default function PlansPage() {
   const { user } = useAuthStore();
   const [myProgress, setMyProgress] = useState<UserPlanProgress[]>([]);
   const [publicPlans, setPublicPlans] = useState<ReadingPlan[]>([]);
+  const [myCreatedPlans, setMyCreatedPlans] = useState<ReadingPlan[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"active" | "browse">("active");
+  const [activeTab, setActiveTab] = useState<"active" | "browse" | "create">("active");
   const [starting, setStarting] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [editingPlan, setEditingPlan] = useState<ReadingPlan | null>(null);
+  const [form, setForm] = useState<PlanForm>(DEFAULT_FORM);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
-    Promise.all([getUserPlanProgress(user.uid), getPublicReadingPlans()])
-      .then(([prog, plans]) => { setMyProgress(prog); setPublicPlans(plans); })
+    Promise.all([getUserPlanProgress(user.uid), getPublicReadingPlans(), getUserReadingPlans(user.uid)])
+      .then(([prog, plans, created]) => { setMyProgress(prog); setPublicPlans(plans); setMyCreatedPlans(created); })
       .finally(() => setLoading(false));
   }, [user]);
 
@@ -55,7 +74,68 @@ export default function PlansPage() {
     toast.success("Day marked complete! 🎉");
   }
 
-  const PLAN_DURATIONS = ["7 Days", "30 Days", "60 Days", "90 Days", "365 Days"];
+  async function handleSavePlan() {
+    if (!user || !form.name.trim()) return;
+    setSaving(true);
+    try {
+      if (editingPlan) {
+        await updateReadingPlan(editingPlan.id, {
+          name: form.name.trim(),
+          description: form.description.trim(),
+          duration: form.duration,
+          isPublic: form.isPublic,
+        });
+        toast.success("Plan updated!");
+      } else {
+        await createReadingPlan({
+          name: form.name.trim(),
+          description: form.description.trim(),
+          duration: form.duration,
+          isPublic: form.isPublic,
+          createdBy: user.uid,
+          days: [],
+          memberIds: [],
+          tags: [],
+        });
+        toast.success("Plan created!");
+      }
+      const updated = await getUserReadingPlans(user.uid);
+      setMyCreatedPlans(updated);
+      setShowForm(false);
+      setEditingPlan(null);
+      setForm(DEFAULT_FORM);
+    } catch {
+      toast.error("Failed to save plan");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDeletePlan(planId: string, planName: string) {
+    if (!confirm(`Delete "${planName}"? This cannot be undone.`)) return;
+    setDeleting(planId);
+    try {
+      await deleteReadingPlan(planId);
+      setMyCreatedPlans((prev) => prev.filter((p) => p.id !== planId));
+      toast.success("Plan deleted");
+    } catch {
+      toast.error("Failed to delete");
+    } finally {
+      setDeleting(null);
+    }
+  }
+
+  function openEdit(plan: ReadingPlan) {
+    setEditingPlan(plan);
+    setForm({ name: plan.name, description: plan.description || "", duration: plan.duration, isPublic: plan.isPublic });
+    setShowForm(true);
+  }
+
+  function openCreate() {
+    setEditingPlan(null);
+    setForm(DEFAULT_FORM);
+    setShowForm(true);
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 md:px-6 py-6">
@@ -64,18 +144,60 @@ export default function PlansPage() {
           <h1 className="text-2xl font-display font-bold text-page">Reading Plans</h1>
           <p className="text-sm text-secondary-page mt-1">Structure your daily Scripture reading</p>
         </div>
-        <button onClick={() => setActiveTab("browse")} className="btn-gold px-4 py-2.5 text-sm">
-          <Plus size={16} /> Browse Plans
+        <button onClick={openCreate} className="btn-gold px-4 py-2.5 text-sm">
+          <Plus size={16} /> New Plan
         </button>
       </div>
+
+      {/* Create/Edit modal */}
+      {showForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+          <div className="card p-6 w-full max-w-md space-y-4">
+            <h2 className="font-display text-lg font-bold text-page">{editingPlan ? "Edit Plan" : "Create Reading Plan"}</h2>
+            <div>
+              <label className="block text-sm font-medium text-secondary-page mb-1.5">Plan name</label>
+              <input className="input-field" placeholder="e.g. Gospels in 30 Days"
+                value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-secondary-page mb-1.5">Description</label>
+              <textarea className="input-field resize-none" rows={3} placeholder="What will readers study?"
+                value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-secondary-page mb-1.5">Duration (days)</label>
+              <input type="number" min={1} max={365} className="input-field"
+                value={form.duration} onChange={(e) => setForm((f) => ({ ...f, duration: Number(e.target.value) }))} />
+            </div>
+            <div className="flex items-center gap-3">
+              <button onClick={() => setForm((f) => ({ ...f, isPublic: !f.isPublic }))}
+                className={`toggle-track ${form.isPublic ? "on" : ""}`} aria-label="Toggle public">
+                <span className="toggle-thumb" />
+              </button>
+              <span className="text-sm text-secondary-page flex items-center gap-1.5">
+                {form.isPublic ? <Globe size={13} /> : <Lock size={13} />}
+                {form.isPublic ? "Public — others can browse this plan" : "Private — only you can see this"}
+              </span>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button onClick={() => { setShowForm(false); setEditingPlan(null); setForm(DEFAULT_FORM); }}
+                className="btn-ghost flex-1">Cancel</button>
+              <button onClick={handleSavePlan} disabled={saving || !form.name.trim()} className="btn-gold flex-1">
+                {saving ? <Loader2 size={16} className="animate-spin" /> : editingPlan ? "Save Changes" : "Create Plan"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex border-b border-page mb-6">
         {[
           { id: "active", label: "My Plans", badge: myProgress.length },
-          { id: "browse", label: "Browse Plans", badge: 0 },
+          { id: "create", label: "My Created", badge: myCreatedPlans.length },
+          { id: "browse", label: "Browse", badge: 0 },
         ].map((tab) => (
-          <button key={tab.id} onClick={() => setActiveTab(tab.id as "active" | "browse")}
+          <button key={tab.id} onClick={() => setActiveTab(tab.id as "active" | "browse" | "create")}
             className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-all ${activeTab === tab.id ? "" : "border-transparent text-muted-page"}`}
             style={activeTab === tab.id ? { borderColor: "var(--gold)", color: "var(--gold)" } : {}}>
             {tab.label}
@@ -202,6 +324,58 @@ export default function PlansPage() {
                   </div>
                 );
               })}
+            </div>
+          )}
+        </div>
+      ) : activeTab === "create" ? (
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm text-secondary-page">{myCreatedPlans.length} plan{myCreatedPlans.length !== 1 ? "s" : ""} created by you</p>
+            <button onClick={openCreate} className="btn-gold text-xs px-4 py-2">
+              <Plus size={14} /> New Plan
+            </button>
+          </div>
+          {myCreatedPlans.length === 0 ? (
+            <div className="text-center py-16 card">
+              <BookOpen size={40} className="mx-auto mb-4 text-muted-page" />
+              <h3 className="text-base font-semibold text-page mb-2">No plans yet</h3>
+              <p className="text-sm text-secondary-page mb-6">Create a custom reading plan for yourself or the community</p>
+              <button onClick={openCreate} className="btn-gold mx-auto px-6">
+                <Plus size={16} /> Create First Plan
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {myCreatedPlans.map((plan) => (
+                <div key={plan.id} className="card p-4 flex items-center justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h4 className="font-semibold text-page truncate">{plan.name}</h4>
+                      <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full flex items-center gap-1"
+                        style={plan.isPublic
+                          ? { background: "rgba(34,197,94,0.1)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.3)" }
+                          : { background: "var(--bg-secondary)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
+                        {plan.isPublic ? <Globe size={10} /> : <Lock size={10} />}
+                        {plan.isPublic ? "Public" : "Private"}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-page truncate">{plan.description || "No description"} · {plan.duration} days</p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <button onClick={() => handleStartPlan({ name: plan.name, description: plan.description || "", duration: plan.duration, tags: plan.tags || [], id: plan.id })}
+                      className="btn-ghost text-xs px-3 py-1.5">Start</button>
+                    <button onClick={() => openEdit(plan)} className="p-2 rounded-lg transition-colors text-muted-page hover:text-page"
+                      style={{ background: "var(--bg-secondary)" }} title="Edit">
+                      <Pencil size={14} />
+                    </button>
+                    <button onClick={() => handleDeletePlan(plan.id, plan.name)} disabled={deleting === plan.id}
+                      className="p-2 rounded-lg transition-colors text-red-400 hover:text-red-300"
+                      style={{ background: "rgba(239,68,68,0.1)" }} title="Delete">
+                      {deleting === plan.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
