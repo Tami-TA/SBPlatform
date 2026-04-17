@@ -6,7 +6,7 @@ import {
   Search, Bookmark, ChevronRight, Info, Users, Clock,
   Globe, Zap
 } from "lucide-react";
-import { OT_BOOKS_CONTEXT } from "@/lib/context-data";
+import { OT_BOOKS_CONTEXT, NT_BOOKS_CONTEXT, ALL_BOOKS_CONTEXT } from "@/lib/context-data";
 import type { OTBookContext, GenealogyNode, KeyEvent, CulturalNote } from "@/lib/context-types";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
@@ -110,12 +110,21 @@ export default function ContextPage() {
   const [bookmarks, setBookmarks] = useState<Set<string>>(new Set());
   const [expandedSections, setExpandedSections] = useState<Set<SectionId>>(new Set(["overview"]));
 
-  const book = useMemo(() => OT_BOOKS_CONTEXT.find(b => b.id === selectedId), [selectedId]);
+  const book = useMemo(() => ALL_BOOKS_CONTEXT.find(b => b.id === selectedId), [selectedId]);
 
-  const filteredBooks = useMemo(() => {
+  const filteredOT = useMemo(() => {
     const q = search.toLowerCase();
     if (!q) return OT_BOOKS_CONTEXT;
     return OT_BOOKS_CONTEXT.filter(b =>
+      b.name.toLowerCase().includes(q) ||
+      b.overview.shortSummary.toLowerCase().includes(q)
+    );
+  }, [search]);
+
+  const filteredNT = useMemo(() => {
+    const q = search.toLowerCase();
+    if (!q) return NT_BOOKS_CONTEXT;
+    return NT_BOOKS_CONTEXT.filter(b =>
       b.name.toLowerCase().includes(q) ||
       b.overview.shortSummary.toLowerCase().includes(q)
     );
@@ -155,18 +164,48 @@ export default function ContextPage() {
           </div>
         </div>
         <ul className="flex-1 overflow-y-auto py-1">
-          {filteredBooks.map(b => (
-            <li key={b.id}>
-              <button
-                onClick={() => { setSelectedId(b.id); setActiveSection("overview"); }}
-                className={`w-full flex items-center justify-between px-3 py-2 text-left text-sm transition-colors
-                  ${b.id === selectedId ? "bg-blue-600/20 text-blue-300" : "text-slate-400 hover:bg-white/5 hover:text-slate-200"}`}
-              >
-                <span className="truncate">{b.name}</span>
-                {bookmarks.has(b.id) && <Bookmark className="h-3 w-3 text-amber-400 flex-shrink-0" />}
-              </button>
-            </li>
-          ))}
+          {(filteredOT.length > 0 || filteredNT.length > 0) && (
+            <>
+              {filteredOT.length > 0 && (
+                <>
+                  <li className="px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-slate-500 mt-1">
+                    Old Testament
+                  </li>
+                  {filteredOT.map(b => (
+                    <li key={b.id}>
+                      <button
+                        onClick={() => { setSelectedId(b.id); setActiveSection("overview"); }}
+                        className={`w-full flex items-center justify-between px-3 py-2 text-left text-sm transition-colors
+                          ${b.id === selectedId ? "bg-blue-600/20 text-blue-300" : "text-slate-400 hover:bg-white/5 hover:text-slate-200"}`}
+                      >
+                        <span className="truncate">{b.name}</span>
+                        {bookmarks.has(b.id) && <Bookmark className="h-3 w-3 text-amber-400 flex-shrink-0" />}
+                      </button>
+                    </li>
+                  ))}
+                </>
+              )}
+              {filteredNT.length > 0 && (
+                <>
+                  <li className="px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-slate-500 mt-2">
+                    New Testament
+                  </li>
+                  {filteredNT.map(b => (
+                    <li key={b.id}>
+                      <button
+                        onClick={() => { setSelectedId(b.id); setActiveSection("overview"); }}
+                        className={`w-full flex items-center justify-between px-3 py-2 text-left text-sm transition-colors
+                          ${b.id === selectedId ? "bg-blue-600/20 text-blue-300" : "text-slate-400 hover:bg-white/5 hover:text-slate-200"}`}
+                      >
+                        <span className="truncate">{b.name}</span>
+                        {bookmarks.has(b.id) && <Bookmark className="h-3 w-3 text-amber-400 flex-shrink-0" />}
+                      </button>
+                    </li>
+                  ))}
+                </>
+              )}
+            </>
+          )}
         </ul>
       </aside>
 
