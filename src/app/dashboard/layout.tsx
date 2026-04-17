@@ -8,12 +8,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { getInitials } from "@/lib/utils";
 import {
   BookOpen, LayoutDashboard, Users, UserPlus, ListChecks,
-  User, Sun, Moon, Bell, Menu, X, LogOut, ChevronRight,
+  User, Sun, Moon, Bell, Menu, X, LogOut, ChevronRight, Layers,
 } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/dashboard/bible", label: "Bible", icon: BookOpen },
+  { href: "/dashboard/context", label: "Context", icon: Layers },
   { href: "/dashboard/groups", label: "Groups", icon: Users },
   { href: "/dashboard/friends", label: "Friends", icon: UserPlus },
   { href: "/dashboard/plans", label: "Reading Plans", icon: ListChecks },

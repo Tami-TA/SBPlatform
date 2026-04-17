@@ -66,7 +66,7 @@ export default function BiblePage() {
       setChapter(data);
       if (user) await updateStreak(user.uid);
     } catch {
-      toast.error("Failed to load chapter. Check your internet connection.");
+      toast.error("Failed to load chapter. The Bible database may not be ready.");
     } finally {
       setLoading(false);
     }
