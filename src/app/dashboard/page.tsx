@@ -9,6 +9,7 @@ import {
 import { getTodaysVerse } from "@/lib/bible-data";
 import { getUserPlanProgress } from "@/lib/firestore";
 import { getStreakLevel, formatVerseRef, shareVerse } from "@/lib/utils";
+import { getBadgeStatus, RARITY_STYLES } from "@/lib/badges";
 import type { UserPlanProgress } from "@/types";
 import toast from "react-hot-toast";
 
@@ -231,50 +232,65 @@ export default function DashboardPage() {
         </div>
 
         {/* Badges */}
-        <div className="card p-5 relative overflow-hidden">
-          <div className="absolute -bottom-4 -right-4 w-24 h-24 star-shape opacity-5" style={{ background: "var(--gold)" }} />
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-page flex items-center gap-2">
-              <Award size={16} style={{ color: "var(--gold)" }} />
-              Achievements
-            </h3>
-            <span className="badge-gold">{user.badges.length} earned</span>
-          </div>
+        {(() => {
+          const badgeStatuses = getBadgeStatus(user);
+          const earnedCount = badgeStatuses.filter((b) => b.earned).length;
+          const nextUnearned = badgeStatuses.find((b) => !b.earned && b.progress.current > 0) ?? badgeStatuses.find((b) => !b.earned);
+          return (
+            <div className="card p-5 relative overflow-hidden">
+              <div className="absolute -bottom-4 -right-4 w-24 h-24 star-shape opacity-5" style={{ background: "var(--gold)" }} />
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-page flex items-center gap-2">
+                  <Award size={16} style={{ color: "var(--gold)" }} />
+                  Achievements
+                </h3>
+                <span className="badge-gold">{earnedCount} / {badgeStatuses.length}</span>
+              </div>
 
-          {user.badges.length === 0 ? (
-            <div className="text-center py-8">
-              <div className="text-4xl mb-3">🏆</div>
-              <p className="text-sm text-secondary-page mb-1">No badges yet</p>
-              <p className="text-xs text-muted-page">Read for 7 days to earn your first badge!</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-3 gap-3">
-              {user.badges.slice(0, 6).map((badge) => (
-                <div key={badge.id} className="flex flex-col items-center gap-1.5 p-3 rounded-xl text-center relative overflow-hidden"
-                  style={{ background: "var(--bg-secondary)", border: "1px solid rgba(212,175,55,0.2)" }}>
-                  <div className="relative">
-                    <div className="w-10 h-10 star-shape flex items-center justify-center mx-auto"
-                      style={{ background: "linear-gradient(135deg, rgba(212,175,55,0.3), rgba(245,158,11,0.2))" }} />
-                    <span className="text-xl absolute inset-0 flex items-center justify-center">{badge.icon}</span>
-                  </div>
-                  <span className="text-xs font-medium text-secondary-page leading-tight">{badge.name}</span>
+              <div className="grid grid-cols-3 gap-3">
+                {badgeStatuses.slice(0, 6).map((b) => {
+                  const rarity = RARITY_STYLES[b.rarity];
+                  const pct = Math.round((b.progress.current / b.progress.target) * 100);
+                  return (
+                    <div key={b.id} className="flex flex-col items-center gap-1.5 p-3 rounded-xl text-center relative"
+                      style={{
+                        background: b.earned ? `radial-gradient(circle at 50% 30%, ${rarity.glow}, var(--bg-secondary))` : "var(--bg-secondary)",
+                        border: `1px solid ${b.earned ? rarity.border : "var(--border)"}`,
+                        opacity: b.earned ? 1 : 0.65,
+                        boxShadow: b.earned ? `0 0 12px ${rarity.glow}` : "none",
+                      }}>
+                      <div className="relative w-12 h-12">
+                        <div className="w-12 h-12 star-shape absolute inset-0"
+                          style={{ background: b.earned ? `linear-gradient(135deg, ${rarity.border}, ${rarity.glow})` : "var(--border)" }} />
+                        <span className="text-2xl absolute inset-0 flex items-center justify-center">{b.icon}</span>
+                      </div>
+                      <span className="text-xs font-semibold leading-tight" style={{ color: b.earned ? rarity.labelColor : "var(--text-muted)" }}>
+                        {b.name}
+                      </span>
+                      {!b.earned && pct > 0 && (
+                        <div className="w-full mt-0.5">
+                          <div className="h-1 rounded-full overflow-hidden" style={{ background: "var(--border)" }}>
+                            <div className="h-full rounded-full" style={{ width: `${pct}%`, background: rarity.labelColor }} />
+                          </div>
+                          <span className="text-[10px] text-muted-page">{b.progress.current}/{b.progress.target}</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {nextUnearned && !nextUnearned.earned && (
+                <div className="mt-4 p-3 rounded-xl" style={{ background: "rgba(212,175,55,0.08)", border: "1px solid rgba(212,175,55,0.2)" }}>
+                  <p className="text-xs text-muted-page flex items-center gap-1.5">
+                    <Star size={12} fill="var(--gold)" style={{ color: "var(--gold)" }} />
+                    {nextUnearned.progress.target - nextUnearned.progress.current} more to unlock &ldquo;{nextUnearned.name}&rdquo; {nextUnearned.icon}
+                  </p>
                 </div>
-              ))}
+              )}
             </div>
-          )}
-
-          {/* Next badge hint */}
-          <div className="mt-4 p-3 rounded-xl" style={{ background: "rgba(212,175,55,0.08)", border: "1px solid rgba(212,175,55,0.2)" }}>
-            <p className="text-xs text-muted-page flex items-center gap-1.5">
-              <Star size={12} fill="var(--gold)" style={{ color: "var(--gold)" }} />
-              {user.currentStreak < 7
-                ? `Read ${7 - user.currentStreak} more days for "Week Warrior" 🔥`
-                : user.currentStreak < 30
-                ? `Read ${30 - user.currentStreak} more days for "Monthly Devotee" ⭐`
-                : "Keep going for more milestones! 💎"}
-            </p>
-          </div>
-        </div>
+          );
+        })()}
       </div>
 
       {/* Stats row */}
