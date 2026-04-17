@@ -60,7 +60,7 @@ export default function GroupsPage() {
   }
 
   const GROUP_COLORS = [
-    "from-crimson-800/20 to-gold-500/10",
+    "from-cobalt-900/20 to-gold-500/10",
     "from-purple-900/20 to-blue-900/10",
     "from-emerald-900/20 to-teal-900/10",
     "from-amber-900/20 to-orange-900/10",

@@ -43,7 +43,7 @@ export default function DashboardPage() {
 
   const QUICK_LINKS = [
     { href: "/dashboard/bible", icon: BookOpen, label: "Open Bible", color: "#D4AF37" },
-    { href: "/dashboard/plans", icon: ListChecks, label: "My Plans", color: "#B91C1C" },
+    { href: "/dashboard/plans", icon: ListChecks, label: "My Plans", color: "#2563eb" },
     { href: "/dashboard/groups", icon: Users, label: "Groups", color: "#7C3AED" },
     { href: "/dashboard/friends", icon: Star, label: "Friends", color: "#0891B2" },
   ];
