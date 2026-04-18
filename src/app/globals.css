@@ -331,16 +331,16 @@ h1, h2, h3 {
   width: 100%;
   padding: 0.75rem 1rem;
   border-radius: 0.75rem;
-  border: 1px solid var(--border);
-  background-color: var(--bg-card);
-  color: var(--text-primary);
+  border: 1px solid var(--input);
+  background-color: var(--background);
+  color: var(--foreground);
   font-size: 0.95rem;
   outline: none;
   transition: all 0.2s ease;
   font-family: inherit;
 }
-.input-field::placeholder { color: var(--text-muted); }
-.input-field:focus { border-color: rgba(212, 175, 55, 0.6); box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.12); }
+.input-field::placeholder { color: var(--muted-foreground); }
+.input-field:focus { border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 20%, transparent); }
 /* Allow Tailwind padding utilities to override the shorthand via compound specificity */
 .input-field.pl-8  { padding-left: 2rem; }
 .input-field.pl-9  { padding-left: 2.25rem; }
