@@ -251,14 +251,20 @@ export function subscribeToGroupMessages(groupId: string, callback: (messages: G
 // ── Reading Plans ─────────────────────────────────────────────────────────────
 
 export async function createReadingPlan(plan: Omit<ReadingPlan, "id" | "createdAt" | "completionCount">): Promise<string> {
-  if (IS_DEMO) return "demo-plan-" + Date.now();
+  if (IS_DEMO) {
+    const { demoCreateReadingPlan } = await import("./demo-store");
+    return demoCreateReadingPlan(plan);
+  }
   const { db, fs } = await fdb();
   const ref = await fs.addDoc(fs.collection(db, "readingPlans"), { ...plan, completionCount: 0, createdAt: fs.serverTimestamp() });
   return ref.id;
 }
 
 export async function getPublicReadingPlans(): Promise<ReadingPlan[]> {
-  if (IS_DEMO) return [];
+  if (IS_DEMO) {
+    const { demoGetPublicReadingPlans } = await import("./demo-store");
+    return demoGetPublicReadingPlans();
+  }
   const { db, fs } = await fdb();
   const q = fs.query(fs.collection(db, "readingPlans"), fs.where("isPublic", "==", true), fs.orderBy("completionCount", "desc"), fs.limit(20));
   const snap = await fs.getDocs(q);
@@ -266,7 +272,10 @@ export async function getPublicReadingPlans(): Promise<ReadingPlan[]> {
 }
 
 export async function getUserReadingPlans(userId: string): Promise<ReadingPlan[]> {
-  if (IS_DEMO) return [];
+  if (IS_DEMO) {
+    const { demoGetUserReadingPlans } = await import("./demo-store");
+    return demoGetUserReadingPlans(userId);
+  }
   const { db, fs } = await fdb();
   const q = fs.query(fs.collection(db, "readingPlans"), fs.where("createdBy", "==", userId));
   const snap = await fs.getDocs(q);
@@ -274,13 +283,21 @@ export async function getUserReadingPlans(userId: string): Promise<ReadingPlan[]
 }
 
 export async function updateReadingPlan(planId: string, data: Partial<Omit<ReadingPlan, "id" | "createdAt" | "createdBy" | "completionCount">>): Promise<void> {
-  if (IS_DEMO) return;
+  if (IS_DEMO) {
+    const { demoUpdateReadingPlan } = await import("./demo-store");
+    demoUpdateReadingPlan(planId, data);
+    return;
+  }
   const { db, fs } = await fdb();
   await fs.updateDoc(fs.doc(db, "readingPlans", planId), data);
 }
 
 export async function deleteReadingPlan(planId: string): Promise<void> {
-  if (IS_DEMO) return;
+  if (IS_DEMO) {
+    const { demoDeleteReadingPlan } = await import("./demo-store");
+    demoDeleteReadingPlan(planId);
+    return;
+  }
   const { db, fs } = await fdb();
   await fs.deleteDoc(fs.doc(db, "readingPlans", planId));
 }

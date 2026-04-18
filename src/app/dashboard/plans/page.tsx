@@ -133,10 +133,19 @@ export default function PlansPage() {
         toast.success("Plan created!");
       }
       const updated = await getUserReadingPlans(user.uid);
+      // Re-register sequences for any new/updated custom plans
+      const updatedMap = new Map(planMap);
+      updated.forEach((p) => {
+        updatedMap.set(p.id, p);
+        updatedMap.set(p.name, p);
+        if (p.selectedBooks?.length) registerPlanSequence(p.name, p.selectedBooks);
+      });
+      setPlanMap(updatedMap);
       setMyCreatedPlans(updated);
       setShowForm(false);
       setEditingPlan(null);
       setForm(DEFAULT_FORM);
+      if (!editingPlan) setActiveTab("create"); // jump to My Created after creating
     } catch {
       toast.error("Failed to save plan");
     } finally {

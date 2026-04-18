@@ -245,6 +245,38 @@ export function demoGetMessages(groupId: string): GroupMessage[] {
 
 // ── Reading Plans ─────────────────────────────────────────────────────────────
 
+export function demoCreateReadingPlan(plan: Omit<ReadingPlan, "id" | "createdAt" | "completionCount">): string {
+  const id = uid();
+  const plans: Record<string, ReadingPlan> = ls("readingPlans", {});
+  plans[id] = { ...plan, id, completionCount: 0, createdAt: new Date() };
+  ls_set("readingPlans", plans);
+  return id;
+}
+
+export function demoUpdateReadingPlan(planId: string, data: Partial<ReadingPlan>): void {
+  const plans: Record<string, ReadingPlan> = ls("readingPlans", {});
+  if (plans[planId]) {
+    plans[planId] = { ...plans[planId], ...data };
+    ls_set("readingPlans", plans);
+  }
+}
+
+export function demoDeleteReadingPlan(planId: string): void {
+  const plans: Record<string, ReadingPlan> = ls("readingPlans", {});
+  delete plans[planId];
+  ls_set("readingPlans", plans);
+}
+
+export function demoGetUserReadingPlans(userId: string): ReadingPlan[] {
+  const plans: Record<string, ReadingPlan> = ls("readingPlans", {});
+  return Object.values(plans).filter((p) => p.createdBy === userId);
+}
+
+export function demoGetPublicReadingPlans(): ReadingPlan[] {
+  const plans: Record<string, ReadingPlan> = ls("readingPlans", {});
+  return Object.values(plans).filter((p) => p.isPublic);
+}
+
 export function demoStartPlan(userId: string, planId: string, planName: string): string {
   const id = uid();
   const progress: Record<string, UserPlanProgress> = ls("planProgress", {});
