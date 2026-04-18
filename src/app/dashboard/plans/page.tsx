@@ -191,19 +191,17 @@ export default function PlansPage() {
       )}
 
       {/* Tabs */}
-      <div className="flex border-b border-border mb-6">
+      <div className="tab-list mb-6">
         {[
           { id: "active", label: "My Plans", badge: myProgress.length },
           { id: "create", label: "My Created", badge: myCreatedPlans.length },
           { id: "browse", label: "Browse", badge: 0 },
         ].map((tab) => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id as "active" | "browse" | "create")}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-all ${activeTab === tab.id ? "" : "border-transparent text-muted-foreground"}`}
             className={activeTab === tab.id ? "tab-item active" : "tab-item"}>
             {tab.label}
             {tab.badge > 0 && (
-              <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold text-gray-900"
-                style={{ background: "var(--primary)" }}>
+              <span className="ml-1.5 w-4 h-4 rounded-full inline-flex items-center justify-center text-[10px] font-bold bg-primary text-primary-foreground">
                 {tab.badge}
               </span>
             )}

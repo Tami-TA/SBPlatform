@@ -119,15 +119,13 @@ export default function FriendsPage() {
       </form>
 
       {/* Tabs */}
-      <div className="flex border-b border-border mb-5">
+      <div className="tab-list mb-5">
         {TABS.map((tab) => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-all ${activeTab === tab.id ? "" : "border-transparent text-muted-foreground"}`}
             className={activeTab === tab.id ? "tab-item active" : "tab-item"}>
             {tab.label}
             {tab.badge > 0 && (
-              <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold text-gray-900"
-                style={{ background: "var(--primary)" }}>
+              <span className="ml-1.5 w-4 h-4 rounded-full inline-flex items-center justify-center text-[10px] font-bold bg-primary text-primary-foreground">
                 {tab.badge}
               </span>
             )}

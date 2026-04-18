@@ -98,12 +98,11 @@ export default function GroupDetailPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-border overflow-x-auto no-scrollbar" style={{ background: "var(--bg-card)" }}>
+      <div className="tab-list overflow-x-auto no-scrollbar bg-background">
         {TABS.map((tab) => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id as typeof activeTab)}
-            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all whitespace-nowrap ${activeTab === tab.id ? "" : "border-transparent text-muted-foreground hover:text-muted-foreground"}`}
             className={activeTab === tab.id ? "tab-item active" : "tab-item"}>
-            <tab.icon size={15} />
+            <tab.icon size={14} strokeWidth={1.75} />
             {tab.label}
           </button>
         ))}
