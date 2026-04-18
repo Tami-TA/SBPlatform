@@ -24,7 +24,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-background overflow-hidden">
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full opacity-[0.04] dark:opacity-[0.08]"
-          style={{ background: "radial-gradient(circle, #D4AF37, transparent)" }} />
+          style={{ background: "radial-gradient(circle, var(--primary), transparent)" }} />
         <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full opacity-[0.04] dark:opacity-[0.06]"
           style={{ background: "radial-gradient(circle, #8B0000, transparent)" }} />
       </div>
@@ -33,7 +33,7 @@ export default function LandingPage() {
       <nav className="relative z-10 flex items-center justify-between px-6 md:px-12 py-5 max-w-7xl mx-auto">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-            style={{ background: "linear-gradient(135deg, #D4AF37, #F59E0B)" }}>
+            style={{ background: "var(--primary)" }}>
             <BookOpen size={20} className="text-gray-900" />
           </div>
           <span className="font-display text-xl font-bold text-foreground">Scripture</span>
@@ -47,7 +47,7 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 pt-20 pb-24 text-center">
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border mb-8"
-          style={{ borderColor: "rgba(212,175,55,0.3)", background: "rgba(212,175,55,0.1)", color: "var(--gold)" }}>
+          style={{ borderColor: "oklch(from var(--primary) l c h / 0.12)", background: "var(--primary)/0.1", color: "var(--primary)" }}>
           <Star size={14} fill="currentColor" />
           <span className="text-sm font-medium">Your Daily Bible Companion</span>
         </div>
@@ -95,8 +95,8 @@ export default function LandingPage() {
           {features.map((f) => (
             <div key={f.title} className="card p-6 text-center">
               <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
-                style={{ background: "linear-gradient(135deg, rgba(139,0,0,0.15), rgba(212,175,55,0.15))" }}>
-                <f.icon size={24} style={{ color: "var(--gold)" }} />
+                style={{ background: "linear-gradient(135deg, rgba(139,0,0,0.15), oklch(from var(--primary) l c h / 0.12))" }}>
+                <f.icon size={24} className="text-primary" />
               </div>
               <h3 className="font-semibold text-foreground mb-2">{f.title}</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
@@ -108,9 +108,9 @@ export default function LandingPage() {
       {/* CTA */}
       <section className="relative z-10 max-w-4xl mx-auto px-6 md:px-12 py-16">
         <div className="rounded-2xl p-10 text-center"
-          style={{ background: "linear-gradient(135deg, rgba(139,0,0,0.2) 0%, rgba(10,8,5,0.95) 50%, rgba(212,175,55,0.15) 100%)", border: "1px solid rgba(212,175,55,0.3)" }}>
+          style={{ background: "linear-gradient(135deg, rgba(139,0,0,0.2) 0%, rgba(10,8,5,0.95) 50%, oklch(from var(--primary) l c h / 0.12) 100%)", border: "1px solid oklch(from var(--primary) l c h / 0.12)" }}>
           <div className="w-12 h-12 mx-auto mb-6 animate-float rounded-xl flex items-center justify-center"
-            style={{ background: "linear-gradient(135deg, #D4AF37, #F59E0B)" }}>
+            style={{ background: "var(--primary)" }}>
             <BookOpen size={22} className="text-gray-900" />
           </div>
           <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">

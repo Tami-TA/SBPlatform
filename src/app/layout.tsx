@@ -53,7 +53,7 @@ export default function RootLayout({
                   fontSize: "0.875rem",
                 },
                 success: {
-                  iconTheme: { primary: "#D4AF37", secondary: "#1a0a0a" },
+                  iconTheme: { primary: "var(--primary)", secondary: "#1a0a0a" },
                 },
               }}
             />

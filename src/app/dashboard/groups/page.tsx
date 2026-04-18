@@ -73,7 +73,7 @@ export default function GroupsPage() {
           <h1 className="text-2xl font-display font-bold text-foreground">Study Groups</h1>
           <p className="text-sm text-muted-foreground mt-1">Grow together in faith</p>
         </div>
-        <button onClick={() => setShowCreate(true)} className="btn-gold px-4 py-2.5 text-sm">
+        <button onClick={() => setShowCreate(true)} className="btn-primary px-4 py-2.5 text-sm">
           <Plus size={16} /> New Group
         </button>
       </div>
@@ -103,7 +103,7 @@ export default function GroupsPage() {
                 <div className="flex gap-3">
                   <button type="button" onClick={() => setNewGroup((g) => ({ ...g, isPublic: true }))}
                     className={`flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium border transition-all ${newGroup.isPublic ? "" : "opacity-60"}`}
-                    style={newGroup.isPublic ? { background: "rgba(212,175,55,0.15)", borderColor: "rgba(212,175,55,0.4)", color: "var(--gold)" } : { borderColor: "var(--border)", color: "var(--text-secondary)" }}>
+                    style={newGroup.isPublic ? { background: "var(--primary)/0.1", borderColor: "oklch(from var(--primary) l c h / 0.12)", color: "var(--primary)" } : { borderColor: "var(--border)", color: "var(--text-secondary)" }}>
                     <Globe size={16} /> Public
                   </button>
                   <button type="button" onClick={() => setNewGroup((g) => ({ ...g, isPublic: false }))}
@@ -136,7 +136,7 @@ export default function GroupsPage() {
           <Users size={48} className="mx-auto mb-4 text-muted-foreground" />
           <h3 className="text-lg font-semibold text-foreground mb-2">No groups yet</h3>
           <p className="text-muted-foreground text-sm mb-6">Create a group or join one to study together</p>
-          <button onClick={() => setShowCreate(true)} className="btn-gold mx-auto px-6">
+          <button onClick={() => setShowCreate(true)} className="btn-primary mx-auto px-6">
             <Plus size={16} /> Create Your First Group
           </button>
         </div>
@@ -151,7 +151,7 @@ export default function GroupsPage() {
                 <div className="relative">
                   <div className="flex items-start justify-between mb-3">
                     <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-bold text-gray-900"
-                      style={{ background: "linear-gradient(135deg, #D4AF37, #F59E0B)" }}>
+                      style={{ background: "var(--primary)" }}>
                       {getInitials(group.name)}
                     </div>
                     <div className="flex items-center gap-1">
@@ -187,8 +187,8 @@ export default function GroupsPage() {
         ].map((f) => (
           <div key={f.title} className="card p-4 flex items-start gap-3">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: "rgba(212,175,55,0.12)" }}>
-              <f.icon size={18} style={{ color: "var(--gold)" }} />
+              style={{ background: "var(--accent)"}}>
+              <f.icon size={18} className="text-primary" />
             </div>
             <div>
               <h4 className="text-sm font-semibold text-foreground">{f.title}</h4>

@@ -72,7 +72,7 @@ export default function ProfilePage() {
   }
 
   const STATS = [
-    { label: "Days Read", value: user.totalDaysRead, color: "var(--gold)" },
+    { label: "Days Read", value: user.totalDaysRead, color: "var(--primary)" },
     { label: "Current Streak", value: `${user.currentStreak}d`, color: "#f97316" },
     { label: "Longest Streak", value: `${user.longestStreak}d`, color: "#a855f7" },
     { label: "Friends", value: user.friendIds?.length || 0, color: "#22c55e" },
@@ -92,19 +92,19 @@ export default function ProfilePage() {
       {/* Profile header */}
       <div className="card p-6 relative overflow-hidden">
         <div className="absolute top-0 left-0 right-0 h-20"
-          style={{ background: "linear-gradient(135deg, rgba(29,78,216,0.18) 0%, rgba(212,175,55,0.12) 100%)" }} />
+          style={{ background: "linear-gradient(135deg, rgba(29,78,216,0.18) 0%, oklch(from var(--primary) l c h / 0.12) 100%)" }} />
 
         <div className="relative flex flex-col md:flex-row items-start md:items-end gap-5 pt-4">
           {/* Avatar */}
           <div className="relative flex-shrink-0">
             <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-bold text-gray-900 overflow-hidden"
-              style={{ background: "linear-gradient(135deg, #D4AF37, #F59E0B)", boxShadow: "0 0 20px rgba(212,175,55,0.25)" }}>
+              style={{ background: "var(--primary)", boxShadow: "0 0 20px oklch(from var(--primary) l c h / 0.12)" }}>
               {user.photoURL
                 ? <img src={user.photoURL} alt={user.displayName} className="w-20 h-20 object-cover" />
                 : getInitials(user.displayName)}
             </div>
             <button className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center text-gray-900 border-2 border-[var(--bg-card)]"
-              style={{ background: "linear-gradient(135deg, #D4AF37, #F59E0B)" }}
+              style={{ background: "var(--primary)" }}
               title="Change photo">
               <Camera size={12} />
             </button>
@@ -135,7 +135,7 @@ export default function ProfilePage() {
                 <button onClick={() => setEditing(false)} className="btn-ghost text-sm py-2 px-4">
                   <X size={15} /> Cancel
                 </button>
-                <button onClick={handleSave} disabled={saving} className="btn-gold text-sm py-2 px-4">
+                <button onClick={handleSave} disabled={saving} className="btn-primary text-sm py-2 px-4">
                   {saving ? "Saving..." : <><Save size={15} /> Save</>}
                 </button>
               </>
@@ -196,17 +196,17 @@ export default function ProfilePage() {
               <div key={milestone.streak}
                 className={`p-4 rounded-xl flex items-center gap-4 transition-all ${earned ? "" : "opacity-70"}`}
                 style={{
-                  background: earned ? "rgba(212,175,55,0.08)" : "var(--bg-secondary)",
-                  border: earned ? "1px solid rgba(212,175,55,0.25)" : "1px solid transparent",
+                  background: earned ? "oklch(from var(--primary) l c h / 0.12)" : "var(--bg-secondary)",
+                  border: earned ? "1px solid oklch(from var(--primary) l c h / 0.12)" : "1px solid transparent",
                 }}>
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: earned ? "rgba(212,175,55,0.15)" : "var(--border)" }}>
-                  <IconComp size={18} style={{ color: earned ? "var(--gold)" : "var(--text-muted)" }} />
+                  style={{ background: earned ? "oklch(from var(--primary) l c h / 0.12)" : "var(--border)" }}>
+                  <IconComp size={18} className={earned ? "text-primary" : "text-muted-foreground"} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
                     <span className="font-semibold text-sm text-foreground">{milestone.name}</span>
-                    {earned && <span className="badge-gold text-xs">Earned</span>}
+                    {earned && <span className="badge-cobalt text-xs">Earned</span>}
                   </div>
                   <p className="text-xs text-muted-foreground">{milestone.desc}</p>
                   {!earned && (
@@ -218,8 +218,8 @@ export default function ProfilePage() {
                 <div className="flex-shrink-0">
                   {earned ? (
                     <div className="w-7 h-7 rounded-full flex items-center justify-center"
-                      style={{ background: "rgba(212,175,55,0.15)" }}>
-                      <Check size={14} style={{ color: "var(--gold)" }} />
+                      style={{ background: "var(--primary)/0.1" }}>
+                      <Check size={14} className="text-primary" />
                     </div>
                   ) : (
                     <span className="text-xs text-muted-foreground font-medium">{milestone.streak}d</span>
@@ -235,7 +235,7 @@ export default function ProfilePage() {
       {user.badges.length > 0 && (
         <div className="card p-5">
           <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Trophy size={15} style={{ color: "var(--gold)" }} />
+            <Trophy size={15} className="text-primary" />
             My Badges ({user.badges.length})
           </h2>
           <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
@@ -247,8 +247,8 @@ export default function ProfilePage() {
                   style={{ background: "var(--bg-secondary)" }}
                   title={badge.description}>
                   <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                    style={{ background: "rgba(212,175,55,0.12)" }}>
-                    <IconComp size={18} style={{ color: "var(--gold)" }} />
+                    style={{ background: "var(--accent)"}}>
+                    <IconComp size={18} className="text-primary" />
                   </div>
                   <span className="text-xs font-medium text-muted-foreground leading-tight">{badge.name}</span>
                 </div>
@@ -261,7 +261,7 @@ export default function ProfilePage() {
       {/* Preferences */}
       <div className="card p-5">
         <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-          <Shield size={15} style={{ color: "var(--gold)" }} />
+          <Shield size={15} className="text-primary" />
           Preferences
         </h2>
         <div className="space-y-4">
@@ -279,7 +279,7 @@ export default function ProfilePage() {
                 ))}
               </select>
             ) : (
-              <span className="badge-gold">{user.preferredTranslation}</span>
+              <span className="badge-cobalt">{user.preferredTranslation}</span>
             )}
           </div>
 
@@ -288,7 +288,7 @@ export default function ProfilePage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {user.notificationsEnabled
-                ? <Bell size={16} style={{ color: "var(--gold)" }} />
+                ? <Bell size={16} className="text-primary" />
                 : <BellOff size={16} className="text-muted-foreground" />}
               <div>
                 <p className="text-sm font-medium text-foreground">Reading Reminders</p>
@@ -298,7 +298,7 @@ export default function ProfilePage() {
             <button
               onClick={() => { if (editing) setForm((f) => ({ ...f, notificationsEnabled: !f.notificationsEnabled })); }}
               className={`relative w-11 h-6 rounded-full transition-all ${(editing ? form.notificationsEnabled : user.notificationsEnabled) ? "" : "bg-gray-600"}`}
-              style={(editing ? form.notificationsEnabled : user.notificationsEnabled) ? { background: "linear-gradient(90deg, #D4AF37, #F59E0B)" } : {}}>
+              style={(editing ? form.notificationsEnabled : user.notificationsEnabled) ? { background: "linear-gradient(90deg, var(--primary), var(--primary))" } : {}}>
               <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${(editing ? form.notificationsEnabled : user.notificationsEnabled) ? "translate-x-5" : "translate-x-0.5"}`} />
             </button>
           </div>

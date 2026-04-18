@@ -144,7 +144,7 @@ export default function PlansPage() {
           <h1 className="text-2xl font-display font-bold text-foreground">Reading Plans</h1>
           <p className="text-sm text-muted-foreground mt-1">Structure your daily Scripture reading</p>
         </div>
-        <button onClick={openCreate} className="btn-gold px-4 py-2.5 text-sm">
+        <button onClick={openCreate} className="btn-primary px-4 py-2.5 text-sm">
           <Plus size={16} /> New Plan
         </button>
       </div>
@@ -182,7 +182,7 @@ export default function PlansPage() {
             <div className="flex gap-3 pt-2">
               <button onClick={() => { setShowForm(false); setEditingPlan(null); setForm(DEFAULT_FORM); }}
                 className="btn-ghost flex-1">Cancel</button>
-              <button onClick={handleSavePlan} disabled={saving || !form.name.trim()} className="btn-gold flex-1">
+              <button onClick={handleSavePlan} disabled={saving || !form.name.trim()} className="btn-primary flex-1">
                 {saving ? <Loader2 size={16} className="animate-spin" /> : editingPlan ? "Save Changes" : "Create Plan"}
               </button>
             </div>
@@ -199,11 +199,11 @@ export default function PlansPage() {
         ].map((tab) => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id as "active" | "browse" | "create")}
             className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-all ${activeTab === tab.id ? "" : "border-transparent text-muted-foreground"}`}
-            style={activeTab === tab.id ? { borderColor: "var(--gold)", color: "var(--gold)" } : {}}>
+            className={activeTab === tab.id ? "tab-item active" : "tab-item"}>
             {tab.label}
             {tab.badge > 0 && (
               <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold text-gray-900"
-                style={{ background: "linear-gradient(135deg, #D4AF37, #F59E0B)" }}>
+                style={{ background: "var(--primary)" }}>
                 {tab.badge}
               </span>
             )}
@@ -222,7 +222,7 @@ export default function PlansPage() {
               <ListChecks size={48} className="mx-auto mb-4 text-muted-foreground" />
               <h3 className="text-lg font-semibold text-foreground mb-2">No active plans</h3>
               <p className="text-muted-foreground text-sm mb-6">Start a reading plan to track your progress</p>
-              <button onClick={() => setActiveTab("browse")} className="btn-gold mx-auto px-6">
+              <button onClick={() => setActiveTab("browse")} className="btn-primary mx-auto px-6">
                 Browse Plans <ChevronRight size={16} />
               </button>
             </div>
@@ -244,7 +244,7 @@ export default function PlansPage() {
                         <p className="text-xs text-muted-foreground">Started {prog.startDate} · Day {todayNum} of {durationEstimate}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-2xl font-display font-bold text-gold-gradient">{pct}%</p>
+                        <p className="text-2xl font-display font-bold text-primary">{pct}%</p>
                         <p className="text-xs text-muted-foreground">complete</p>
                       </div>
                     </div>
@@ -265,8 +265,8 @@ export default function PlansPage() {
                             ? <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(34,197,94,0.2)" }}>
                                 <Check size={16} className="text-green-500" />
                               </div>
-                            : <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(212,175,55,0.15)" }}>
-                                <BookOpen size={16} style={{ color: "var(--gold)" }} />
+                            : <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "var(--primary)/0.1" }}>
+                                <BookOpen size={16} className="text-primary" />
                               </div>
                           }
                           <div>
@@ -274,7 +274,7 @@ export default function PlansPage() {
                               {todayDone ? "Day complete!" : `Day ${todayNum}`}
                             </p>
                             {dayReading && (
-                              <p className="text-xs font-semibold mt-0.5" style={{ color: "var(--gold)" }}>
+                              <p className="text-xs font-semibold mt-0.5" className="text-primary">
                                 {dayReading.label}
                               </p>
                             )}
@@ -285,13 +285,13 @@ export default function PlansPage() {
                             <Link
                               href={`/dashboard/bible?book=${dayReading.bookId}&chapter=${dayReading.chapter}`}
                               className="text-xs px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors"
-                              style={{ background: "rgba(212,175,55,0.12)", color: "var(--gold)", border: "1px solid rgba(212,175,55,0.3)" }}>
+                              style={{ background: "var(--accent)"}}>
                               Read <ArrowRight size={11} />
                             </Link>
                           )}
                           {!todayDone && (
                             <button onClick={() => handleMarkDay(prog.id, todayNum)}
-                              className="btn-gold text-xs px-4 py-2">
+                              className="btn-primary text-xs px-4 py-2">
                               Mark Done
                             </button>
                           )}
@@ -307,9 +307,9 @@ export default function PlansPage() {
                           <div key={day}
                             className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-medium transition-all ${prog.completedDays.includes(day) ? "" : day === todayNum ? "ring-2" : "opacity-40"}`}
                             style={prog.completedDays.includes(day)
-                              ? { background: "linear-gradient(135deg, #D4AF37, #F59E0B)", color: "#1a0a0a" }
+                              ? { background: "var(--primary)", color: "#1a0a0a" }
                               : day === todayNum
-                              ? { background: "var(--bg-secondary)", color: "var(--gold)" }
+                              ? { background: "var(--bg-secondary)", color: "var(--primary)" }
                               : { background: "var(--bg-secondary)", color: "var(--text-muted)" }}>
                             {day}
                           </div>
@@ -331,7 +331,7 @@ export default function PlansPage() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm text-muted-foreground">{myCreatedPlans.length} plan{myCreatedPlans.length !== 1 ? "s" : ""} created by you</p>
-            <button onClick={openCreate} className="btn-gold text-xs px-4 py-2">
+            <button onClick={openCreate} className="btn-primary text-xs px-4 py-2">
               <Plus size={14} /> New Plan
             </button>
           </div>
@@ -340,7 +340,7 @@ export default function PlansPage() {
               <BookOpen size={40} className="mx-auto mb-4 text-muted-foreground" />
               <h3 className="text-base font-semibold text-foreground mb-2">No plans yet</h3>
               <p className="text-sm text-muted-foreground mb-6">Create a custom reading plan for yourself or the community</p>
-              <button onClick={openCreate} className="btn-gold mx-auto px-6">
+              <button onClick={openCreate} className="btn-primary mx-auto px-6">
                 <Plus size={16} /> Create First Plan
               </button>
             </div>
@@ -384,7 +384,7 @@ export default function PlansPage() {
           {/* Preset plans */}
           <div>
             <h2 className="text-base font-semibold text-foreground mb-3 flex items-center gap-2">
-              <Star size={15} style={{ color: "var(--gold)" }} />
+              <Star size={15} className="text-primary" />
               Popular Plans
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -394,10 +394,10 @@ export default function PlansPage() {
                   <div key={plan.name} className="card p-5">
                     <div className="flex items-start justify-between mb-3">
                       <div className="w-11 h-11 rounded-2xl flex items-center justify-center"
-                        style={{ background: "linear-gradient(135deg, rgba(29,78,216,0.15), rgba(212,175,55,0.15))" }}>
-                        <BookOpen size={20} style={{ color: "var(--gold)" }} />
+                        style={{ background: "linear-gradient(135deg, rgba(29,78,216,0.15), oklch(from var(--primary) l c h / 0.12))" }}>
+                        <BookOpen size={20} className="text-primary" />
                       </div>
-                      <span className="badge-gold">{plan.duration} days</span>
+                      <span className="badge-cobalt">{plan.duration} days</span>
                     </div>
                     <h3 className="font-semibold text-foreground mb-1">{plan.name}</h3>
                     <p className="text-xs text-muted-foreground mb-3 leading-relaxed">{plan.description}</p>
@@ -414,7 +414,7 @@ export default function PlansPage() {
                       className={`w-full text-sm py-2.5 rounded-xl font-semibold transition-all ${alreadyStarted ? "opacity-60 cursor-default" : ""}`}
                       style={alreadyStarted
                         ? { background: "var(--bg-secondary)", color: "var(--text-muted)" }
-                        : { background: "linear-gradient(135deg, #D4AF37, #F59E0B)", color: "#1a0a0a" }}>
+                        : { background: "var(--primary)", color: "#1a0a0a" }}>
                       {starting === plan.name ? (
                         <Loader2 size={16} className="animate-spin mx-auto" />
                       ) : alreadyStarted ? (
@@ -433,7 +433,7 @@ export default function PlansPage() {
           {publicPlans.length > 0 && (
             <div>
               <h2 className="text-base font-semibold text-foreground mb-3 flex items-center gap-2">
-                <Users size={15} style={{ color: "var(--gold)" }} />
+                <Users size={15} className="text-primary" />
                 Community Plans
               </h2>
               <div className="space-y-3">

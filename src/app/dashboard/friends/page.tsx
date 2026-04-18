@@ -113,7 +113,7 @@ export default function FriendsPage() {
             placeholder="Search by username (e.g. john123)"
             className="input-field pl-10" />
         </div>
-        <button type="submit" disabled={searching} className="btn-gold px-4 py-2.5 text-sm">
+        <button type="submit" disabled={searching} className="btn-primary px-4 py-2.5 text-sm">
           {searching ? <Loader2 size={16} className="animate-spin" /> : "Search"}
         </button>
       </form>
@@ -123,11 +123,11 @@ export default function FriendsPage() {
         {TABS.map((tab) => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id)}
             className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-all ${activeTab === tab.id ? "" : "border-transparent text-muted-foreground"}`}
-            style={activeTab === tab.id ? { borderColor: "var(--gold)", color: "var(--gold)" } : {}}>
+            className={activeTab === tab.id ? "tab-item active" : "tab-item"}>
             {tab.label}
             {tab.badge > 0 && (
               <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold text-gray-900"
-                style={{ background: "linear-gradient(135deg, #D4AF37, #F59E0B)" }}>
+                style={{ background: "var(--primary)" }}>
                 {tab.badge}
               </span>
             )}
@@ -149,7 +149,7 @@ export default function FriendsPage() {
               <Users size={40} className="mx-auto mb-3 text-muted-foreground" />
               <h3 className="font-semibold text-foreground mb-2">No friends yet</h3>
               <p className="text-muted-foreground text-sm mb-4">Search by username to find people to study with</p>
-              <button onClick={() => setActiveTab("search")} className="btn-gold text-sm px-5 py-2">
+              <button onClick={() => setActiveTab("search")} className="btn-primary text-sm px-5 py-2">
                 Find Friends
               </button>
             </div>
@@ -160,7 +160,7 @@ export default function FriendsPage() {
                 return (
                   <div key={friend.uid} className="flex items-center gap-3 p-4 rounded-xl card">
                     <div className="w-11 h-11 rounded-full flex items-center justify-center font-bold text-gray-900 flex-shrink-0"
-                      style={{ background: "linear-gradient(135deg, #D4AF37, #F59E0B)" }}>
+                      style={{ background: "var(--primary)" }}>
                       {friend.photoURL
                         ? <img src={friend.photoURL} alt={friend.displayName} className="w-11 h-11 rounded-full object-cover" />
                         : getInitials(friend.displayName)}
@@ -200,7 +200,7 @@ export default function FriendsPage() {
               {requests.map((req) => (
                 <div key={req.id} className="card p-4 flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-gray-900 flex-shrink-0"
-                    style={{ background: "linear-gradient(135deg, #D4AF37, #F59E0B)" }}>
+                    style={{ background: "var(--primary)" }}>
                     {req.fromPhotoURL
                       ? <img src={req.fromPhotoURL} alt={req.fromDisplayName} className="w-10 h-10 rounded-full object-cover" />
                       : getInitials(req.fromDisplayName)}
@@ -217,7 +217,7 @@ export default function FriendsPage() {
                     </button>
                     <button onClick={() => handleAccept(req)}
                       className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-900 transition-all"
-                      style={{ background: "linear-gradient(135deg, #D4AF37, #F59E0B)" }}>
+                      style={{ background: "var(--primary)" }}>
                       <Check size={16} />
                     </button>
                   </div>
@@ -250,7 +250,7 @@ export default function FriendsPage() {
                 return (
                   <div key={result.uid} className="card p-4 flex items-center gap-3">
                     <div className="w-11 h-11 rounded-full flex items-center justify-center font-bold text-gray-900 flex-shrink-0"
-                      style={{ background: "linear-gradient(135deg, #D4AF37, #F59E0B)" }}>
+                      style={{ background: "var(--primary)" }}>
                       {result.photoURL
                         ? <img src={result.photoURL} alt={result.displayName} className="w-11 h-11 rounded-full object-cover" />
                         : getInitials(result.displayName)}
@@ -273,7 +273,7 @@ export default function FriendsPage() {
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${isFriend || hasSentRequest ? "opacity-60 cursor-default" : "hover:opacity-80"}`}
                       style={isFriend || hasSentRequest
                         ? { background: "var(--bg-secondary)", color: "var(--text-muted)" }
-                        : { background: "linear-gradient(135deg, #D4AF37, #F59E0B)", color: "#1a0a0a" }}>
+                        : { background: "var(--primary)", color: "#1a0a0a" }}>
                       {isFriend ? (
                         <><UserCheck size={13} /> Friends</>
                       ) : hasSentRequest ? (

@@ -80,7 +80,7 @@ export default function GroupDetailPage() {
           <ArrowLeft size={20} />
         </Link>
         <div className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold text-gray-900"
-          style={{ background: "linear-gradient(135deg, #D4AF37, #F59E0B)" }}>
+          style={{ background: "var(--primary)" }}>
           {getInitials(group.name)}
         </div>
         <div className="flex-1 min-w-0">
@@ -90,7 +90,7 @@ export default function GroupDetailPage() {
         <div className="flex items-center gap-1.5">
           {group.memberIds.slice(0, 4).map((_, i) => (
             <div key={i} className="w-7 h-7 rounded-full border-2 border-[var(--bg-card)] flex items-center justify-center text-xs font-bold text-gray-900 -ml-2 first:ml-0"
-              style={{ background: "linear-gradient(135deg, #D4AF37, #B45309)" }}>
+              style={{ background: "linear-gradient(135deg, var(--primary), #B45309)" }}>
               {String.fromCharCode(65 + i)}
             </div>
           ))}
@@ -102,7 +102,7 @@ export default function GroupDetailPage() {
         {TABS.map((tab) => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id as typeof activeTab)}
             className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all whitespace-nowrap ${activeTab === tab.id ? "" : "border-transparent text-muted-foreground hover:text-muted-foreground"}`}
-            style={activeTab === tab.id ? { borderColor: "var(--gold)", color: "var(--gold)" } : {}}>
+            className={activeTab === tab.id ? "tab-item active" : "tab-item"}>
             <tab.icon size={15} />
             {tab.label}
           </button>
@@ -126,7 +126,7 @@ export default function GroupDetailPage() {
                   return (
                     <div key={msg.id} className={`flex items-end gap-2.5 ${isMe ? "flex-row-reverse" : ""}`}>
                       <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-gray-900 flex-shrink-0"
-                        style={{ background: "linear-gradient(135deg, #D4AF37, #F59E0B)" }}>
+                        style={{ background: "var(--primary)" }}>
                         {msg.authorPhotoURL
                           ? <img src={msg.authorPhotoURL} alt={msg.authorUsername} className="w-8 h-8 rounded-full object-cover" />
                           : getInitials(msg.authorUsername)}
@@ -137,7 +137,7 @@ export default function GroupDetailPage() {
                         )}
                         <div className={`px-4 py-2.5 rounded-2xl ${isMe ? "rounded-br-sm" : "rounded-bl-sm"} text-sm leading-relaxed`}
                           style={isMe
-                            ? { background: "linear-gradient(135deg, var(--cobalt-dark), var(--cobalt))", color: "white" }
+                            ? { background: "linear-gradient(135deg, var(--cobalt-dark), var(--primary))", color: "white" }
                             : { background: "var(--bg-secondary)", color: "var(--text-primary)" }}>
                           {msg.content}
                         </div>
@@ -172,7 +172,7 @@ export default function GroupDetailPage() {
                 className="input-field flex-1 py-2.5 text-sm" />
               <button type="submit" disabled={!newMessage.trim() || sending}
                 className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${newMessage.trim() ? "" : "opacity-50"}`}
-                style={{ background: "linear-gradient(135deg, #D4AF37, #F59E0B)" }}>
+                style={{ background: "var(--primary)" }}>
                 {sending ? <Loader2 size={16} className="animate-spin text-gray-900" /> : <Send size={16} className="text-gray-900" />}
               </button>
             </form>
@@ -183,14 +183,14 @@ export default function GroupDetailPage() {
           <div className="flex-1 overflow-y-auto p-6">
             <div className="max-w-lg mx-auto text-center">
               <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
-                style={{ background: "rgba(212,175,55,0.12)" }}>
-                <BookOpen size={28} style={{ color: "var(--gold)" }} />
+                style={{ background: "var(--accent)"}}>
+                <BookOpen size={28} className="text-primary" />
               </div>
               <h3 className="text-lg font-display font-bold text-foreground mb-2">Community Bible</h3>
               <p className="text-muted-foreground text-sm mb-6">
                 Read and annotate scripture together. All group members can see and contribute notes and insights.
               </p>
-              <Link href={`/dashboard/bible?groupId=${id}`} className="btn-gold mx-auto inline-flex">
+              <Link href={`/dashboard/bible?groupId=${id}`} className="btn-primary mx-auto inline-flex">
                 Open Community Bible <ChevronRight size={16} />
               </Link>
             </div>
@@ -205,7 +205,7 @@ export default function GroupDetailPage() {
               </h3>
               <Link href={`/dashboard/bible?groupId=${id}`}
                 className="text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors"
-                style={{ background: "rgba(212,175,55,0.12)", color: "var(--gold)", border: "1px solid rgba(212,175,55,0.3)" }}>
+                style={{ background: "var(--accent)"}}>
                 <BookOpen size={12} /> Add Note in Bible
               </Link>
             </div>
@@ -215,7 +215,7 @@ export default function GroupDetailPage() {
                 <StickyNote size={40} className="mx-auto mb-4 text-muted-foreground" />
                 <h3 className="text-base font-semibold text-foreground mb-2">No shared notes yet</h3>
                 <p className="text-sm text-muted-foreground mb-6">Open the Community Bible to add annotations visible to the whole group</p>
-                <Link href={`/dashboard/bible?groupId=${id}`} className="btn-gold inline-flex">
+                <Link href={`/dashboard/bible?groupId=${id}`} className="btn-primary inline-flex">
                   Open Community Bible
                 </Link>
               </div>
@@ -225,13 +225,13 @@ export default function GroupDetailPage() {
                   const typeColors: Record<string, string> = {
                     note: "rgba(96,165,250,0.15)",
                     question: "rgba(251,146,60,0.15)",
-                    insight: "rgba(212,175,55,0.15)",
+                    insight: "oklch(from var(--primary) l c h / 0.12)",
                     prayer: "rgba(167,139,250,0.15)",
                   };
                   const typeBorders: Record<string, string> = {
                     note: "rgba(96,165,250,0.4)",
                     question: "rgba(251,146,60,0.4)",
-                    insight: "rgba(212,175,55,0.4)",
+                    insight: "oklch(from var(--primary) l c h / 0.12)",
                     prayer: "rgba(167,139,250,0.4)",
                   };
                   return (
@@ -239,7 +239,7 @@ export default function GroupDetailPage() {
                       <div className="flex items-start justify-between gap-3 mb-2">
                         <div className="flex items-center gap-2">
                           <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-gray-900 flex-shrink-0"
-                            style={{ background: "linear-gradient(135deg, #D4AF37, #F59E0B)" }}>
+                            style={{ background: "var(--primary)" }}>
                             {getInitials(ann.username)}
                           </div>
                           <div>
@@ -257,7 +257,7 @@ export default function GroupDetailPage() {
 
                       <Link href={`/dashboard/bible?book=${ann.verseRef.bookId}&chapter=${ann.verseRef.chapter}`}
                         className="text-xs font-semibold mb-2 block hover:underline"
-                        style={{ color: "var(--gold)" }}>
+                        className="text-primary">
                         {ann.verseRef.bookName} {ann.verseRef.chapter}:{ann.verseRef.verse}
                       </Link>
 
@@ -286,13 +286,13 @@ export default function GroupDetailPage() {
               {group.memberIds.map((uid, i) => (
                 <div key={uid} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: "var(--bg-secondary)" }}>
                   <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-gray-900"
-                    style={{ background: "linear-gradient(135deg, #D4AF37, #F59E0B)" }}>
+                    style={{ background: "var(--primary)" }}>
                     {String.fromCharCode(65 + i)}
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-medium text-foreground">Member {i + 1}</p>
                     {group.adminIds.includes(uid) && (
-                      <span className="badge-gold text-xs">Admin</span>
+                      <span className="badge-cobalt text-xs">Admin</span>
                     )}
                   </div>
                   {uid === user?.uid && (
@@ -309,7 +309,7 @@ export default function GroupDetailPage() {
             <div className="max-w-lg mx-auto text-center">
               <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
                 style={{ background: "rgba(29,78,216,0.12)" }}>
-                <BookMarked size={28} style={{ color: "var(--cobalt-light)" }} />
+                <BookMarked size={28} style={{ color: "var(--primary)" }} />
               </div>
               <h3 className="text-lg font-display font-bold text-foreground mb-2">Group Reading Plan</h3>
               <p className="text-muted-foreground text-sm mb-6">
