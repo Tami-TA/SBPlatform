@@ -59,12 +59,11 @@ export function AIPanel({ verse, onClose }: AIPanelProps) {
   }
 
   return (
-    <div className="flex flex-col h-full" style={{ background: "var(--bg-card)" }}>
+    <div className="flex flex-col h-full bg-card">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-lg flex items-center justify-center"
-            style={{ background: "var(--primary)" }}>
+          <div className="w-6 h-6 rounded-lg flex items-center justify-center bg-primary">
             <Sparkles size={13} className="text-gray-900" />
           </div>
           <span className="font-semibold text-sm text-foreground">AI Study Assistant</span>
@@ -74,7 +73,7 @@ export function AIPanel({ verse, onClose }: AIPanelProps) {
 
       {/* Verse reference */}
       <div className="px-4 py-3 border-b border-border">
-        <p className="text-xs font-semibold mb-1" className="text-primary">
+        <p className="text-xs font-semibold mb-1 text-primary">
           {verse.bookName} {verse.chapter}:{verse.verse}
         </p>
         <p className="text-sm text-muted-foreground verse-text leading-relaxed line-clamp-3">
@@ -111,10 +110,10 @@ export function AIPanel({ verse, onClose }: AIPanelProps) {
         ) : relatedVerses.length > 0 ? (
           <div className="space-y-3">
             {relatedVerses.map((v, i) => (
-              <div key={i} className="p-3 rounded-xl" style={{ background: "var(--bg-secondary)" }}>
-                <p className="text-xs font-bold mb-1" className="text-primary">{v.reference}</p>
+              <div key={i} className="p-3 rounded-xl bg-secondary">
+                <p className="text-xs font-bold mb-1 text-primary">{v.reference}</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">{v.connection}</p>
-                <span className="inline-block mt-1.5 text-xs px-2 py-0.5 rounded-full" style={{ background: "var(--primary)/0.1", color: "var(--gold-muted)" }}>
+                <span className="inline-block mt-1.5 text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
                   {v.theme}
                 </span>
               </div>
@@ -122,8 +121,7 @@ export function AIPanel({ verse, onClose }: AIPanelProps) {
           </div>
         ) : (
           <div className="text-center py-10">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3"
-              style={{ background: "var(--primary)/0.1" }}>
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3 bg-primary/10">
               <Sparkles size={20} className="text-primary" />
             </div>
             <p className="text-sm text-muted-foreground mb-1">Ask AI about this verse</p>

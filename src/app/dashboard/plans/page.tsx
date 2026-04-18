@@ -380,8 +380,7 @@ export default function PlansPage() {
                 return (
                   <div key={plan.name} className="card p-5">
                     <div className="flex items-start justify-between mb-3">
-                      <div className="w-11 h-11 rounded-2xl flex items-center justify-center"
-                        className="bg-primary/8">
+                      <div className="w-11 h-11 rounded-2xl flex items-center justify-center bg-primary/8">
                         <BookOpen size={20} className="text-primary" />
                       </div>
                       <span className="badge-cobalt">{plan.duration} days</span>
