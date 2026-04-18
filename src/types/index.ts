@@ -197,6 +197,7 @@ export interface ReadingPlan {
   coverImage?: string;
   tags?: string[];
   completionCount: number;
+  selectedBooks?: string[];
 }
 
 export interface ReadingPlanDay {

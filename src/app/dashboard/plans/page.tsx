@@ -12,10 +12,13 @@ import {
   markDayComplete,
 } from "@/lib/firestore";
 import type { ReadingPlan, UserPlanProgress } from "@/types";
-import { PRESET_READING_PLANS, getPlanDayReading } from "@/lib/bible-data";
+import {
+  BIBLE_BOOKS, PRESET_READING_PLANS, getPlanDayReading,
+  registerPlanSequence, getTotalChaptersForBooks,
+} from "@/lib/bible-data";
 import {
   ListChecks, Plus, Check, ChevronRight, BookOpen, Users,
-  Star, Loader2, Target, ArrowRight, Pencil, Trash2, Globe, Lock,
+  Star, Loader2, Target, ArrowRight, Pencil, Trash2, Globe, Lock, X,
 } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
@@ -25,9 +28,21 @@ interface PlanForm {
   description: string;
   duration: number;
   isPublic: boolean;
+  selectedBooks: string[];
 }
 
-const DEFAULT_FORM: PlanForm = { name: "", description: "", duration: 30, isPublic: false };
+const DEFAULT_FORM: PlanForm = { name: "", description: "", duration: 30, isPublic: false, selectedBooks: [] };
+
+const OT_BOOKS = BIBLE_BOOKS.filter((b) => b.testament === "OT");
+const NT_BOOKS = BIBLE_BOOKS.filter((b) => b.testament === "NT");
+
+const BOOK_PRESETS = [
+  { label: "NT", books: NT_BOOKS.map((b) => b.id) },
+  { label: "Gospels", books: ["MAT", "MRK", "LUK", "JHN"] },
+  { label: "Epistles", books: ["ROM","1CO","2CO","GAL","EPH","PHP","COL","1TH","2TH","1TI","2TI","TIT","PHM","HEB","JAS","1PE","2PE","1JN","2JN","3JN","JUD"] },
+  { label: "Wisdom", books: ["PSA", "PRO", "JOB", "ECC", "SNG"] },
+  { label: "OT", books: OT_BOOKS.map((b) => b.id) },
+];
 
 export default function PlansPage() {
   const { user } = useAuthStore();
@@ -46,7 +61,15 @@ export default function PlansPage() {
   useEffect(() => {
     if (!user) return;
     Promise.all([getUserPlanProgress(user.uid), getPublicReadingPlans(), getUserReadingPlans(user.uid)])
-      .then(([prog, plans, created]) => { setMyProgress(prog); setPublicPlans(plans); setMyCreatedPlans(created); })
+      .then(([prog, plans, created]) => {
+        setMyProgress(prog);
+        setPublicPlans(plans);
+        setMyCreatedPlans(created);
+        // Register custom plan sequences so getPlanDayReading works for them
+        [...plans, ...created].forEach((p) => {
+          if (p.selectedBooks?.length) registerPlanSequence(p.name, p.selectedBooks);
+        });
+      })
       .finally(() => setLoading(false));
   }, [user]);
 
@@ -78,17 +101,20 @@ export default function PlansPage() {
     if (!user || !form.name.trim()) return;
     setSaving(true);
     try {
+      const planName = form.name.trim();
       if (editingPlan) {
         await updateReadingPlan(editingPlan.id, {
-          name: form.name.trim(),
+          name: planName,
           description: form.description.trim(),
           duration: form.duration,
           isPublic: form.isPublic,
+          ...(form.selectedBooks.length ? { selectedBooks: form.selectedBooks } : {}),
         });
+        if (form.selectedBooks.length) registerPlanSequence(planName, form.selectedBooks);
         toast.success("Plan updated!");
       } else {
         await createReadingPlan({
-          name: form.name.trim(),
+          name: planName,
           description: form.description.trim(),
           duration: form.duration,
           isPublic: form.isPublic,
@@ -96,7 +122,9 @@ export default function PlansPage() {
           days: [],
           memberIds: [],
           tags: [],
+          ...(form.selectedBooks.length ? { selectedBooks: form.selectedBooks } : {}),
         });
+        if (form.selectedBooks.length) registerPlanSequence(planName, form.selectedBooks);
         toast.success("Plan created!");
       }
       const updated = await getUserReadingPlans(user.uid);
@@ -127,8 +155,21 @@ export default function PlansPage() {
 
   function openEdit(plan: ReadingPlan) {
     setEditingPlan(plan);
-    setForm({ name: plan.name, description: plan.description || "", duration: plan.duration, isPublic: plan.isPublic });
+    setForm({ name: plan.name, description: plan.description || "", duration: plan.duration, isPublic: plan.isPublic, selectedBooks: plan.selectedBooks || [] });
     setShowForm(true);
+  }
+
+  function toggleBook(bookId: string) {
+    setForm((f) => ({
+      ...f,
+      selectedBooks: f.selectedBooks.includes(bookId)
+        ? f.selectedBooks.filter((b) => b !== bookId)
+        : [...f.selectedBooks, bookId],
+    }));
+  }
+
+  function applyPreset(books: string[]) {
+    setForm((f) => ({ ...f, selectedBooks: books }));
   }
 
   function openCreate() {
@@ -151,34 +192,102 @@ export default function PlansPage() {
 
       {/* Create/Edit modal */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
-          <div className="card p-6 w-full max-w-md space-y-4">
-            <h2 className="font-display text-lg font-bold text-foreground">{editingPlan ? "Edit Plan" : "Create Reading Plan"}</h2>
-            <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-1.5">Plan name</label>
-              <input className="input-field" placeholder="e.g. Gospels in 30 Days"
-                value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 overflow-y-auto">
+          <div className="card p-6 w-full max-w-lg space-y-4 my-4">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-lg font-bold text-foreground">{editingPlan ? "Edit Plan" : "Create Reading Plan"}</h2>
+              <button onClick={() => { setShowForm(false); setEditingPlan(null); setForm(DEFAULT_FORM); }}>
+                <X size={18} className="text-muted-foreground" />
+              </button>
             </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-muted-foreground mb-1.5">Plan name</label>
+                <input className="input-field" placeholder="e.g. Gospels in 30 Days"
+                  value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-muted-foreground mb-1.5">Duration (days)</label>
+                <input type="number" min={1} max={365} className="input-field"
+                  value={form.duration} onChange={(e) => setForm((f) => ({ ...f, duration: Number(e.target.value) }))} />
+              </div>
+              <div className="flex items-end pb-0.5">
+                <div className="flex items-center gap-2.5">
+                  <button onClick={() => setForm((f) => ({ ...f, isPublic: !f.isPublic }))}
+                    className={`toggle-track ${form.isPublic ? "on" : ""}`} aria-label="Toggle public">
+                    <span className="toggle-thumb" />
+                  </button>
+                  <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+                    {form.isPublic ? <Globe size={13} /> : <Lock size={13} />}
+                    {form.isPublic ? "Public" : "Private"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
             <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-1.5">Description</label>
-              <textarea className="input-field resize-none" rows={3} placeholder="What will readers study?"
+              <label className="block text-sm font-medium text-muted-foreground mb-1.5">Description (optional)</label>
+              <textarea className="input-field resize-none" rows={2} placeholder="What will readers study?"
                 value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
             </div>
+
+            {/* Book selection */}
             <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-1.5">Duration (days)</label>
-              <input type="number" min={1} max={365} className="input-field"
-                value={form.duration} onChange={(e) => setForm((f) => ({ ...f, duration: Number(e.target.value) }))} />
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-muted-foreground">
+                  Books to read
+                  {form.selectedBooks.length > 0 && (
+                    <span className="ml-2 text-primary">
+                      {form.selectedBooks.length} books · {getTotalChaptersForBooks(form.selectedBooks)} chapters
+                      {" "}≈ {Math.ceil(getTotalChaptersForBooks(form.selectedBooks) / form.duration)} ch/day
+                    </span>
+                  )}
+                </label>
+                {form.selectedBooks.length > 0 && (
+                  <button onClick={() => setForm((f) => ({ ...f, selectedBooks: [] }))}
+                    className="text-xs text-muted-foreground hover:text-foreground">
+                    Clear all
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {BOOK_PRESETS.map((p) => (
+                  <button key={p.label} onClick={() => applyPreset(p.books)}
+                    className="text-xs px-2.5 py-1 rounded-full bg-secondary text-muted-foreground hover:bg-primary/10 hover:text-primary border border-border transition-colors">
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+              <div className="border border-border rounded-xl overflow-hidden">
+                <div className="bg-secondary px-3 py-1.5 border-b border-border">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Old Testament</span>
+                </div>
+                <div className="p-2 grid grid-cols-8 sm:grid-cols-10 gap-1">
+                  {OT_BOOKS.map((b) => (
+                    <button key={b.id} onClick={() => toggleBook(b.id)} title={`${b.name} (${b.chapters} ch)`}
+                      className={`text-[10px] px-1 py-1 rounded font-medium transition-all text-center ${form.selectedBooks.includes(b.id) ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-secondary"}`}>
+                      {b.abbreviation}
+                    </button>
+                  ))}
+                </div>
+                <div className="bg-secondary px-3 py-1.5 border-t border-b border-border">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">New Testament</span>
+                </div>
+                <div className="p-2 grid grid-cols-8 sm:grid-cols-10 gap-1">
+                  {NT_BOOKS.map((b) => (
+                    <button key={b.id} onClick={() => toggleBook(b.id)} title={`${b.name} (${b.chapters} ch)`}
+                      className={`text-[10px] px-1 py-1 rounded font-medium transition-all text-center ${form.selectedBooks.includes(b.id) ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-secondary"}`}>
+                      {b.abbreviation}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {form.selectedBooks.length === 0 && (
+                <p className="text-xs text-muted-foreground mt-1.5">No books selected — you can still create the plan and add content later</p>
+              )}
             </div>
-            <div className="flex items-center gap-3">
-              <button onClick={() => setForm((f) => ({ ...f, isPublic: !f.isPublic }))}
-                className={`toggle-track ${form.isPublic ? "on" : ""}`} aria-label="Toggle public">
-                <span className="toggle-thumb" />
-              </button>
-              <span className="text-sm text-muted-foreground flex items-center gap-1.5">
-                {form.isPublic ? <Globe size={13} /> : <Lock size={13} />}
-                {form.isPublic ? "Public — others can browse this plan" : "Private — only you can see this"}
-              </span>
-            </div>
+
             <div className="flex gap-3 pt-2">
               <button onClick={() => { setShowForm(false); setEditingPlan(null); setForm(DEFAULT_FORM); }}
                 className="btn-ghost flex-1">Cancel</button>

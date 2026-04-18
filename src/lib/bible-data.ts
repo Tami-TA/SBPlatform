@@ -154,7 +154,7 @@ export interface DayReading {
 // Ordered list of chapters for each plan
 const PLAN_CHAPTER_SEQUENCE: Record<string, Array<{ bookId: string; bookName: string; chapter: number }>> = {};
 
-function buildSequence(bookIds: string[]): Array<{ bookId: string; bookName: string; chapter: number }> {
+export function buildSequence(bookIds: string[]): Array<{ bookId: string; bookName: string; chapter: number }> {
   const seq: Array<{ bookId: string; bookName: string; chapter: number }> = [];
   for (const id of bookIds) {
     const book = BIBLE_BOOKS.find((b) => b.id === id);
@@ -213,4 +213,17 @@ export function getPlanDayReading(planName: string, dayNumber: number): DayReadi
   }
 
   return { label, bookId: first.bookId, chapter: first.chapter };
+}
+
+export function registerPlanSequence(planName: string, bookIds: string[]): void {
+  if (!PLAN_CHAPTER_SEQUENCE[planName]) {
+    PLAN_CHAPTER_SEQUENCE[planName] = buildSequence(bookIds);
+  }
+}
+
+export function getTotalChaptersForBooks(bookIds: string[]): number {
+  return bookIds.reduce((sum, id) => {
+    const book = BIBLE_BOOKS.find((b) => b.id === id);
+    return sum + (book?.chapters ?? 0);
+  }, 0);
 }
