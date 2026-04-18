@@ -50,6 +50,7 @@ export default function PlansPage() {
   const [publicPlans, setPublicPlans] = useState<ReadingPlan[]>([]);
   const [myCreatedPlans, setMyCreatedPlans] = useState<ReadingPlan[]>([]);
   const [loading, setLoading] = useState(true);
+  const [planMap, setPlanMap] = useState<Map<string, ReadingPlan>>(new Map());
   const [activeTab, setActiveTab] = useState<"active" | "browse" | "create">("active");
   const [starting, setStarting] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -65,10 +66,14 @@ export default function PlansPage() {
         setMyProgress(prog);
         setPublicPlans(plans);
         setMyCreatedPlans(created);
-        // Register custom plan sequences so getPlanDayReading works for them
+        // Build plan lookup map (by id and by name for presets)
+        const map = new Map<string, ReadingPlan>();
         [...plans, ...created].forEach((p) => {
+          map.set(p.id, p);
+          map.set(p.name, p);
           if (p.selectedBooks?.length) registerPlanSequence(p.name, p.selectedBooks);
         });
+        setPlanMap(map);
       })
       .finally(() => setLoading(false));
   }, [user]);
@@ -336,7 +341,10 @@ export default function PlansPage() {
           ) : (
             <div className="space-y-4">
               {myProgress.map((prog) => {
-                const durationEstimate = 30;
+                const planData = planMap.get(prog.planId) ?? planMap.get(prog.planName);
+                const presetPlan = PRESET_READING_PLANS.find((p) => p.name === prog.planName);
+                const duration = planData?.duration ?? presetPlan?.duration ?? 30;
+                const durationEstimate = duration;
                 const pct = Math.min(100, Math.round((prog.completedDays.length / durationEstimate) * 100));
                 const todayNum = prog.currentDay;
                 const todayDone = prog.completedDays.includes(todayNum);
