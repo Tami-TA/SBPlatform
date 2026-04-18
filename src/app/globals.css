@@ -267,8 +267,8 @@ h1, h2, h3 {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  background-color: var(--cobalt);
-  color: white;
+  background-color: var(--primary);
+  color: var(--primary-foreground);
   font-weight: 600;
   padding: 0.75rem 1.5rem;
   border-radius: 0.75rem;
@@ -276,10 +276,10 @@ h1, h2, h3 {
   cursor: pointer;
   border: none;
   outline: none;
-  box-shadow: 0 0 20px rgba(29, 78, 216, 0.3);
+  box-shadow: 0 0 20px color-mix(in oklch, var(--primary) 30%, transparent);
   font-size: 0.9rem;
 }
-.btn-crimson:hover, .btn-cobalt:hover { background-color: var(--cobalt-light); }
+.btn-crimson:hover, .btn-cobalt:hover { opacity: 0.9; }
 .btn-crimson:active, .btn-cobalt:active { transform: scale(0.95); }
 .btn-crimson:disabled, .btn-cobalt:disabled { opacity: 0.6; cursor: not-allowed; }
 
@@ -313,7 +313,7 @@ h1, h2, h3 {
   justify-content: center;
   gap: 0.5rem;
   border: 1px solid var(--border);
-  color: var(--text-secondary);
+  color: var(--muted-foreground);
   font-weight: 500;
   padding: 0.75rem 1.5rem;
   border-radius: 0.75rem;
@@ -323,7 +323,7 @@ h1, h2, h3 {
   outline: none;
   font-size: 0.9rem;
 }
-.btn-ghost:hover { background-color: var(--bg-secondary); color: var(--text-primary); }
+.btn-ghost:hover { background-color: var(--accent); color: var(--accent-foreground); }
 .btn-ghost:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* ── Input ── */
