@@ -1,13 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600;700&display=swap');
-
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme {
   --font-family-serif: Georgia, Cambria, "Times New Roman", serif;
-  --font-family-sans: Inter, system-ui, sans-serif;
-  --font-family-display: "Playfair Display", Georgia, serif;
+  --font-family-display: "Plus Jakarta Sans", system-ui, sans-serif;
 
   --color-cobalt-50: #eff6ff;
   --color-cobalt-100: #dbeafe;
@@ -198,12 +195,12 @@
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 h1, h2, h3 {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: var(--font-sans);
 }
 
 ::selection {
@@ -458,7 +455,7 @@ h1, h2, h3 {
   font-size: 1.05rem;
 }
 .verse-number {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans), sans-serif;
   font-size: 0.6rem;
   font-weight: 700;
   color: var(--gold);
