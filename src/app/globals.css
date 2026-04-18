@@ -240,21 +240,22 @@ h1, h2, h3 {
 
 /* ── Card ── */
 .card {
-  background-color: var(--bg-card);
+  background-color: var(--card);
+  color: var(--card-foreground);
   border: 1px solid var(--border);
   border-radius: 1rem;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-sm);
   transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 .card:hover {
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-md);
   transform: translateY(-1px);
 }
-.dark .card:hover { box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4); }
 
 .card-gold {
   position: relative;
-  background-color: var(--bg-card);
+  background-color: var(--card);
+  color: var(--card-foreground);
   border-radius: 1rem;
   border: 1px solid rgba(212, 175, 55, 0.4);
   box-shadow: 0 0 20px rgba(212, 175, 55, 0.1);
