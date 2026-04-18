@@ -91,7 +91,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Sidebar */}
       <aside
         className={`fixed top-0 left-0 h-full z-50 w-60 flex flex-col transition-transform duration-300 lg:translate-x-0 lg:static lg:z-auto ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
-        style={{ background: "var(--bg-card)", borderRight: "1px solid var(--border)" }}
+        style={{ background: "var(--sidebar)", borderRight: "1px solid var(--sidebar-border)", color: "var(--sidebar-foreground)" }}
       >
         {/* Logo */}
         <div className="flex items-center justify-between px-4 py-4 border-b border-page">
@@ -131,7 +131,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <button
               onClick={() => setProfileOpen(!profileOpen)}
               className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition-all hover:opacity-80"
-              style={{ background: "var(--bg-secondary)" }}
+              style={{ background: "var(--sidebar-accent)" }}
             >
               <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-gray-900 overflow-hidden"
                 style={{ background: "linear-gradient(135deg, #D4AF37, #F59E0B)" }}>
@@ -150,7 +150,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {profileOpen && (
               <div
                 className="absolute bottom-full left-0 right-0 mb-1 rounded-xl shadow-lg z-50 py-1 overflow-hidden"
-                style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
+                style={{ background: "var(--popover)", border: "1px solid var(--border)", color: "var(--popover-foreground)" }}
               >
                 <Link href="/dashboard/profile" onClick={() => setProfileOpen(false)}
                   className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-secondary-page hover:text-page hover:bg-[var(--bg-secondary)] transition-colors">
