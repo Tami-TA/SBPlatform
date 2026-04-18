@@ -226,8 +226,7 @@ export default function BiblePage() {
 
         {/* Chapter selector */}
         <div className="flex items-center gap-1">
-          <button onClick={() => navigateChapter("prev")} className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-all"
-            className="bg-secondary">
+          <button onClick={() => navigateChapter("prev")} className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-all bg-secondary">
             <ChevronLeft size={16} />
           </button>
           <select value={selectedChapter}
@@ -238,15 +237,13 @@ export default function BiblePage() {
               <option key={c} value={c}>{c}</option>
             ))}
           </select>
-          <button onClick={() => navigateChapter("next")} className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-all"
-            className="bg-secondary">
+          <button onClick={() => navigateChapter("next")} className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-all bg-secondary">
             <ChevronRight size={16} />
           </button>
         </div>
 
         {/* Translation */}
         <button onClick={(e) => { e.stopPropagation(); setShowTranslationSelector(!showTranslationSelector); setShowBookSelector(false); }}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all"
           className="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium bg-primary/10 border border-primary/25 text-primary hover:bg-primary/15 transition-colors">
           {translation}
           <ChevronDown size={13} />
@@ -256,22 +253,20 @@ export default function BiblePage() {
 
         {/* Font size */}
         <div className="hidden md:flex items-center gap-1.5">
-          <button onClick={() => setFontSize((f) => Math.max(13, f - 1))} className="text-xs px-2 py-1 rounded text-muted-foreground hover:text-foreground" className="bg-secondary">A-</button>
-          <button onClick={() => setFontSize((f) => Math.min(24, f + 1))} className="text-sm px-2 py-1 rounded text-muted-foreground hover:text-foreground" className="bg-secondary">A+</button>
+          <button onClick={() => setFontSize((f) => Math.max(13, f - 1))} className="text-xs px-2 py-1 rounded text-muted-foreground hover:text-foreground bg-secondary">A-</button>
+          <button onClick={() => setFontSize((f) => Math.min(24, f + 1))} className="text-sm px-2 py-1 rounded text-muted-foreground hover:text-foreground bg-secondary">A+</button>
         </div>
 
         {/* Search */}
         <button onClick={(e) => { e.stopPropagation(); setSearchMode(!searchMode); }}
-          className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all ${searchMode ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-          className={searchMode ? "bg-primary/10 text-primary" : "bg-secondary text-muted-foreground hover:text-foreground"}>
+          className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all ${searchMode ? "bg-primary/10 text-primary" : "bg-secondary text-muted-foreground hover:text-foreground"}`}>
           <Search size={16} />
         </button>
       </div>
 
       {/* Book Selector Dropdown */}
       {showBookSelector && (
-        <div className="absolute top-28 left-4 z-50 w-80 max-h-96 overflow-y-auto rounded-2xl shadow-card-hover"
-          className="bg-card border border-border"
+        <div className="absolute top-28 left-4 z-50 w-80 max-h-96 overflow-y-auto rounded-2xl shadow-card-hover bg-card border border-border"
           onClick={(e) => e.stopPropagation()}>
           <div className="p-3 border-b border-border flex items-center justify-between">
             <h3 className="font-semibold text-sm text-foreground">Select Book</h3>
@@ -282,8 +277,7 @@ export default function BiblePage() {
             <div className="grid grid-cols-3 gap-1 mb-4">
               {OT.map((b) => (
                 <button key={b.id} onClick={() => { setSelectedBook(b.id); setSelectedChapter(1); setShowBookSelector(false); }}
-                  className={`text-xs px-2 py-1.5 rounded-lg text-left transition-all ${selectedBook === b.id ? "font-bold" : "text-muted-foreground hover:text-foreground"}`}
-                  className={selectedBook === b.id ? "bg-primary/10 text-primary font-semibold" : "bg-secondary text-muted-foreground hover:text-foreground"}>
+                  className={`text-xs px-2 py-1.5 rounded-lg text-left transition-all ${selectedBook === b.id ? "bg-primary/10 text-primary font-semibold" : "bg-secondary text-muted-foreground hover:text-foreground"}`}>
                   {b.abbreviation}
                 </button>
               ))}
@@ -303,8 +297,7 @@ export default function BiblePage() {
 
       {/* Translation Selector */}
       {showTranslationSelector && (
-        <div className="absolute top-28 left-60 z-50 w-64 rounded-2xl shadow-card-hover"
-          className="bg-card border border-border"
+        <div className="absolute top-28 left-60 z-50 w-64 rounded-2xl shadow-card-hover bg-card border border-border"
           onClick={(e) => e.stopPropagation()}>
           <div className="p-3 border-b border-border flex items-center justify-between">
             <h3 className="font-semibold text-sm text-foreground">Translation</h3>
@@ -313,8 +306,7 @@ export default function BiblePage() {
           <div className="p-2 max-h-80 overflow-y-auto">
             {availableTranslations.map((t) => (
               <button key={t.id} onClick={() => { setTranslation(t.id as BibleTranslation); setShowTranslationSelector(false); }}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-all ${translation === t.id ? "font-semibold" : "text-muted-foreground hover:text-foreground"}`}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors ${translation === t.id ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`}>
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors ${translation === t.id ? "bg-primary/10 text-primary font-semibold" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`}>
                 <span className="truncate">{t.name}</span>
                 <span className={`text-xs font-semibold ml-2 flex-shrink-0 ${translation === t.id ? "text-primary" : "text-muted-foreground"}`}>{t.id}</span>
               </button>
@@ -325,7 +317,7 @@ export default function BiblePage() {
 
       {/* Search panel */}
       {searchMode && (
-        <div className="border-b border-border p-3" className="bg-secondary">
+        <div className="border-b border-border p-3 bg-secondary">
           <form onSubmit={handleSearch} className="flex gap-2">
             <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search the Bible (e.g. 'love one another')"
@@ -343,8 +335,7 @@ export default function BiblePage() {
               {searchResults.map((v) => (
                 <button key={v.id}
                   onClick={() => { setSelectedBook(v.bookId); setSelectedChapter(v.chapter); setSearchMode(false); setSearchResults([]); }}
-                  className="w-full text-left p-3 rounded-xl transition-all hover:opacity-80"
-                  className="bg-card border border-border">
+                  className="w-full text-left p-3 rounded-xl transition-all hover:opacity-80 bg-card border border-border">
                   <p className="text-xs font-semibold mb-1 text-primary">
                     {v.bookName} {v.chapter}:{v.verse} ({translation})
                   </p>
@@ -376,8 +367,7 @@ export default function BiblePage() {
             <>
               {/* Floating verse toolbar */}
               {selectedVerse && toolbarPos && !showAnnotationForm && (
-                <div className="absolute z-40 flex items-center gap-1 p-1.5 rounded-xl shadow-card-hover"
-                  className="bg-card border border-border rounded-lg shadow-md" style={{ top: toolbarPos.top, left: toolbarPos.left }}
+                <div className="absolute z-40 flex items-center gap-1 p-1.5 rounded-lg shadow-card-hover bg-card border border-border" style={{ top: toolbarPos.top, left: toolbarPos.left }}
                   onClick={(e) => e.stopPropagation()}>
                   {HIGHLIGHT_COLORS.map((c) => (
                     <button key={c.id} onClick={() => handleHighlight(c.id)} title={c.label}
@@ -385,16 +375,13 @@ export default function BiblePage() {
                       style={{ background: c.bg }} />
                   ))}
                   <div className="w-px h-5 mx-1" style={{ background: "var(--border)" }} />
-                  <button onClick={handleBookmark} className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-all"
-                    className="bg-secondary" title="Bookmark">
+                  <button onClick={handleBookmark} className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-all bg-secondary" title="Bookmark">
                     <Bookmark size={14} />
                   </button>
-                  <button onClick={() => setShowAnnotationForm(true)} className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-all"
-                    className="bg-secondary" title="Add note">
+                  <button onClick={() => setShowAnnotationForm(true)} className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-all bg-secondary" title="Add note">
                     <MessageSquarePlus size={14} />
                   </button>
-                  <button onClick={handleShareVerse} className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-all"
-                    className="bg-secondary" title="Share">
+                  <button onClick={handleShareVerse} className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-all bg-secondary" title="Share">
                     <Share2 size={14} />
                   </button>
                 </div>
@@ -402,8 +389,7 @@ export default function BiblePage() {
 
               {/* Annotation form */}
               {showAnnotationForm && selectedVerse && (
-                <div className="sticky top-4 z-40 mb-6 p-4 rounded-2xl shadow-card-hover"
-                  className="bg-card border border-border rounded-xl shadow-md"
+                <div className="sticky top-4 z-40 mb-6 p-4 rounded-xl shadow-card-hover bg-card border border-border"
                   onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="font-semibold text-sm text-foreground">
@@ -416,8 +402,7 @@ export default function BiblePage() {
                   <div className="flex gap-2 mb-3">
                     {(["note", "question", "insight", "prayer"] as const).map((t) => (
                       <button key={t} onClick={() => setAnnotationType(t)}
-                        className={`text-xs px-3 py-1.5 rounded-lg font-medium capitalize transition-all ${annotationType === t ? "text-gray-900" : "text-muted-foreground"}`}
-                        className={annotationType === t ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"}>
+                        className={`text-xs px-3 py-1.5 rounded-lg font-medium capitalize transition-all ${annotationType === t ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"}`}>
                         {t}
                       </button>
                     ))}
@@ -481,8 +466,7 @@ export default function BiblePage() {
       </div>
 
       {/* Highlight legend */}
-      <div className="hidden md:flex items-center gap-3 px-6 py-2 border-t border-border text-xs text-muted-foreground"
-        className="bg-card">
+      <div className="hidden md:flex items-center gap-3 px-6 py-2 border-t border-border text-xs text-muted-foreground bg-card">
         <Highlighter size={13} />
         <span>Click a verse to highlight, bookmark, or add notes</span>
         <div className="flex gap-1.5 ml-2">

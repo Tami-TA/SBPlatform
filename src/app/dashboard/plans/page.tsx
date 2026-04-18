@@ -269,7 +269,7 @@ export default function PlansPage() {
                               {todayDone ? "Day complete!" : `Day ${todayNum}`}
                             </p>
                             {dayReading && (
-                              <p className="text-xs font-semibold mt-0.5" className="text-primary">
+                              <p className="text-xs font-semibold mt-0.5 text-primary">
                                 {dayReading.label}
                               </p>
                             )}
@@ -279,8 +279,7 @@ export default function PlansPage() {
                           {dayReading && !todayDone && (
                             <Link
                               href={`/dashboard/bible?book=${dayReading.bookId}&chapter=${dayReading.chapter}`}
-                              className="text-xs px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors"
-                              className="bg-accent">
+                              className="text-xs px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors bg-accent">
                               Read <ArrowRight size={11} />
                             </Link>
                           )}
@@ -300,12 +299,7 @@ export default function PlansPage() {
                       <div className="flex gap-1.5 flex-wrap">
                         {Array.from({ length: Math.min(14, todayNum + 2) }, (_, i) => i + 1).map((day) => (
                           <div key={day}
-                            className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-medium transition-all ${prog.completedDays.includes(day) ? "" : day === todayNum ? "ring-2" : "opacity-40"}`}
-                            style={prog.completedDays.includes(day)
-                              ? { background: "var(--primary)", color: "#1a0a0a" }
-                              : day === todayNum
-                              ? { background: "var(--bg-secondary)", color: "var(--primary)" }
-                              : { background: "var(--bg-secondary)", color: "var(--text-muted)" }}>
+                            className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-medium transition-all ${prog.completedDays.includes(day) ? "bg-primary text-primary-foreground" : day === todayNum ? "bg-secondary text-primary ring-2 ring-primary/30" : "bg-secondary text-muted-foreground opacity-40"}`}>
                             {day}
                           </div>
                         ))}
@@ -359,13 +353,11 @@ export default function PlansPage() {
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <button onClick={() => handleStartPlan({ name: plan.name, description: plan.description || "", duration: plan.duration, tags: plan.tags || [], id: plan.id })}
                       className="btn-ghost text-xs px-3 py-1.5">Start</button>
-                    <button onClick={() => openEdit(plan)} className="p-2 rounded-lg transition-colors text-muted-foreground hover:text-foreground"
-                      className="bg-secondary" title="Edit">
+                    <button onClick={() => openEdit(plan)} className="p-2 rounded-lg transition-colors text-muted-foreground hover:text-foreground bg-secondary" title="Edit">
                       <Pencil size={14} />
                     </button>
                     <button onClick={() => handleDeletePlan(plan.id, plan.name)} disabled={deleting === plan.id}
-                      className="p-2 rounded-lg transition-colors text-red-400 hover:text-red-300"
-                      className="bg-destructive/10" title="Delete">
+                      className="p-2 rounded-lg transition-colors text-red-400 hover:text-red-300 bg-destructive/10" title="Delete">
                       {deleting === plan.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                     </button>
                   </div>
@@ -398,7 +390,7 @@ export default function PlansPage() {
                     <p className="text-xs text-muted-foreground mb-3 leading-relaxed">{plan.description}</p>
                     <div className="flex flex-wrap gap-1.5 mb-4">
                       {plan.tags.map((tag) => (
-                        <span key={tag} className="text-xs px-2.5 py-1 rounded-full" className="bg-secondary text-muted-foreground">
+                        <span key={tag} className="text-xs px-2.5 py-1 rounded-full bg-secondary text-muted-foreground">
                           {tag}
                         </span>
                       ))}
@@ -406,10 +398,7 @@ export default function PlansPage() {
                     <button
                       onClick={() => handleStartPlan(plan)}
                       disabled={alreadyStarted || starting === plan.name}
-                      className={`w-full text-sm py-2.5 rounded-xl font-semibold transition-all ${alreadyStarted ? "opacity-60 cursor-default" : ""}`}
-                      style={alreadyStarted
-                        ? { background: "var(--bg-secondary)", color: "var(--text-muted)" }
-                        : { background: "var(--primary)", color: "#1a0a0a" }}>
+                      className={`w-full text-sm py-2.5 rounded-xl font-semibold transition-all ${alreadyStarted ? "bg-secondary text-muted-foreground opacity-60 cursor-default" : "bg-primary text-primary-foreground"}`}>
                       {starting === plan.name ? (
                         <Loader2 size={16} className="animate-spin mx-auto" />
                       ) : alreadyStarted ? (

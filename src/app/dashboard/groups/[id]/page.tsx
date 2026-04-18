@@ -202,8 +202,7 @@ export default function GroupDetailPage() {
                 {annotations.length} shared annotation{annotations.length !== 1 ? "s" : ""}
               </h3>
               <Link href={`/dashboard/bible?groupId=${id}`}
-                className="text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors"
-                style={{ background: "var(--accent)"}}>
+                className="text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors bg-accent">
                 <BookOpen size={12} /> Add Note in Bible
               </Link>
             </div>
