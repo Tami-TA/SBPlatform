@@ -62,10 +62,10 @@ export default function DashboardPage() {
     <div className="max-w-5xl mx-auto px-4 md:px-6 py-6 space-y-5">
       {/* Welcome */}
       <div>
-        <h1 className="text-2xl font-display font-bold text-page">
+        <h1 className="text-2xl font-display font-bold text-foreground">
           {greeting()}, {user.displayName.split(" ")[0]}
         </h1>
-        <p className="text-sm text-secondary-page mt-0.5">
+        <p className="text-sm text-muted-foreground mt-0.5">
           {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
         </p>
       </div>
@@ -75,7 +75,7 @@ export default function DashboardPage() {
         {/* Streak card */}
         <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-page flex items-center gap-2 text-sm">
+            <h3 className="font-semibold text-foreground flex items-center gap-2 text-sm">
               <Flame size={16} className="text-orange-400" />
               Reading Streak
             </h3>
@@ -84,22 +84,22 @@ export default function DashboardPage() {
           <div className="flex items-end gap-4">
             <div>
               <p className="text-5xl font-display font-bold text-gold-gradient">{user.currentStreak}</p>
-              <p className="text-xs text-muted-page mt-1">days in a row</p>
+              <p className="text-xs text-muted-foreground mt-1">days in a row</p>
             </div>
             <div className="flex-1 space-y-2 pb-1">
-              <div className="flex justify-between text-xs text-muted-page">
+              <div className="flex justify-between text-xs text-muted-foreground">
                 <span>Best</span>
-                <span className="font-semibold text-secondary-page">{user.longestStreak}d</span>
+                <span className="font-semibold text-muted-foreground">{user.longestStreak}d</span>
               </div>
-              <div className="flex justify-between text-xs text-muted-page">
+              <div className="flex justify-between text-xs text-muted-foreground">
                 <span>Total</span>
-                <span className="font-semibold text-secondary-page">{user.totalDaysRead}d</span>
+                <span className="font-semibold text-muted-foreground">{user.totalDaysRead}d</span>
               </div>
             </div>
           </div>
           {user.currentStreak < 7 && (
             <div className="mt-4">
-              <div className="flex justify-between text-xs text-muted-page mb-1.5">
+              <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
                 <span>Next milestone</span>
                 <span>{7 - user.currentStreak} days to Week Warrior</span>
               </div>
@@ -110,7 +110,7 @@ export default function DashboardPage() {
           )}
           {user.currentStreak >= 7 && user.currentStreak < 30 && (
             <div className="mt-4">
-              <div className="flex justify-between text-xs text-muted-page mb-1.5">
+              <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
                 <span>Next milestone</span>
                 <span>{30 - user.currentStreak} days to Monthly Devotee</span>
               </div>
@@ -128,11 +128,11 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Star size={14} fill="var(--gold)" style={{ color: "var(--gold)" }} />
-              <h3 className="font-semibold text-page text-sm">Verse of the Day</h3>
+              <h3 className="font-semibold text-foreground text-sm">Verse of the Day</h3>
             </div>
             <div className="flex items-center gap-1">
               <button onClick={handleShareVerse}
-                className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-page hover:text-page transition-all"
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-all"
                 style={{ background: "var(--bg-secondary)" }} title="Share">
                 <Share2 size={13} />
               </button>
@@ -141,13 +141,13 @@ export default function DashboardPage() {
                   navigator.clipboard.writeText(`"${todaysVerse.text}" — ${formatVerseRef(todaysVerse.bookName, todaysVerse.chapter, todaysVerse.verse)}`);
                   toast.success("Copied!");
                 }}
-                className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-page hover:text-page transition-all"
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-all"
                 style={{ background: "var(--bg-secondary)" }} title="Copy">
                 <Copy size={13} />
               </button>
             </div>
           </div>
-          <blockquote className="verse-text text-page mb-3 leading-relaxed">
+          <blockquote className="verse-text text-foreground mb-3 leading-relaxed">
             &ldquo;{todaysVerse.text}&rdquo;
           </blockquote>
           <div className="flex items-center justify-between">
@@ -155,7 +155,7 @@ export default function DashboardPage() {
               — {formatVerseRef(todaysVerse.bookName, todaysVerse.chapter, todaysVerse.verse)} (KJV)
             </p>
             <Link href={`/dashboard/bible?book=${todaysVerse.bookId}&chapter=${todaysVerse.chapter}`}
-              className="text-xs text-muted-page hover:text-page flex items-center gap-1 transition-colors">
+              className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
               Read chapter <ChevronRight size={11} />
             </Link>
           </div>
@@ -171,7 +171,7 @@ export default function DashboardPage() {
               style={{ background: `${link.color}18`, border: `1px solid ${link.color}28` }}>
               <link.icon size={20} style={{ color: link.color }} />
             </div>
-            <span className="text-xs font-medium text-secondary-page group-hover:text-page transition-colors">{link.label}</span>
+            <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">{link.label}</span>
           </Link>
         ))}
       </div>
@@ -181,11 +181,11 @@ export default function DashboardPage() {
         {/* Active Reading Plans */}
         <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-page flex items-center gap-2 text-sm">
+            <h3 className="font-semibold text-foreground flex items-center gap-2 text-sm">
               <Target size={15} style={{ color: "var(--gold)" }} />
               Active Plans
             </h3>
-            <Link href="/dashboard/plans" className="text-xs text-muted-page hover:text-page flex items-center gap-1">
+            <Link href="/dashboard/plans" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1">
               View all <ArrowRight size={11} />
             </Link>
           </div>
@@ -197,8 +197,8 @@ export default function DashboardPage() {
             </div>
           ) : plans.length === 0 ? (
             <div className="text-center py-8">
-              <ListChecks size={28} className="mx-auto mb-2 text-muted-page opacity-50" />
-              <p className="text-sm text-secondary-page mb-3">No active reading plans</p>
+              <ListChecks size={28} className="mx-auto mb-2 text-muted-foreground opacity-50" />
+              <p className="text-sm text-muted-foreground mb-3">No active reading plans</p>
               <Link href="/dashboard/plans" className="btn-gold text-xs px-4 py-1.5">Start a Plan</Link>
             </div>
           ) : (
@@ -210,13 +210,13 @@ export default function DashboardPage() {
                 return (
                   <div key={plan.id} className="p-3 rounded-xl" style={{ background: "var(--bg-secondary)" }}>
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-sm font-medium text-page truncate">{plan.planName}</span>
+                      <span className="text-sm font-medium text-foreground truncate">{plan.planName}</span>
                       <span className="text-xs font-bold text-gold-500 ml-2 flex-shrink-0">{pct}%</span>
                     </div>
                     <div className="progress-gold">
                       <div className="progress-gold-fill" style={{ width: `${pct}%` }} />
                     </div>
-                    <p className="text-xs text-muted-page mt-1">Day {plan.currentDay}</p>
+                    <p className="text-xs text-muted-foreground mt-1">Day {plan.currentDay}</p>
                   </div>
                 );
               })}
@@ -234,7 +234,7 @@ export default function DashboardPage() {
           return (
             <div className="card p-5">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-page flex items-center gap-2 text-sm">
+                <h3 className="font-semibold text-foreground flex items-center gap-2 text-sm">
                   <Award size={15} style={{ color: "var(--gold)" }} />
                   Achievements
                 </h3>
@@ -278,7 +278,7 @@ export default function DashboardPage() {
               </div>
               {nextUnearned && !nextUnearned.earned && (
                 <div className="mt-3 p-2.5 rounded-xl" style={{ background: "rgba(212,175,55,0.07)", border: "1px solid rgba(212,175,55,0.15)" }}>
-                  <p className="text-xs text-muted-page flex items-center gap-1.5">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                     <Star size={10} fill="var(--gold)" style={{ color: "var(--gold)" }} />
                     {nextUnearned.progress.target - nextUnearned.progress.current} more to unlock &ldquo;{nextUnearned.name}&rdquo;
                   </p>
