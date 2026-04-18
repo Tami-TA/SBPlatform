@@ -194,8 +194,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar */}
         <header
-          className="flex items-center justify-between px-4 md:px-6 py-3 border-b border-page sticky top-0 z-30"
-          style={{ background: "var(--bg-card)" }}
+          className="flex items-center justify-between px-4 md:px-6 py-3 border-b border-page sticky top-0 z-30 bg-card text-card-foreground"
         >
           <div className="flex items-center gap-3">
             <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-muted-page hover:text-page">
@@ -233,8 +232,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {/* Theme toggle (desktop) */}
             <button
               onClick={toggleTheme}
-              className="hidden lg:flex w-8 h-8 items-center justify-center rounded-lg text-muted-page hover:text-page transition-colors"
-              style={{ background: "var(--bg-secondary)" }}
+              className="hidden lg:flex w-8 h-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground transition-colors bg-secondary"
               aria-label="Toggle theme"
             >
               {theme === "dark" ? <Moon size={14} /> : <Sun size={14} />}
@@ -253,8 +251,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div ref={notifRef} className="relative">
               <button
                 onClick={() => setNotifOpen(!notifOpen)}
-                className="relative w-8 h-8 flex items-center justify-center rounded-lg text-muted-page hover:text-page transition-colors"
-                style={{ background: "var(--bg-secondary)" }}
+                className="relative w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground transition-colors bg-secondary"
               >
                 <Bell size={15} />
                 {unreadCount > 0 && (
@@ -267,8 +264,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               {/* Notification panel */}
               {notifOpen && (
                 <div
-                  className="absolute right-0 top-full mt-2 w-80 rounded-2xl shadow-lg z-50 overflow-hidden"
-                  style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
+                  className="absolute right-0 top-full mt-2 w-80 rounded-2xl shadow-lg z-50 overflow-hidden bg-popover text-popover-foreground border border-border"
                 >
                   <div className="flex items-center justify-between px-4 py-3 border-b border-page">
                     <h3 className="font-semibold text-sm text-page">Notifications</h3>
