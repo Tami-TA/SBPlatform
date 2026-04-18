@@ -219,7 +219,7 @@ export default function BiblePage() {
 
         {/* Book selector */}
         <button onClick={(e) => { e.stopPropagation(); setShowBookSelector(!showBookSelector); setShowTranslationSelector(false); }}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-page transition-all hover:opacity-80"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-foreground transition-all hover:opacity-80"
           style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)" }}>
           <BookOpen size={15} />
           {book?.name || "Book"}
@@ -228,7 +228,7 @@ export default function BiblePage() {
 
         {/* Chapter selector */}
         <div className="flex items-center gap-1">
-          <button onClick={() => navigateChapter("prev")} className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-page hover:text-page transition-all"
+          <button onClick={() => navigateChapter("prev")} className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-all"
             style={{ background: "var(--bg-secondary)" }}>
             <ChevronLeft size={16} />
           </button>
@@ -240,7 +240,7 @@ export default function BiblePage() {
               <option key={c} value={c}>{c}</option>
             ))}
           </select>
-          <button onClick={() => navigateChapter("next")} className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-page hover:text-page transition-all"
+          <button onClick={() => navigateChapter("next")} className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-all"
             style={{ background: "var(--bg-secondary)" }}>
             <ChevronRight size={16} />
           </button>
@@ -258,13 +258,13 @@ export default function BiblePage() {
 
         {/* Font size */}
         <div className="hidden md:flex items-center gap-1.5">
-          <button onClick={() => setFontSize((f) => Math.max(13, f - 1))} className="text-xs px-2 py-1 rounded text-muted-page hover:text-page" style={{ background: "var(--bg-secondary)" }}>A-</button>
-          <button onClick={() => setFontSize((f) => Math.min(24, f + 1))} className="text-sm px-2 py-1 rounded text-muted-page hover:text-page" style={{ background: "var(--bg-secondary)" }}>A+</button>
+          <button onClick={() => setFontSize((f) => Math.max(13, f - 1))} className="text-xs px-2 py-1 rounded text-muted-foreground hover:text-foreground" style={{ background: "var(--bg-secondary)" }}>A-</button>
+          <button onClick={() => setFontSize((f) => Math.min(24, f + 1))} className="text-sm px-2 py-1 rounded text-muted-foreground hover:text-foreground" style={{ background: "var(--bg-secondary)" }}>A+</button>
         </div>
 
         {/* Search */}
         <button onClick={(e) => { e.stopPropagation(); setSearchMode(!searchMode); }}
-          className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all ${searchMode ? "text-page" : "text-muted-page hover:text-page"}`}
+          className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all ${searchMode ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
           style={{ background: searchMode ? "rgba(212,175,55,0.2)" : "var(--bg-secondary)" }}>
           <Search size={16} />
         </button>
@@ -276,25 +276,25 @@ export default function BiblePage() {
           style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
           onClick={(e) => e.stopPropagation()}>
           <div className="p-3 border-b border-page flex items-center justify-between">
-            <h3 className="font-semibold text-sm text-page">Select Book</h3>
-            <button onClick={() => setShowBookSelector(false)}><X size={16} className="text-muted-page" /></button>
+            <h3 className="font-semibold text-sm text-foreground">Select Book</h3>
+            <button onClick={() => setShowBookSelector(false)}><X size={16} className="text-muted-foreground" /></button>
           </div>
           <div className="p-3">
-            <p className="text-xs font-bold text-muted-page mb-2 uppercase tracking-wider">Old Testament</p>
+            <p className="text-xs font-bold text-muted-foreground mb-2 uppercase tracking-wider">Old Testament</p>
             <div className="grid grid-cols-3 gap-1 mb-4">
               {OT.map((b) => (
                 <button key={b.id} onClick={() => { setSelectedBook(b.id); setSelectedChapter(1); setShowBookSelector(false); }}
-                  className={`text-xs px-2 py-1.5 rounded-lg text-left transition-all ${selectedBook === b.id ? "font-bold" : "text-secondary-page hover:text-page"}`}
+                  className={`text-xs px-2 py-1.5 rounded-lg text-left transition-all ${selectedBook === b.id ? "font-bold" : "text-muted-foreground hover:text-foreground"}`}
                   style={{ background: selectedBook === b.id ? "rgba(212,175,55,0.2)" : "var(--bg-secondary)", color: selectedBook === b.id ? "var(--gold)" : undefined }}>
                   {b.abbreviation}
                 </button>
               ))}
             </div>
-            <p className="text-xs font-bold text-muted-page mb-2 uppercase tracking-wider">New Testament</p>
+            <p className="text-xs font-bold text-muted-foreground mb-2 uppercase tracking-wider">New Testament</p>
             <div className="grid grid-cols-3 gap-1">
               {NT.map((b) => (
                 <button key={b.id} onClick={() => { setSelectedBook(b.id); setSelectedChapter(1); setShowBookSelector(false); }}
-                  className={`text-xs px-2 py-1.5 rounded-lg text-left transition-all ${selectedBook === b.id ? "font-bold" : "text-secondary-page hover:text-page"}`}
+                  className={`text-xs px-2 py-1.5 rounded-lg text-left transition-all ${selectedBook === b.id ? "font-bold" : "text-muted-foreground hover:text-foreground"}`}
                   style={{ background: selectedBook === b.id ? "rgba(212,175,55,0.2)" : "var(--bg-secondary)", color: selectedBook === b.id ? "var(--gold)" : undefined }}>
                   {b.abbreviation}
                 </button>
@@ -310,13 +310,13 @@ export default function BiblePage() {
           style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
           onClick={(e) => e.stopPropagation()}>
           <div className="p-3 border-b border-page flex items-center justify-between">
-            <h3 className="font-semibold text-sm text-page">Translation</h3>
-            <button onClick={() => setShowTranslationSelector(false)}><X size={16} className="text-muted-page" /></button>
+            <h3 className="font-semibold text-sm text-foreground">Translation</h3>
+            <button onClick={() => setShowTranslationSelector(false)}><X size={16} className="text-muted-foreground" /></button>
           </div>
           <div className="p-2 max-h-80 overflow-y-auto">
             {availableTranslations.map((t) => (
               <button key={t.id} onClick={() => { setTranslation(t.id as BibleTranslation); setShowTranslationSelector(false); }}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-all ${translation === t.id ? "font-semibold" : "text-secondary-page hover:text-page"}`}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-all ${translation === t.id ? "font-semibold" : "text-muted-foreground hover:text-foreground"}`}
                 style={{ background: translation === t.id ? "rgba(212,175,55,0.15)" : "transparent" }}>
                 <span className="truncate">{t.name}</span>
                 <span className="text-xs font-bold ml-2 flex-shrink-0"
@@ -352,7 +352,7 @@ export default function BiblePage() {
                   <p className="text-xs font-semibold mb-1" style={{ color: "var(--gold)" }}>
                     {v.bookName} {v.chapter}:{v.verse} ({translation})
                   </p>
-                  <p className="text-sm text-secondary-page verse-text leading-relaxed">{v.text}</p>
+                  <p className="text-sm text-muted-foreground verse-text leading-relaxed">{v.text}</p>
                 </button>
               ))}
             </div>
@@ -365,16 +365,16 @@ export default function BiblePage() {
         <div className="max-w-3xl mx-auto px-4 md:px-8 py-8 relative">
           {/* Chapter header */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-display font-bold text-page">
+            <h1 className="text-3xl font-display font-bold text-foreground">
               {book?.name} {selectedChapter}
             </h1>
-            <p className="text-sm text-muted-page mt-1">{translation} Translation</p>
+            <p className="text-sm text-muted-foreground mt-1">{translation} Translation</p>
           </div>
 
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
-              <Loader2 size={32} className="animate-spin text-muted-page" />
-              <p className="text-secondary-page text-sm">Loading scripture...</p>
+              <Loader2 size={32} className="animate-spin text-muted-foreground" />
+              <p className="text-muted-foreground text-sm">Loading scripture...</p>
             </div>
           ) : chapter && chapter.verses.length > 0 ? (
             <>
@@ -389,15 +389,15 @@ export default function BiblePage() {
                       style={{ background: c.bg }} />
                   ))}
                   <div className="w-px h-5 mx-1" style={{ background: "var(--border)" }} />
-                  <button onClick={handleBookmark} className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-page hover:text-page transition-all"
+                  <button onClick={handleBookmark} className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-all"
                     style={{ background: "var(--bg-secondary)" }} title="Bookmark">
                     <Bookmark size={14} />
                   </button>
-                  <button onClick={() => setShowAnnotationForm(true)} className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-page hover:text-page transition-all"
+                  <button onClick={() => setShowAnnotationForm(true)} className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-all"
                     style={{ background: "var(--bg-secondary)" }} title="Add note">
                     <MessageSquarePlus size={14} />
                   </button>
-                  <button onClick={handleShareVerse} className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-page hover:text-page transition-all"
+                  <button onClick={handleShareVerse} className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground transition-all"
                     style={{ background: "var(--bg-secondary)" }} title="Share">
                     <Share2 size={14} />
                   </button>
@@ -410,17 +410,17 @@ export default function BiblePage() {
                   style={{ background: "var(--bg-card)", border: "1px solid rgba(212,175,55,0.3)" }}
                   onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-semibold text-sm text-page">
+                    <h4 className="font-semibold text-sm text-foreground">
                       Note on verse {selectedVerse}
                     </h4>
                     <button onClick={() => { setShowAnnotationForm(false); setAnnotationText(""); }}>
-                      <X size={16} className="text-muted-page" />
+                      <X size={16} className="text-muted-foreground" />
                     </button>
                   </div>
                   <div className="flex gap-2 mb-3">
                     {(["note", "question", "insight", "prayer"] as const).map((t) => (
                       <button key={t} onClick={() => setAnnotationType(t)}
-                        className={`text-xs px-3 py-1.5 rounded-lg font-medium capitalize transition-all ${annotationType === t ? "text-gray-900" : "text-muted-page"}`}
+                        className={`text-xs px-3 py-1.5 rounded-lg font-medium capitalize transition-all ${annotationType === t ? "text-gray-900" : "text-muted-foreground"}`}
                         style={{ background: annotationType === t ? "linear-gradient(135deg, #D4AF37, #F59E0B)" : "var(--bg-secondary)" }}>
                         {t}
                       </button>
@@ -456,9 +456,9 @@ export default function BiblePage() {
             </>
           ) : (
             <div className="text-center py-20">
-              <BookOpen size={48} className="mx-auto mb-4 text-muted-page" />
-              <p className="text-secondary-page mb-2">Could not load this chapter.</p>
-              <p className="text-sm text-muted-page mb-4">
+              <BookOpen size={48} className="mx-auto mb-4 text-muted-foreground" />
+              <p className="text-muted-foreground mb-2">Could not load this chapter.</p>
+              <p className="text-sm text-muted-foreground mb-4">
                 {loadError || "Try a different translation or chapter."}
               </p>
               <button onClick={loadChapter} className="btn-gold text-sm px-6 py-2">Try Again</button>
@@ -472,7 +472,7 @@ export default function BiblePage() {
                 className="btn-ghost flex items-center gap-2 text-sm">
                 <ChevronLeft size={16} /> Previous
               </button>
-              <span className="text-xs text-muted-page">
+              <span className="text-xs text-muted-foreground">
                 {book?.name} {selectedChapter} / {book?.chapters}
               </span>
               <button onClick={() => navigateChapter("next")}
@@ -485,7 +485,7 @@ export default function BiblePage() {
       </div>
 
       {/* Highlight legend */}
-      <div className="hidden md:flex items-center gap-3 px-6 py-2 border-t border-page text-xs text-muted-page"
+      <div className="hidden md:flex items-center gap-3 px-6 py-2 border-t border-page text-xs text-muted-foreground"
         style={{ background: "var(--bg-card)" }}>
         <Highlighter size={13} />
         <span>Click a verse to highlight, bookmark, or add notes</span>

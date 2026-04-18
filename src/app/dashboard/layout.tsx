@@ -56,11 +56,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-page flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="w-10 h-10 rounded-xl mx-auto mb-3 animate-pulse"
             style={{ background: "linear-gradient(135deg, #D4AF37, #F59E0B)" }} />
-          <p className="text-secondary-page text-sm">Loading...</p>
+          <p className="text-muted-foreground text-sm">Loading...</p>
         </div>
       </div>
     );
@@ -83,7 +83,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const currentPage = NAV_ITEMS.find((n) => isActive(n.href, n.exact))?.label || "Profile";
 
   return (
-    <div className="min-h-screen bg-page flex">
+    <div className="min-h-screen bg-background flex">
       {sidebarOpen && (
         <div className="fixed inset-0 z-40 bg-black/60 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
@@ -94,15 +94,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         style={{ background: "var(--sidebar)", borderRight: "1px solid var(--sidebar-border)", color: "var(--sidebar-foreground)" }}
       >
         {/* Logo */}
-        <div className="flex items-center justify-between px-4 py-4 border-b border-page">
+        <div className="flex items-center justify-between px-4 py-4 border-b border-border">
           <Link href="/dashboard" className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
               style={{ background: "linear-gradient(135deg, #D4AF37, #F59E0B)" }}>
               <BookOpen size={15} className="text-gray-900" />
             </div>
-            <span className="font-display text-base font-bold text-page">Scripture</span>
+            <span className="font-display text-base font-bold text-foreground">Scripture</span>
           </Link>
-          <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-muted-page hover:text-page">
+          <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-muted-foreground hover:text-foreground">
             <X size={18} />
           </button>
         </div>
@@ -126,7 +126,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </nav>
 
         {/* Profile section at bottom */}
-        <div className="border-t border-page p-3 space-y-1">
+        <div className="border-t border-border p-3 space-y-1">
           <div ref={profileRef} className="relative">
             <button
               onClick={() => setProfileOpen(!profileOpen)}
@@ -140,10 +140,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   : getInitials(user.displayName)}
               </div>
               <div className="flex-1 min-w-0 text-left">
-                <p className="text-sm font-semibold text-page truncate leading-tight">{user.displayName}</p>
-                <p className="text-xs text-muted-page truncate">@{user.username}</p>
+                <p className="text-sm font-semibold text-foreground truncate leading-tight">{user.displayName}</p>
+                <p className="text-xs text-muted-foreground truncate">@{user.username}</p>
               </div>
-              <ChevronDown size={13} className="text-muted-page flex-shrink-0" />
+              <ChevronDown size={13} className="text-muted-foreground flex-shrink-0" />
             </button>
 
             {/* Profile dropdown — opens upward */}
@@ -153,21 +153,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 style={{ background: "var(--popover)", border: "1px solid var(--border)", color: "var(--popover-foreground)" }}
               >
                 <Link href="/dashboard/profile" onClick={() => setProfileOpen(false)}
-                  className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-secondary-page hover:text-page hover:bg-[var(--bg-secondary)] transition-colors">
+                  className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
                   <UserCircle size={15} /> View Profile
                 </Link>
                 <Link href="/dashboard/profile" onClick={() => setProfileOpen(false)}
-                  className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-secondary-page hover:text-page hover:bg-[var(--bg-secondary)] transition-colors">
+                  className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
                   <Camera size={15} /> Change Photo
                 </Link>
                 <Link href="/dashboard/profile" onClick={() => setProfileOpen(false)}
-                  className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-secondary-page hover:text-page hover:bg-[var(--bg-secondary)] transition-colors">
+                  className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
                   <Settings size={15} /> Settings
                 </Link>
                 <div className="h-px my-1" style={{ background: "var(--border)" }} />
                 <button
                   onClick={handleSignOut}
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-[var(--bg-secondary)] transition-colors"
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-accent transition-colors"
                 >
                   <LogOut size={15} /> Sign Out
                 </button>
@@ -178,7 +178,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {/* Theme toggle */}
           <button
             onClick={toggleTheme}
-            className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-sm text-muted-page hover:text-page transition-colors"
+            className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-sm text-muted-foreground hover:text-foreground transition-colors"
             style={{ background: "transparent" }}
           >
             {theme === "dark" ? <Moon size={14} /> : <Sun size={14} />}
@@ -194,16 +194,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar */}
         <header
-          className="flex items-center justify-between px-4 md:px-6 py-3 border-b border-page sticky top-0 z-30 bg-card text-card-foreground"
+          className="flex items-center justify-between px-4 md:px-6 py-3 border-b border-border sticky top-0 z-30 bg-card text-card-foreground"
         >
           <div className="flex items-center gap-3">
-            <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-muted-page hover:text-page">
+            <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-muted-foreground hover:text-foreground">
               <Menu size={20} />
             </button>
             {/* Desktop: page title */}
             <div className="hidden lg:block">
-              <h1 className="text-base font-semibold text-page">{currentPage}</h1>
-              <p className="text-xs text-muted-page">
+              <h1 className="text-base font-semibold text-foreground">{currentPage}</h1>
+              <p className="text-xs text-muted-foreground">
                 {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
               </p>
             </div>
@@ -213,7 +213,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 style={{ background: "linear-gradient(135deg, #D4AF37, #F59E0B)" }}>
                 <BookOpen size={13} className="text-gray-900" />
               </div>
-              <span className="font-display font-bold text-page text-sm">Scripture</span>
+              <span className="font-display font-bold text-foreground text-sm">Scripture</span>
             </div>
           </div>
 
@@ -241,7 +241,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {/* Theme toggle (mobile) */}
             <button
               onClick={toggleTheme}
-              className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg text-muted-page hover:text-page transition-colors"
+              className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground transition-colors"
               aria-label="Toggle theme"
             >
               {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
@@ -266,29 +266,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <div
                   className="absolute right-0 top-full mt-2 w-80 rounded-2xl shadow-lg z-50 overflow-hidden bg-popover text-popover-foreground border border-border"
                 >
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-page">
-                    <h3 className="font-semibold text-sm text-page">Notifications</h3>
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                    <h3 className="font-semibold text-sm text-foreground">Notifications</h3>
                     <div className="flex items-center gap-2">
                       {unreadCount > 0 && (
-                        <span className="text-xs text-muted-page">{unreadCount} new</span>
+                        <span className="text-xs text-muted-foreground">{unreadCount} new</span>
                       )}
-                      <button onClick={() => setNotifOpen(false)} className="text-muted-page hover:text-page">
+                      <button onClick={() => setNotifOpen(false)} className="text-muted-foreground hover:text-foreground">
                         <X size={14} />
                       </button>
                     </div>
                   </div>
                   {notifications.length === 0 ? (
                     <div className="py-10 text-center">
-                      <Bell size={22} className="mx-auto mb-2 text-muted-page opacity-40" />
-                      <p className="text-sm text-muted-page">No notifications</p>
-                      <p className="text-xs text-muted-page mt-1 opacity-60">You&apos;re all caught up</p>
+                      <Bell size={22} className="mx-auto mb-2 text-muted-foreground opacity-40" />
+                      <p className="text-sm text-muted-foreground">No notifications</p>
+                      <p className="text-xs text-muted-foreground mt-1 opacity-60">You&apos;re all caught up</p>
                     </div>
                   ) : (
                     <div className="max-h-72 overflow-y-auto divide-y" style={{ borderColor: "var(--border)" }}>
                       {notifications.slice(0, 20).map((n) => (
                         <div
                           key={n.id}
-                          className="px-4 py-3 transition-colors hover:bg-[var(--bg-secondary)]"
+                          className="px-4 py-3 transition-colors hover:bg-accent"
                           style={!n.isRead ? { background: "rgba(212,175,55,0.04)" } : {}}
                         >
                           <div className="flex items-start gap-2">
@@ -296,8 +296,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                               <span className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 bg-blue-400" />
                             )}
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-page leading-tight">{n.title}</p>
-                              <p className="text-xs text-muted-page mt-0.5 leading-relaxed">{n.body}</p>
+                              <p className="text-sm font-medium text-foreground leading-tight">{n.title}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{n.body}</p>
                             </div>
                           </div>
                         </div>

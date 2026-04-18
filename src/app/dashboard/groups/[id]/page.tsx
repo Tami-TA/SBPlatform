@@ -59,7 +59,7 @@ export default function GroupDetailPage() {
   if (!group) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 size={24} className="animate-spin text-muted-page" />
+        <Loader2 size={24} className="animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -76,7 +76,7 @@ export default function GroupDetailPage() {
     <div className="h-full flex flex-col max-h-screen">
       {/* Group header */}
       <div className="flex items-center gap-4 px-5 py-4 border-b border-page" style={{ background: "var(--bg-card)" }}>
-        <Link href="/dashboard/groups" className="text-muted-page hover:text-page transition-colors">
+        <Link href="/dashboard/groups" className="text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft size={20} />
         </Link>
         <div className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold text-gray-900"
@@ -84,8 +84,8 @@ export default function GroupDetailPage() {
           {getInitials(group.name)}
         </div>
         <div className="flex-1 min-w-0">
-          <h2 className="font-semibold text-page truncate">{group.name}</h2>
-          <p className="text-xs text-muted-page">{group.memberIds.length} members</p>
+          <h2 className="font-semibold text-foreground truncate">{group.name}</h2>
+          <p className="text-xs text-muted-foreground">{group.memberIds.length} members</p>
         </div>
         <div className="flex items-center gap-1.5">
           {group.memberIds.slice(0, 4).map((_, i) => (
@@ -101,7 +101,7 @@ export default function GroupDetailPage() {
       <div className="flex border-b border-page overflow-x-auto no-scrollbar" style={{ background: "var(--bg-card)" }}>
         {TABS.map((tab) => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id as typeof activeTab)}
-            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all whitespace-nowrap ${activeTab === tab.id ? "" : "border-transparent text-muted-page hover:text-secondary-page"}`}
+            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all whitespace-nowrap ${activeTab === tab.id ? "" : "border-transparent text-muted-foreground hover:text-muted-foreground"}`}
             style={activeTab === tab.id ? { borderColor: "var(--gold)", color: "var(--gold)" } : {}}>
             <tab.icon size={15} />
             {tab.label}
@@ -117,8 +117,8 @@ export default function GroupDetailPage() {
             <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
               {messages.length === 0 ? (
                 <div className="text-center py-16">
-                  <MessageCircle size={40} className="mx-auto mb-3 text-muted-page" />
-                  <p className="text-secondary-page">No messages yet. Start the conversation!</p>
+                  <MessageCircle size={40} className="mx-auto mb-3 text-muted-foreground" />
+                  <p className="text-muted-foreground">No messages yet. Start the conversation!</p>
                 </div>
               ) : (
                 messages.map((msg) => {
@@ -133,7 +133,7 @@ export default function GroupDetailPage() {
                       </div>
                       <div className={`max-w-xs md:max-w-md ${isMe ? "items-end" : "items-start"} flex flex-col`}>
                         {!isMe && (
-                          <span className="text-xs text-muted-page mb-1 ml-1">@{msg.authorUsername}</span>
+                          <span className="text-xs text-muted-foreground mb-1 ml-1">@{msg.authorUsername}</span>
                         )}
                         <div className={`px-4 py-2.5 rounded-2xl ${isMe ? "rounded-br-sm" : "rounded-bl-sm"} text-sm leading-relaxed`}
                           style={isMe
@@ -142,11 +142,11 @@ export default function GroupDetailPage() {
                           {msg.content}
                         </div>
                         <div className={`flex items-center gap-2 mt-1 ${isMe ? "flex-row-reverse" : ""}`}>
-                          <span className="text-xs text-muted-page">{timeAgo(msg.createdAt instanceof Date ? msg.createdAt : new Date())}</span>
-                          <button className="text-xs text-muted-page hover:text-page flex items-center gap-1">
+                          <span className="text-xs text-muted-foreground">{timeAgo(msg.createdAt instanceof Date ? msg.createdAt : new Date())}</span>
+                          <button className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1">
                             <Heart size={11} /> {msg.likes.length > 0 && msg.likes.length}
                           </button>
-                          <button className="text-xs text-muted-page hover:text-page flex items-center gap-1">
+                          <button className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1">
                             <Reply size={11} />
                           </button>
                         </div>
@@ -162,7 +162,7 @@ export default function GroupDetailPage() {
             <form onSubmit={handleSend} className="flex items-center gap-3 p-4 border-t border-page"
               style={{ background: "var(--bg-card)" }}>
               <div className="flex gap-2 flex-shrink-0">
-                <button type="button" className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-page hover:text-page"
+                <button type="button" className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground"
                   style={{ background: "var(--bg-secondary)" }} title="Share verse">
                   <BookOpen size={15} />
                 </button>
@@ -186,8 +186,8 @@ export default function GroupDetailPage() {
                 style={{ background: "rgba(212,175,55,0.12)" }}>
                 <BookOpen size={28} style={{ color: "var(--gold)" }} />
               </div>
-              <h3 className="text-lg font-display font-bold text-page mb-2">Community Bible</h3>
-              <p className="text-secondary-page text-sm mb-6">
+              <h3 className="text-lg font-display font-bold text-foreground mb-2">Community Bible</h3>
+              <p className="text-muted-foreground text-sm mb-6">
                 Read and annotate scripture together. All group members can see and contribute notes and insights.
               </p>
               <Link href={`/dashboard/bible?groupId=${id}`} className="btn-gold mx-auto inline-flex">
@@ -200,7 +200,7 @@ export default function GroupDetailPage() {
         {activeTab === "notes" && (
           <div className="flex-1 overflow-y-auto p-5">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-secondary-page">
+              <h3 className="text-sm font-semibold text-muted-foreground">
                 {annotations.length} shared annotation{annotations.length !== 1 ? "s" : ""}
               </h3>
               <Link href={`/dashboard/bible?groupId=${id}`}
@@ -212,9 +212,9 @@ export default function GroupDetailPage() {
 
             {annotations.length === 0 ? (
               <div className="text-center py-16">
-                <StickyNote size={40} className="mx-auto mb-4 text-muted-page" />
-                <h3 className="text-base font-semibold text-page mb-2">No shared notes yet</h3>
-                <p className="text-sm text-secondary-page mb-6">Open the Community Bible to add annotations visible to the whole group</p>
+                <StickyNote size={40} className="mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-base font-semibold text-foreground mb-2">No shared notes yet</h3>
+                <p className="text-sm text-muted-foreground mb-6">Open the Community Bible to add annotations visible to the whole group</p>
                 <Link href={`/dashboard/bible?groupId=${id}`} className="btn-gold inline-flex">
                   Open Community Bible
                 </Link>
@@ -243,8 +243,8 @@ export default function GroupDetailPage() {
                             {getInitials(ann.username)}
                           </div>
                           <div>
-                            <span className="text-sm font-medium text-page">@{ann.username}</span>
-                            <span className="text-xs text-muted-page ml-2">
+                            <span className="text-sm font-medium text-foreground">@{ann.username}</span>
+                            <span className="text-xs text-muted-foreground ml-2">
                               {timeAgo(ann.createdAt instanceof Date ? ann.createdAt : new Date())}
                             </span>
                           </div>
@@ -261,12 +261,12 @@ export default function GroupDetailPage() {
                         {ann.verseRef.bookName} {ann.verseRef.chapter}:{ann.verseRef.verse}
                       </Link>
 
-                      <p className="text-sm text-secondary-page leading-relaxed">{ann.content}</p>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{ann.content}</p>
 
                       {ann.likes.length > 0 && (
                         <div className="flex items-center gap-1 mt-2">
                           <Heart size={12} className="text-red-400" />
-                          <span className="text-xs text-muted-page">{ann.likes.length}</span>
+                          <span className="text-xs text-muted-foreground">{ann.likes.length}</span>
                         </div>
                       )}
                     </div>
@@ -279,7 +279,7 @@ export default function GroupDetailPage() {
 
         {activeTab === "members" && (
           <div className="flex-1 overflow-y-auto p-5">
-            <h3 className="text-sm font-semibold text-secondary-page mb-3">
+            <h3 className="text-sm font-semibold text-muted-foreground mb-3">
               {group.memberIds.length} Members
             </h3>
             <div className="space-y-2">
@@ -290,13 +290,13 @@ export default function GroupDetailPage() {
                     {String.fromCharCode(65 + i)}
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-page">Member {i + 1}</p>
+                    <p className="text-sm font-medium text-foreground">Member {i + 1}</p>
                     {group.adminIds.includes(uid) && (
                       <span className="badge-gold text-xs">Admin</span>
                     )}
                   </div>
                   {uid === user?.uid && (
-                    <span className="text-xs text-muted-page">(you)</span>
+                    <span className="text-xs text-muted-foreground">(you)</span>
                   )}
                 </div>
               ))}
@@ -311,8 +311,8 @@ export default function GroupDetailPage() {
                 style={{ background: "rgba(29,78,216,0.12)" }}>
                 <BookMarked size={28} style={{ color: "var(--cobalt-light)" }} />
               </div>
-              <h3 className="text-lg font-display font-bold text-page mb-2">Group Reading Plan</h3>
-              <p className="text-secondary-page text-sm mb-6">
+              <h3 className="text-lg font-display font-bold text-foreground mb-2">Group Reading Plan</h3>
+              <p className="text-muted-foreground text-sm mb-6">
                 Follow a reading plan together and track each member&apos;s progress.
               </p>
               <Link href="/dashboard/plans" className="btn-cobalt mx-auto inline-flex">

@@ -70,8 +70,8 @@ export default function GroupsPage() {
     <div className="max-w-5xl mx-auto px-4 md:px-6 py-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-display font-bold text-page">Study Groups</h1>
-          <p className="text-sm text-secondary-page mt-1">Grow together in faith</p>
+          <h1 className="text-2xl font-display font-bold text-foreground">Study Groups</h1>
+          <p className="text-sm text-muted-foreground mt-1">Grow together in faith</p>
         </div>
         <button onClick={() => setShowCreate(true)} className="btn-gold px-4 py-2.5 text-sm">
           <Plus size={16} /> New Group
@@ -84,22 +84,22 @@ export default function GroupsPage() {
           <div className="w-full max-w-md rounded-2xl p-6 animate-slide-up"
             style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-display font-bold text-page">Create a Study Group</h2>
-              <button onClick={() => setShowCreate(false)}><X size={20} className="text-muted-page" /></button>
+              <h2 className="text-lg font-display font-bold text-foreground">Create a Study Group</h2>
+              <button onClick={() => setShowCreate(false)}><X size={20} className="text-muted-foreground" /></button>
             </div>
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-secondary-page mb-1.5">Group Name</label>
+                <label className="block text-sm font-medium text-muted-foreground mb-1.5">Group Name</label>
                 <input type="text" value={newGroup.name} onChange={(e) => setNewGroup((g) => ({ ...g, name: e.target.value }))}
                   placeholder="e.g. Morning Devotions, Youth Bible Study" required className="input-field" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-secondary-page mb-1.5">Description (optional)</label>
+                <label className="block text-sm font-medium text-muted-foreground mb-1.5">Description (optional)</label>
                 <textarea value={newGroup.description} onChange={(e) => setNewGroup((g) => ({ ...g, description: e.target.value }))}
                   placeholder="What is this group about?" rows={3} className="input-field resize-none" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-secondary-page mb-2">Visibility</label>
+                <label className="block text-sm font-medium text-muted-foreground mb-2">Visibility</label>
                 <div className="flex gap-3">
                   <button type="button" onClick={() => setNewGroup((g) => ({ ...g, isPublic: true }))}
                     className={`flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium border transition-all ${newGroup.isPublic ? "" : "opacity-60"}`}
@@ -133,16 +133,16 @@ export default function GroupsPage() {
         </div>
       ) : groups.length === 0 ? (
         <div className="text-center py-20 card">
-          <Users size={48} className="mx-auto mb-4 text-muted-page" />
-          <h3 className="text-lg font-semibold text-page mb-2">No groups yet</h3>
-          <p className="text-secondary-page text-sm mb-6">Create a group or join one to study together</p>
+          <Users size={48} className="mx-auto mb-4 text-muted-foreground" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">No groups yet</h3>
+          <p className="text-muted-foreground text-sm mb-6">Create a group or join one to study together</p>
           <button onClick={() => setShowCreate(true)} className="btn-gold mx-auto px-6">
             <Plus size={16} /> Create Your First Group
           </button>
         </div>
       ) : (
         <>
-          <h2 className="text-base font-semibold text-page mb-3">My Groups ({groups.length})</h2>
+          <h2 className="text-base font-semibold text-foreground mb-3">My Groups ({groups.length})</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {groups.map((group, i) => (
               <Link key={group.id} href={`/dashboard/groups/${group.id}`}
@@ -156,20 +156,20 @@ export default function GroupsPage() {
                     </div>
                     <div className="flex items-center gap-1">
                       {group.isPublic
-                        ? <Globe size={13} className="text-muted-page" />
-                        : <Lock size={13} className="text-muted-page" />}
+                        ? <Globe size={13} className="text-muted-foreground" />
+                        : <Lock size={13} className="text-muted-foreground" />}
                     </div>
                   </div>
-                  <h3 className="font-semibold text-page mb-1 group-hover:text-gold-500 transition-colors">{group.name}</h3>
+                  <h3 className="font-semibold text-foreground mb-1 group-hover:text-gold-500 transition-colors">{group.name}</h3>
                   {group.description && (
-                    <p className="text-xs text-secondary-page line-clamp-2 mb-3">{group.description}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{group.description}</p>
                   )}
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 text-xs text-muted-page">
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1"><Users size={12} />{group.memberIds.length}</span>
                       <span className="flex items-center gap-1"><MessageCircle size={12} />Active</span>
                     </div>
-                    <ArrowRight size={14} className="text-muted-page group-hover:text-gold-500 transition-colors" />
+                    <ArrowRight size={14} className="text-muted-foreground group-hover:text-gold-500 transition-colors" />
                   </div>
                 </div>
               </Link>
@@ -191,8 +191,8 @@ export default function GroupsPage() {
               <f.icon size={18} style={{ color: "var(--gold)" }} />
             </div>
             <div>
-              <h4 className="text-sm font-semibold text-page">{f.title}</h4>
-              <p className="text-xs text-secondary-page mt-0.5">{f.desc}</p>
+              <h4 className="text-sm font-semibold text-foreground">{f.title}</h4>
+              <p className="text-xs text-muted-foreground mt-0.5">{f.desc}</p>
             </div>
           </div>
         ))}

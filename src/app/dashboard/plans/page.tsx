@@ -141,8 +141,8 @@ export default function PlansPage() {
     <div className="max-w-4xl mx-auto px-4 md:px-6 py-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-display font-bold text-page">Reading Plans</h1>
-          <p className="text-sm text-secondary-page mt-1">Structure your daily Scripture reading</p>
+          <h1 className="text-2xl font-display font-bold text-foreground">Reading Plans</h1>
+          <p className="text-sm text-muted-foreground mt-1">Structure your daily Scripture reading</p>
         </div>
         <button onClick={openCreate} className="btn-gold px-4 py-2.5 text-sm">
           <Plus size={16} /> New Plan
@@ -153,19 +153,19 @@ export default function PlansPage() {
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
           <div className="card p-6 w-full max-w-md space-y-4">
-            <h2 className="font-display text-lg font-bold text-page">{editingPlan ? "Edit Plan" : "Create Reading Plan"}</h2>
+            <h2 className="font-display text-lg font-bold text-foreground">{editingPlan ? "Edit Plan" : "Create Reading Plan"}</h2>
             <div>
-              <label className="block text-sm font-medium text-secondary-page mb-1.5">Plan name</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-1.5">Plan name</label>
               <input className="input-field" placeholder="e.g. Gospels in 30 Days"
                 value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-secondary-page mb-1.5">Description</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-1.5">Description</label>
               <textarea className="input-field resize-none" rows={3} placeholder="What will readers study?"
                 value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-secondary-page mb-1.5">Duration (days)</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-1.5">Duration (days)</label>
               <input type="number" min={1} max={365} className="input-field"
                 value={form.duration} onChange={(e) => setForm((f) => ({ ...f, duration: Number(e.target.value) }))} />
             </div>
@@ -174,7 +174,7 @@ export default function PlansPage() {
                 className={`toggle-track ${form.isPublic ? "on" : ""}`} aria-label="Toggle public">
                 <span className="toggle-thumb" />
               </button>
-              <span className="text-sm text-secondary-page flex items-center gap-1.5">
+              <span className="text-sm text-muted-foreground flex items-center gap-1.5">
                 {form.isPublic ? <Globe size={13} /> : <Lock size={13} />}
                 {form.isPublic ? "Public — others can browse this plan" : "Private — only you can see this"}
               </span>
@@ -198,7 +198,7 @@ export default function PlansPage() {
           { id: "browse", label: "Browse", badge: 0 },
         ].map((tab) => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id as "active" | "browse" | "create")}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-all ${activeTab === tab.id ? "" : "border-transparent text-muted-page"}`}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-all ${activeTab === tab.id ? "" : "border-transparent text-muted-foreground"}`}
             style={activeTab === tab.id ? { borderColor: "var(--gold)", color: "var(--gold)" } : {}}>
             {tab.label}
             {tab.badge > 0 && (
@@ -213,15 +213,15 @@ export default function PlansPage() {
 
       {loading ? (
         <div className="flex justify-center py-16">
-          <Loader2 size={24} className="animate-spin text-muted-page" />
+          <Loader2 size={24} className="animate-spin text-muted-foreground" />
         </div>
       ) : activeTab === "active" ? (
         <div>
           {myProgress.length === 0 ? (
             <div className="text-center py-16 card">
-              <ListChecks size={48} className="mx-auto mb-4 text-muted-page" />
-              <h3 className="text-lg font-semibold text-page mb-2">No active plans</h3>
-              <p className="text-secondary-page text-sm mb-6">Start a reading plan to track your progress</p>
+              <ListChecks size={48} className="mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">No active plans</h3>
+              <p className="text-muted-foreground text-sm mb-6">Start a reading plan to track your progress</p>
               <button onClick={() => setActiveTab("browse")} className="btn-gold mx-auto px-6">
                 Browse Plans <ChevronRight size={16} />
               </button>
@@ -240,12 +240,12 @@ export default function PlansPage() {
                   <div key={prog.id} className="card p-5">
                     <div className="flex items-start justify-between mb-4">
                       <div>
-                        <h3 className="font-semibold text-page text-base mb-1">{prog.planName}</h3>
-                        <p className="text-xs text-muted-page">Started {prog.startDate} · Day {todayNum} of {durationEstimate}</p>
+                        <h3 className="font-semibold text-foreground text-base mb-1">{prog.planName}</h3>
+                        <p className="text-xs text-muted-foreground">Started {prog.startDate} · Day {todayNum} of {durationEstimate}</p>
                       </div>
                       <div className="text-right">
                         <p className="text-2xl font-display font-bold text-gold-gradient">{pct}%</p>
-                        <p className="text-xs text-muted-page">complete</p>
+                        <p className="text-xs text-muted-foreground">complete</p>
                       </div>
                     </div>
 
@@ -270,7 +270,7 @@ export default function PlansPage() {
                               </div>
                           }
                           <div>
-                            <p className="text-sm font-medium text-page">
+                            <p className="text-sm font-medium text-foreground">
                               {todayDone ? "Day complete!" : `Day ${todayNum}`}
                             </p>
                             {dayReading && (
@@ -301,7 +301,7 @@ export default function PlansPage() {
 
                     {/* Recent days grid */}
                     <div className="mt-4">
-                      <p className="text-xs text-muted-page mb-2">Recent days</p>
+                      <p className="text-xs text-muted-foreground mb-2">Recent days</p>
                       <div className="flex gap-1.5 flex-wrap">
                         {Array.from({ length: Math.min(14, todayNum + 2) }, (_, i) => i + 1).map((day) => (
                           <div key={day}
@@ -317,7 +317,7 @@ export default function PlansPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3 mt-4 pt-3 border-t border-page text-xs text-muted-page">
+                    <div className="flex items-center gap-3 mt-4 pt-3 border-t border-page text-xs text-muted-foreground">
                       <span className="flex items-center gap-1"><Check size={11} className="text-green-500" />{prog.completedDays.length} days done</span>
                       <span className="flex items-center gap-1"><Target size={11} />{Math.max(0, durationEstimate - prog.completedDays.length)} remaining</span>
                     </div>
@@ -330,16 +330,16 @@ export default function PlansPage() {
       ) : activeTab === "create" ? (
         <div>
           <div className="flex items-center justify-between mb-4">
-            <p className="text-sm text-secondary-page">{myCreatedPlans.length} plan{myCreatedPlans.length !== 1 ? "s" : ""} created by you</p>
+            <p className="text-sm text-muted-foreground">{myCreatedPlans.length} plan{myCreatedPlans.length !== 1 ? "s" : ""} created by you</p>
             <button onClick={openCreate} className="btn-gold text-xs px-4 py-2">
               <Plus size={14} /> New Plan
             </button>
           </div>
           {myCreatedPlans.length === 0 ? (
             <div className="text-center py-16 card">
-              <BookOpen size={40} className="mx-auto mb-4 text-muted-page" />
-              <h3 className="text-base font-semibold text-page mb-2">No plans yet</h3>
-              <p className="text-sm text-secondary-page mb-6">Create a custom reading plan for yourself or the community</p>
+              <BookOpen size={40} className="mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-base font-semibold text-foreground mb-2">No plans yet</h3>
+              <p className="text-sm text-muted-foreground mb-6">Create a custom reading plan for yourself or the community</p>
               <button onClick={openCreate} className="btn-gold mx-auto px-6">
                 <Plus size={16} /> Create First Plan
               </button>
@@ -350,7 +350,7 @@ export default function PlansPage() {
                 <div key={plan.id} className="card p-4 flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-semibold text-page truncate">{plan.name}</h4>
+                      <h4 className="font-semibold text-foreground truncate">{plan.name}</h4>
                       <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full flex items-center gap-1"
                         style={plan.isPublic
                           ? { background: "rgba(34,197,94,0.1)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.3)" }
@@ -359,12 +359,12 @@ export default function PlansPage() {
                         {plan.isPublic ? "Public" : "Private"}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-page truncate">{plan.description || "No description"} · {plan.duration} days</p>
+                    <p className="text-xs text-muted-foreground truncate">{plan.description || "No description"} · {plan.duration} days</p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <button onClick={() => handleStartPlan({ name: plan.name, description: plan.description || "", duration: plan.duration, tags: plan.tags || [], id: plan.id })}
                       className="btn-ghost text-xs px-3 py-1.5">Start</button>
-                    <button onClick={() => openEdit(plan)} className="p-2 rounded-lg transition-colors text-muted-page hover:text-page"
+                    <button onClick={() => openEdit(plan)} className="p-2 rounded-lg transition-colors text-muted-foreground hover:text-foreground"
                       style={{ background: "var(--bg-secondary)" }} title="Edit">
                       <Pencil size={14} />
                     </button>
@@ -383,7 +383,7 @@ export default function PlansPage() {
         <div className="space-y-6">
           {/* Preset plans */}
           <div>
-            <h2 className="text-base font-semibold text-page mb-3 flex items-center gap-2">
+            <h2 className="text-base font-semibold text-foreground mb-3 flex items-center gap-2">
               <Star size={15} style={{ color: "var(--gold)" }} />
               Popular Plans
             </h2>
@@ -399,8 +399,8 @@ export default function PlansPage() {
                       </div>
                       <span className="badge-gold">{plan.duration} days</span>
                     </div>
-                    <h3 className="font-semibold text-page mb-1">{plan.name}</h3>
-                    <p className="text-xs text-secondary-page mb-3 leading-relaxed">{plan.description}</p>
+                    <h3 className="font-semibold text-foreground mb-1">{plan.name}</h3>
+                    <p className="text-xs text-muted-foreground mb-3 leading-relaxed">{plan.description}</p>
                     <div className="flex flex-wrap gap-1.5 mb-4">
                       {plan.tags.map((tag) => (
                         <span key={tag} className="text-xs px-2.5 py-1 rounded-full" style={{ background: "var(--bg-secondary)", color: "var(--text-muted)" }}>
@@ -432,7 +432,7 @@ export default function PlansPage() {
           {/* From community */}
           {publicPlans.length > 0 && (
             <div>
-              <h2 className="text-base font-semibold text-page mb-3 flex items-center gap-2">
+              <h2 className="text-base font-semibold text-foreground mb-3 flex items-center gap-2">
                 <Users size={15} style={{ color: "var(--gold)" }} />
                 Community Plans
               </h2>
@@ -440,8 +440,8 @@ export default function PlansPage() {
                 {publicPlans.map((plan) => (
                   <div key={plan.id} className="card p-4 flex items-center justify-between">
                     <div>
-                      <h4 className="font-medium text-page">{plan.name}</h4>
-                      <p className="text-xs text-muted-page">{plan.duration} days · {plan.completionCount} completed</p>
+                      <h4 className="font-medium text-foreground">{plan.name}</h4>
+                      <p className="text-xs text-muted-foreground">{plan.duration} days · {plan.completionCount} completed</p>
                     </div>
                     <button onClick={() => handleStartPlan({ ...plan, description: plan.description || "", tags: plan.tags || [] })} className="btn-ghost text-xs px-4 py-2">
                       Start

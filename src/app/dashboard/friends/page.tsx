@@ -101,14 +101,14 @@ export default function FriendsPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 md:px-6 py-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-display font-bold text-page">Friends</h1>
-        <p className="text-sm text-secondary-page mt-1">Find and connect with fellow believers</p>
+        <h1 className="text-2xl font-display font-bold text-foreground">Friends</h1>
+        <p className="text-sm text-muted-foreground mt-1">Find and connect with fellow believers</p>
       </div>
 
       {/* Search bar */}
       <form onSubmit={handleSearch} className="flex gap-2 mb-5">
         <div className="relative flex-1">
-          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-page" />
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by username (e.g. john123)"
             className="input-field pl-10" />
@@ -122,7 +122,7 @@ export default function FriendsPage() {
       <div className="flex border-b border-page mb-5">
         {TABS.map((tab) => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-all ${activeTab === tab.id ? "" : "border-transparent text-muted-page"}`}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-all ${activeTab === tab.id ? "" : "border-transparent text-muted-foreground"}`}
             style={activeTab === tab.id ? { borderColor: "var(--gold)", color: "var(--gold)" } : {}}>
             {tab.label}
             {tab.badge > 0 && (
@@ -146,9 +146,9 @@ export default function FriendsPage() {
             </div>
           ) : friends.length === 0 ? (
             <div className="text-center py-16 card">
-              <Users size={40} className="mx-auto mb-3 text-muted-page" />
-              <h3 className="font-semibold text-page mb-2">No friends yet</h3>
-              <p className="text-secondary-page text-sm mb-4">Search by username to find people to study with</p>
+              <Users size={40} className="mx-auto mb-3 text-muted-foreground" />
+              <h3 className="font-semibold text-foreground mb-2">No friends yet</h3>
+              <p className="text-muted-foreground text-sm mb-4">Search by username to find people to study with</p>
               <button onClick={() => setActiveTab("search")} className="btn-gold text-sm px-5 py-2">
                 Find Friends
               </button>
@@ -166,8 +166,8 @@ export default function FriendsPage() {
                         : getInitials(friend.displayName)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-page">{friend.displayName}</p>
-                      <p className="text-xs text-muted-page">@{friend.username}</p>
+                      <p className="font-semibold text-foreground">{friend.displayName}</p>
+                      <p className="text-xs text-muted-foreground">@{friend.username}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       {friend.currentStreak > 0 && (
@@ -191,12 +191,12 @@ export default function FriendsPage() {
         <div>
           {requests.length === 0 ? (
             <div className="text-center py-16 card">
-              <UserPlus size={40} className="mx-auto mb-3 text-muted-page" />
-              <p className="text-secondary-page">No pending friend requests</p>
+              <UserPlus size={40} className="mx-auto mb-3 text-muted-foreground" />
+              <p className="text-muted-foreground">No pending friend requests</p>
             </div>
           ) : (
             <div className="space-y-3">
-              <p className="text-sm text-secondary-page">{requests.length} pending request{requests.length !== 1 ? "s" : ""}</p>
+              <p className="text-sm text-muted-foreground">{requests.length} pending request{requests.length !== 1 ? "s" : ""}</p>
               {requests.map((req) => (
                 <div key={req.id} className="card p-4 flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-gray-900 flex-shrink-0"
@@ -206,12 +206,12 @@ export default function FriendsPage() {
                       : getInitials(req.fromDisplayName)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-page text-sm">{req.fromDisplayName}</p>
-                    <p className="text-xs text-muted-page">@{req.fromUsername}</p>
+                    <p className="font-semibold text-foreground text-sm">{req.fromDisplayName}</p>
+                    <p className="text-xs text-muted-foreground">@{req.fromUsername}</p>
                   </div>
                   <div className="flex gap-2">
                     <button onClick={() => handleDecline(req)}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-page hover:text-red-400 transition-colors"
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-red-400 transition-colors"
                       style={{ background: "var(--bg-secondary)" }}>
                       <X size={16} />
                     </button>
@@ -233,16 +233,16 @@ export default function FriendsPage() {
         <div>
           {searching ? (
             <div className="flex justify-center py-12">
-              <Loader2 size={24} className="animate-spin text-muted-page" />
+              <Loader2 size={24} className="animate-spin text-muted-foreground" />
             </div>
           ) : searchResults.length === 0 ? (
             <div className="text-center py-16 card">
-              <Search size={40} className="mx-auto mb-3 text-muted-page" />
-              <p className="text-secondary-page">Search for users by their username above</p>
+              <Search size={40} className="mx-auto mb-3 text-muted-foreground" />
+              <p className="text-muted-foreground">Search for users by their username above</p>
             </div>
           ) : (
             <div className="space-y-2">
-              <p className="text-sm text-secondary-page">{searchResults.length} user{searchResults.length !== 1 ? "s" : ""} found</p>
+              <p className="text-sm text-muted-foreground">{searchResults.length} user{searchResults.length !== 1 ? "s" : ""} found</p>
               {searchResults.map((result) => {
                 const isFriend = user?.friendIds?.includes(result.uid);
                 const hasSentRequest = pendingSent.has(result.uid);
@@ -256,8 +256,8 @@ export default function FriendsPage() {
                         : getInitials(result.displayName)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-page">{result.displayName}</p>
-                      <p className="text-xs text-muted-page">@{result.username}</p>
+                      <p className="font-semibold text-foreground">{result.displayName}</p>
+                      <p className="text-xs text-muted-foreground">@{result.username}</p>
                       <div className="flex items-center gap-2 mt-1">
                         {result.currentStreak > 0 && (
                           <span className="text-xs text-orange-400 flex items-center gap-1">
