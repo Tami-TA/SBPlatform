@@ -10,7 +10,7 @@ import { getInitials } from "@/lib/utils";
 import type { Notification } from "@/types";
 import {
   BookOpen, LayoutDashboard, Users, UserPlus, ListChecks,
-  User, Sun, Moon, Bell, Menu, X, LogOut, ChevronRight, Layers,
+  Sun, Moon, Bell, Menu, X, LogOut, ChevronRight, Layers,
   Flame, Settings, Camera, ChevronDown, UserCircle,
 } from "lucide-react";
 
@@ -123,17 +123,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               )}
             </Link>
           ))}
-          <Link
-            href="/dashboard/profile"
-            onClick={() => setSidebarOpen(false)}
-            className={`nav-item ${isActive("/dashboard/profile") ? "active" : ""}`}
-          >
-            <User size={17} />
-            <span>Profile</span>
-            {isActive("/dashboard/profile") && (
-              <ChevronRight size={13} className="ml-auto opacity-50" />
-            )}
-          </Link>
         </nav>
 
         {/* Profile section at bottom */}
