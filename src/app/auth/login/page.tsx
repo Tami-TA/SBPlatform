@@ -157,7 +157,7 @@ export default function LoginPage() {
               <Info size={16} style={{ color: "var(--gold)", flexShrink: 0, marginTop: 2 }} />
               <div>
                 <p className="text-sm font-semibold" style={{ color: "var(--gold)" }}>Demo Mode Active</p>
-                <p className="text-xs text-secondary-page mt-0.5">
+                <p className="text-xs text-muted-foreground mt-0.5">
                   Firebase is not configured. All data is stored locally in your browser.
                   Sign up to create a demo account, then log in.
                 </p>

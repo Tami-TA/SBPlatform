@@ -75,7 +75,7 @@ export default function GroupDetailPage() {
   return (
     <div className="h-full flex flex-col max-h-screen">
       {/* Group header */}
-      <div className="flex items-center gap-4 px-5 py-4 border-b border-page" style={{ background: "var(--bg-card)" }}>
+      <div className="flex items-center gap-4 px-5 py-4 border-b border-border" style={{ background: "var(--bg-card)" }}>
         <Link href="/dashboard/groups" className="text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft size={20} />
         </Link>
@@ -98,7 +98,7 @@ export default function GroupDetailPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-page overflow-x-auto no-scrollbar" style={{ background: "var(--bg-card)" }}>
+      <div className="flex border-b border-border overflow-x-auto no-scrollbar" style={{ background: "var(--bg-card)" }}>
         {TABS.map((tab) => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id as typeof activeTab)}
             className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all whitespace-nowrap ${activeTab === tab.id ? "" : "border-transparent text-muted-foreground hover:text-muted-foreground"}`}
@@ -159,7 +159,7 @@ export default function GroupDetailPage() {
             </div>
 
             {/* Message input */}
-            <form onSubmit={handleSend} className="flex items-center gap-3 p-4 border-t border-page"
+            <form onSubmit={handleSend} className="flex items-center gap-3 p-4 border-t border-border"
               style={{ background: "var(--bg-card)" }}>
               <div className="flex gap-2 flex-shrink-0">
                 <button type="button" className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground"

@@ -147,7 +147,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <div className="mt-4 pt-4 border-t border-page">
+        <div className="mt-4 pt-4 border-t border-border">
           {editing ? (
             <textarea value={form.bio} onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))}
               placeholder="Write a short bio..." rows={2}

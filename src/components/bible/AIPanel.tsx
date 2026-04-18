@@ -61,33 +61,33 @@ export function AIPanel({ verse, onClose }: AIPanelProps) {
   return (
     <div className="flex flex-col h-full" style={{ background: "var(--bg-card)" }}>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-page">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-lg flex items-center justify-center"
             style={{ background: "linear-gradient(135deg, #D4AF37, #F59E0B)" }}>
             <Sparkles size={13} className="text-gray-900" />
           </div>
-          <span className="font-semibold text-sm text-page">AI Study Assistant</span>
+          <span className="font-semibold text-sm text-foreground">AI Study Assistant</span>
         </div>
-        <button onClick={onClose} className="text-muted-page hover:text-page"><X size={18} /></button>
+        <button onClick={onClose} className="text-muted-foreground hover:text-foreground"><X size={18} /></button>
       </div>
 
       {/* Verse reference */}
-      <div className="px-4 py-3 border-b border-page">
+      <div className="px-4 py-3 border-b border-border">
         <p className="text-xs font-semibold mb-1" style={{ color: "var(--gold)" }}>
           {verse.bookName} {verse.chapter}:{verse.verse}
         </p>
-        <p className="text-sm text-secondary-page verse-text leading-relaxed line-clamp-3">
+        <p className="text-sm text-muted-foreground verse-text leading-relaxed line-clamp-3">
           &ldquo;{verse.text}&rdquo;
         </p>
       </div>
 
       {/* Action buttons */}
-      <div className="flex gap-1.5 p-3 border-b border-page overflow-x-auto no-scrollbar">
+      <div className="flex gap-1.5 p-3 border-b border-border overflow-x-auto no-scrollbar">
         {AI_ACTIONS.map((action) => (
           <button key={action.id}
             onClick={() => handleAction(action.id)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap transition-all ${activeAction === action.id && result ? "" : "text-muted-page hover:text-page"}`}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap transition-all ${activeAction === action.id && result ? "" : "text-muted-foreground hover:text-foreground"}`}
             style={activeAction === action.id && (result || relatedVerses.length > 0)
               ? { background: "rgba(212,175,55,0.2)", color: "var(--gold)" }
               : { background: "var(--bg-secondary)" }}>
@@ -101,11 +101,11 @@ export function AIPanel({ verse, onClose }: AIPanelProps) {
       <div className="flex-1 overflow-y-auto p-4">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-12 gap-3">
-            <Loader2 size={24} className="animate-spin text-muted-page" />
-            <p className="text-xs text-muted-page">Claude is thinking...</p>
+            <Loader2 size={24} className="animate-spin text-muted-foreground" />
+            <p className="text-xs text-muted-foreground">Claude is thinking...</p>
           </div>
         ) : result ? (
-          <div className="text-sm text-secondary-page leading-relaxed verse-text whitespace-pre-line">
+          <div className="text-sm text-muted-foreground leading-relaxed verse-text whitespace-pre-line">
             {result}
           </div>
         ) : relatedVerses.length > 0 ? (
@@ -113,7 +113,7 @@ export function AIPanel({ verse, onClose }: AIPanelProps) {
             {relatedVerses.map((v, i) => (
               <div key={i} className="p-3 rounded-xl" style={{ background: "var(--bg-secondary)" }}>
                 <p className="text-xs font-bold mb-1" style={{ color: "var(--gold)" }}>{v.reference}</p>
-                <p className="text-xs text-secondary-page leading-relaxed">{v.connection}</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">{v.connection}</p>
                 <span className="inline-block mt-1.5 text-xs px-2 py-0.5 rounded-full" style={{ background: "rgba(212,175,55,0.1)", color: "var(--gold-muted)" }}>
                   {v.theme}
                 </span>
@@ -126,16 +126,16 @@ export function AIPanel({ verse, onClose }: AIPanelProps) {
               style={{ background: "rgba(212,175,55,0.1)" }}>
               <Sparkles size={20} style={{ color: "var(--gold)" }} />
             </div>
-            <p className="text-sm text-secondary-page mb-1">Ask AI about this verse</p>
-            <p className="text-xs text-muted-page">Choose an action above to get started</p>
+            <p className="text-sm text-muted-foreground mb-1">Ask AI about this verse</p>
+            <p className="text-xs text-muted-foreground">Choose an action above to get started</p>
           </div>
         )}
       </div>
 
       {/* Powered by note */}
-      <div className="px-4 py-2 border-t border-page flex items-center justify-center gap-1.5">
-        <Sparkles size={11} className="text-muted-page" />
-        <span className="text-xs text-muted-page">Powered by Claude AI</span>
+      <div className="px-4 py-2 border-t border-border flex items-center justify-center gap-1.5">
+        <Sparkles size={11} className="text-muted-foreground" />
+        <span className="text-xs text-muted-foreground">Powered by Claude AI</span>
       </div>
     </div>
   );

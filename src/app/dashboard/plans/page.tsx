@@ -191,7 +191,7 @@ export default function PlansPage() {
       )}
 
       {/* Tabs */}
-      <div className="flex border-b border-page mb-6">
+      <div className="flex border-b border-border mb-6">
         {[
           { id: "active", label: "My Plans", badge: myProgress.length },
           { id: "create", label: "My Created", badge: myCreatedPlans.length },
@@ -317,7 +317,7 @@ export default function PlansPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3 mt-4 pt-3 border-t border-page text-xs text-muted-foreground">
+                    <div className="flex items-center gap-3 mt-4 pt-3 border-t border-border text-xs text-muted-foreground">
                       <span className="flex items-center gap-1"><Check size={11} className="text-green-500" />{prog.completedDays.length} days done</span>
                       <span className="flex items-center gap-1"><Target size={11} />{Math.max(0, durationEstimate - prog.completedDays.length)} remaining</span>
                     </div>

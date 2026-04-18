@@ -214,7 +214,7 @@ export default function BiblePage() {
   return (
     <div className="h-full flex flex-col" onClick={() => { if (selectedVerse) { setSelectedVerse(null); setToolbarPos(null); } }}>
       {/* Bible toolbar */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-page flex-wrap"
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-border flex-wrap"
         style={{ background: "var(--bg-card)" }}>
 
         {/* Book selector */}
@@ -275,7 +275,7 @@ export default function BiblePage() {
         <div className="absolute top-28 left-4 z-50 w-80 max-h-96 overflow-y-auto rounded-2xl shadow-card-hover"
           style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
           onClick={(e) => e.stopPropagation()}>
-          <div className="p-3 border-b border-page flex items-center justify-between">
+          <div className="p-3 border-b border-border flex items-center justify-between">
             <h3 className="font-semibold text-sm text-foreground">Select Book</h3>
             <button onClick={() => setShowBookSelector(false)}><X size={16} className="text-muted-foreground" /></button>
           </div>
@@ -309,7 +309,7 @@ export default function BiblePage() {
         <div className="absolute top-28 left-60 z-50 w-64 rounded-2xl shadow-card-hover"
           style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}
           onClick={(e) => e.stopPropagation()}>
-          <div className="p-3 border-b border-page flex items-center justify-between">
+          <div className="p-3 border-b border-border flex items-center justify-between">
             <h3 className="font-semibold text-sm text-foreground">Translation</h3>
             <button onClick={() => setShowTranslationSelector(false)}><X size={16} className="text-muted-foreground" /></button>
           </div>
@@ -329,7 +329,7 @@ export default function BiblePage() {
 
       {/* Search panel */}
       {searchMode && (
-        <div className="border-b border-page p-3" style={{ background: "var(--bg-secondary)" }}>
+        <div className="border-b border-border p-3" style={{ background: "var(--bg-secondary)" }}>
           <form onSubmit={handleSearch} className="flex gap-2">
             <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search the Bible (e.g. 'love one another')"
@@ -467,7 +467,7 @@ export default function BiblePage() {
 
           {/* Chapter navigation */}
           {chapter && (
-            <div className="flex items-center justify-between mt-12 pt-6 border-t border-page">
+            <div className="flex items-center justify-between mt-12 pt-6 border-t border-border">
               <button onClick={() => navigateChapter("prev")}
                 className="btn-ghost flex items-center gap-2 text-sm">
                 <ChevronLeft size={16} /> Previous
@@ -485,7 +485,7 @@ export default function BiblePage() {
       </div>
 
       {/* Highlight legend */}
-      <div className="hidden md:flex items-center gap-3 px-6 py-2 border-t border-page text-xs text-muted-foreground"
+      <div className="hidden md:flex items-center gap-3 px-6 py-2 border-t border-border text-xs text-muted-foreground"
         style={{ background: "var(--bg-card)" }}>
         <Highlighter size={13} />
         <span>Click a verse to highlight, bookmark, or add notes</span>
