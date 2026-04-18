@@ -105,10 +105,10 @@ export default function SignupPage() {
   const strengthColors = ["", "bg-red-500", "bg-yellow-500", "bg-green-500"];
 
   return (
-    <div className="min-h-screen bg-page flex">
+    <div className="min-h-screen bg-background text-foreground flex">
       {/* Decorative panel */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden"
-        style={{ background: "linear-gradient(135deg, #0a0805 0%, #1a0808 50%, #0d0a04 100%)" }}>
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-card"
+        style={{ background: "linear-gradient(135deg, oklch(0.08 0.015 60) 0%, oklch(0.12 0.02 30) 50%, oklch(0.09 0.012 50) 100%)" }}>
         <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-center">
           <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-8 animate-float"
             style={{ background: "linear-gradient(135deg, #D4AF37, #F59E0B)", boxShadow: "0 0 40px rgba(212,175,55,0.4)" }}>
@@ -136,7 +136,7 @@ export default function SignupPage() {
       {/* Form panel */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
         <div className="w-full max-w-md">
-          <Link href="/" className="inline-flex items-center gap-2 text-sm text-muted-page hover:text-page transition-colors mb-8">
+          <Link href="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8">
             <ArrowLeft size={16} /> Back to home
           </Link>
 
@@ -146,7 +146,7 @@ export default function SignupPage() {
               <Info size={16} style={{ color: "var(--gold)", flexShrink: 0, marginTop: 2 }} />
               <div>
                 <p className="text-sm font-semibold" style={{ color: "var(--gold)" }}>Demo Mode Active</p>
-                <p className="text-xs text-secondary-page mt-0.5">
+                <p className="text-xs text-muted-foreground mt-0.5">
                   Your account and all data will be stored in your browser&apos;s local storage.
                   Add Firebase credentials to <code className="text-xs">.env.local</code> to enable cloud sync.
                 </p>
@@ -161,14 +161,14 @@ export default function SignupPage() {
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all`}
                   style={step >= s
                     ? { background: "linear-gradient(135deg, #D4AF37, #F59E0B)", color: "#1a0a0a" }
-                    : { background: "var(--bg-secondary)", color: "var(--text-muted)" }}>
+                    : { background: "var(--muted)", color: "var(--muted-foreground)" }}>
                   {step > s ? <Check size={14} /> : s}
                 </div>
                 {s < 2 && <div className="h-0.5 w-8 transition-all"
                   style={{ background: step > s ? "linear-gradient(90deg, #D4AF37, #F59E0B)" : "var(--border)" }} />}
               </div>
             ))}
-            <span className="text-sm text-secondary-page ml-2">
+            <span className="text-sm text-muted-foreground ml-2">
               {step === 1 ? "Account Details" : "Your Profile"}
             </span>
           </div>
@@ -176,8 +176,8 @@ export default function SignupPage() {
           {step === 1 ? (
             <>
               <div className="mb-8">
-                <h2 className="text-3xl font-display font-bold text-page mb-2">Create Account</h2>
-                <p className="text-secondary-page">Join thousands of daily Bible readers</p>
+                <h2 className="text-3xl font-display font-bold text-foreground mb-2">Create Account</h2>
+                <p className="text-muted-foreground">Join thousands of daily Bible readers</p>
               </div>
 
               {!IS_DEMO_MODE && (
@@ -197,22 +197,22 @@ export default function SignupPage() {
 
               <form onSubmit={handleStep1} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-secondary-page mb-2">Email</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-2">Email</label>
                   <div className="relative">
-                    <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-page" />
+                    <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
                     <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
                       placeholder="you@example.com" required className="input-field pl-10" />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-secondary-page mb-2">Password</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-2">Password</label>
                   <div className="relative">
-                    <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-page" />
+                    <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
                     <input type={showPassword ? "text" : "password"} value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Min. 6 characters" required className="input-field pl-10 pr-10" />
                     <button type="button" onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-page hover:text-page">
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
@@ -223,7 +223,7 @@ export default function SignupPage() {
                           <div key={i} className={`h-1 flex-1 rounded-full transition-all ${i <= passwordStrength ? strengthColors[passwordStrength] : "bg-[var(--bg-secondary)]"}`} />
                         ))}
                       </div>
-                      <span className="text-xs text-muted-page">{strengthLabels[passwordStrength]}</span>
+                      <span className="text-xs text-muted-foreground">{strengthLabels[passwordStrength]}</span>
                     </div>
                   )}
                 </div>
@@ -233,26 +233,26 @@ export default function SignupPage() {
           ) : (
             <>
               <div className="mb-8">
-                <h2 className="text-3xl font-display font-bold text-page mb-2">Your Profile</h2>
-                <p className="text-secondary-page">How should others know you?</p>
+                <h2 className="text-3xl font-display font-bold text-foreground mb-2">Your Profile</h2>
+                <p className="text-muted-foreground">How should others know you?</p>
               </div>
               <form onSubmit={handleSignup} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-secondary-page mb-2">Display Name</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-2">Display Name</label>
                   <div className="relative">
-                    <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-page" />
+                    <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
                     <input type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)}
                       placeholder="Your full name" required className="input-field pl-10" />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-secondary-page mb-2">Username</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-2">Username</label>
                   <div className="relative">
-                    <AtSign size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-page" />
+                    <AtSign size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
                     <input type="text" value={username} onChange={(e) => handleUsernameChange(e.target.value)}
                       placeholder="unique_handle" required className="input-field pl-10" />
                   </div>
-                  <p className="text-xs text-muted-page mt-1.5">Letters, numbers, underscore only. Min 3 characters.</p>
+                  <p className="text-xs text-muted-foreground mt-1.5">Letters, numbers, underscore only. Min 3 characters.</p>
                 </div>
                 <div className="flex gap-3 mt-2">
                   <button type="button" onClick={() => setStep(1)} className="btn-ghost flex-1">Back</button>
@@ -264,7 +264,7 @@ export default function SignupPage() {
             </>
           )}
 
-          <p className="text-center text-sm text-secondary-page mt-6">
+          <p className="text-center text-sm text-muted-foreground mt-6">
             Already have an account?{" "}
             <Link href="/auth/login" className="font-semibold hover:underline" style={{ color: "var(--gold)" }}>Sign in</Link>
           </p>
