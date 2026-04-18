@@ -107,26 +107,23 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen bg-background text-foreground flex">
       {/* Decorative panel */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-card"
-        style={{ background: "linear-gradient(135deg, oklch(0.08 0.015 60) 0%, oklch(0.12 0.02 30) 50%, oklch(0.09 0.012 50) 100%)" }}>
+      <div className="hidden lg:flex lg:w-5/12 bg-foreground relative overflow-hidden">
         <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-center">
-          <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-8 animate-float"
-            style={{ background: "linear-gradient(135deg, #D4AF37, #F59E0B)", boxShadow: "0 0 40px rgba(212,175,55,0.4)" }}>
-            <BookOpen size={36} className="text-gray-900" />
+          <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-8 bg-primary">
+            <BookOpen size={26} className="text-primary-foreground" />
           </div>
-          <h1 className="text-4xl font-display font-bold text-white mb-4">Begin Your Journey</h1>
-          <p className="text-gray-400 max-w-sm leading-relaxed mb-6">
+          <h1 className="text-3xl font-semibold text-background mb-4 leading-snug">Begin your journey</h1>
+          <p className="text-background/60 max-w-xs text-sm leading-relaxed mb-8">
             &ldquo;Blessed is the one who reads aloud the words of this prophecy.&rdquo;
           </p>
-          <p className="text-sm font-medium" style={{ color: "var(--gold)" }}>— Revelation 1:3</p>
+          <p className="text-background/40 text-xs">— Revelation 1:3</p>
           <div className="mt-10 space-y-3 text-left max-w-xs">
-            {["7+ Bible translations", "Daily streaks & badges", "Study groups & friends", "Historical context for every book", "AI-powered insights"].map((p) => (
+            {["8 Bible translations", "Daily streaks & badges", "Study groups & friends", "Historical context", "AI-powered insights"].map((p) => (
               <div key={p} className="flex items-center gap-3">
-                <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-                  style={{ background: "rgba(212,175,55,0.2)", border: "1px solid rgba(212,175,55,0.4)" }}>
-                  <Check size={12} style={{ color: "#D4AF37" }} />
+                <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 bg-primary/20">
+                  <Check size={10} className="text-primary" />
                 </div>
-                <span className="text-sm text-gray-300">{p}</span>
+                <span className="text-sm text-background/70">{p}</span>
               </div>
             ))}
           </div>
@@ -135,49 +132,44 @@ export default function SignupPage() {
 
       {/* Form panel */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
-        <div className="w-full max-w-md">
-          <Link href="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8">
-            <ArrowLeft size={16} /> Back to home
+        <div className="w-full max-w-sm">
+          <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8">
+            <ArrowLeft size={14} /> Back
           </Link>
 
           {IS_DEMO_MODE && (
-            <div className="mb-6 p-4 rounded-xl flex items-start gap-3"
-              style={{ background: "rgba(212,175,55,0.1)", border: "1px solid rgba(212,175,55,0.3)" }}>
-              <Info size={16} style={{ color: "var(--gold)", flexShrink: 0, marginTop: 2 }} />
+            <div className="mb-6 p-3.5 rounded-lg flex items-start gap-3 bg-primary/8 border border-primary/20">
+              <Info size={15} className="text-primary flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-semibold" style={{ color: "var(--gold)" }}>Demo Mode Active</p>
+                <p className="text-sm font-medium text-foreground">Demo mode</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Your account and all data will be stored in your browser&apos;s local storage.
-                  Add Firebase credentials to <code className="text-xs">.env.local</code> to enable cloud sync.
+                  Data stored in your browser. Add Firebase credentials to enable cloud sync.
                 </p>
               </div>
             </div>
           )}
 
           {/* Step indicator */}
-          <div className="flex items-center gap-3 mb-8">
+          <div className="flex items-center gap-2 mb-7">
             {[1, 2].map((s) => (
               <div key={s} className="flex items-center gap-2">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all`}
-                  style={step >= s
-                    ? { background: "linear-gradient(135deg, #D4AF37, #F59E0B)", color: "#1a0a0a" }
-                    : { background: "var(--muted)", color: "var(--muted-foreground)" }}>
-                  {step > s ? <Check size={14} /> : s}
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold transition-all
+                  ${step >= s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+                  {step > s ? <Check size={12} /> : s}
                 </div>
-                {s < 2 && <div className="h-0.5 w-8 transition-all"
-                  style={{ background: step > s ? "linear-gradient(90deg, #D4AF37, #F59E0B)" : "var(--border)" }} />}
+                {s < 2 && <div className={`h-px w-8 transition-all ${step > s ? "bg-primary" : "bg-border"}`} />}
               </div>
             ))}
-            <span className="text-sm text-muted-foreground ml-2">
-              {step === 1 ? "Account Details" : "Your Profile"}
+            <span className="text-xs text-muted-foreground ml-1">
+              {step === 1 ? "Account" : "Profile"}
             </span>
           </div>
 
           {step === 1 ? (
             <>
-              <div className="mb-8">
-                <h2 className="text-3xl font-display font-bold text-foreground mb-2">Create Account</h2>
-                <p className="text-muted-foreground">Join thousands of daily Bible readers</p>
+              <div className="mb-6">
+                <h2 className="text-2xl font-semibold text-foreground mb-1">Create account</h2>
+                <p className="text-sm text-muted-foreground">Join daily Bible readers</p>
               </div>
 
               {!IS_DEMO_MODE && (
@@ -220,21 +212,21 @@ export default function SignupPage() {
                     <div className="mt-2 flex items-center gap-2">
                       <div className="flex gap-1 flex-1">
                         {[1, 2, 3].map((i) => (
-                          <div key={i} className={`h-1 flex-1 rounded-full transition-all ${i <= passwordStrength ? strengthColors[passwordStrength] : "bg-[var(--bg-secondary)]"}`} />
+                          <div key={i} className={`h-1 flex-1 rounded-full transition-all ${i <= passwordStrength ? strengthColors[passwordStrength] : "bg-muted"}`} />
                         ))}
                       </div>
                       <span className="text-xs text-muted-foreground">{strengthLabels[passwordStrength]}</span>
                     </div>
                   )}
                 </div>
-                <button type="submit" className="btn-gold w-full mt-2">Continue</button>
+                <button type="submit" className="btn-primary w-full mt-2">Continue</button>
               </form>
             </>
           ) : (
             <>
-              <div className="mb-8">
-                <h2 className="text-3xl font-display font-bold text-foreground mb-2">Your Profile</h2>
-                <p className="text-muted-foreground">How should others know you?</p>
+              <div className="mb-6">
+                <h2 className="text-2xl font-semibold text-foreground mb-1">Your profile</h2>
+                <p className="text-sm text-muted-foreground">How should others know you?</p>
               </div>
               <form onSubmit={handleSignup} className="space-y-4">
                 <div>
@@ -266,7 +258,7 @@ export default function SignupPage() {
 
           <p className="text-center text-sm text-muted-foreground mt-6">
             Already have an account?{" "}
-            <Link href="/auth/login" className="font-semibold hover:underline" style={{ color: "var(--gold)" }}>Sign in</Link>
+            <Link href="/auth/login" className="font-medium text-primary hover:underline">Sign in</Link>
           </p>
         </div>
       </div>

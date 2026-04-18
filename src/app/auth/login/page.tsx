@@ -124,50 +124,42 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex">
-      {/* Left panel */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-card"
-        style={{ background: "linear-gradient(135deg, oklch(0.08 0.015 60) 0%, oklch(0.12 0.02 30) 50%, oklch(0.09 0.012 50) 100%)" }}>
+      {/* Left panel — decorative */}
+      <div className="hidden lg:flex lg:w-5/12 relative overflow-hidden bg-foreground">
         <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-center">
-          <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-8 animate-float"
-            style={{ background: "linear-gradient(135deg, #D4AF37, #F59E0B)", boxShadow: "0 0 40px rgba(212,175,55,0.4)" }}>
-            <BookOpen size={36} className="text-gray-900" />
+          <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-8 bg-primary">
+            <BookOpen size={26} className="text-primary-foreground" />
           </div>
-          <h1 className="text-4xl font-display font-bold text-white mb-4">Welcome Back to Scripture</h1>
-          <p className="text-gray-400 max-w-sm leading-relaxed">
+          <h1 className="text-3xl font-semibold text-background mb-4 leading-snug">Welcome back to Scripture</h1>
+          <p className="text-background/60 max-w-xs text-sm leading-relaxed">
             &ldquo;Your word is a lamp to my feet and a light to my path.&rdquo;
           </p>
-          <p className="text-sm mt-3 font-medium" style={{ color: "var(--gold)" }}>— Psalm 119:105</p>
-          <div className="absolute top-12 right-12 w-8 h-8 opacity-20 animate-float"
-            style={{ clipPath: "polygon(50% 0%,100% 50%,50% 100%,0% 50%)", background: "#D4AF37", animationDelay: "0.5s" }} />
-          <div className="absolute bottom-20 left-16 w-5 h-5 opacity-15 animate-float"
-            style={{ clipPath: "polygon(50% 0%,100% 50%,50% 100%,0% 50%)", background: "#D4AF37", animationDelay: "1s" }} />
+          <p className="text-background/40 text-xs mt-3">— Psalm 119:105</p>
         </div>
       </div>
 
       {/* Right form */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
-        <div className="w-full max-w-md">
-          <Link href="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8">
-            <ArrowLeft size={16} /> Back to home
+        <div className="w-full max-w-sm">
+          <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8">
+            <ArrowLeft size={14} /> Back
           </Link>
 
           {IS_DEMO_MODE && (
-            <div className="mb-6 p-4 rounded-xl flex items-start gap-3"
-              style={{ background: "rgba(212,175,55,0.1)", border: "1px solid rgba(212,175,55,0.3)" }}>
-              <Info size={16} style={{ color: "var(--gold)", flexShrink: 0, marginTop: 2 }} />
+            <div className="mb-6 p-3.5 rounded-lg flex items-start gap-3 bg-primary/8 border border-primary/20">
+              <Info size={15} className="text-primary flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-semibold" style={{ color: "var(--gold)" }}>Demo Mode Active</p>
+                <p className="text-sm font-medium text-foreground">Demo mode</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Firebase is not configured. All data is stored locally in your browser.
-                  Sign up to create a demo account, then log in.
+                  Firebase not configured — data stored in your browser. Sign up to create a demo account.
                 </p>
               </div>
             </div>
           )}
 
-          <div className="mb-8">
-            <h2 className="text-3xl font-display font-bold text-foreground mb-2">Sign In</h2>
-            <p className="text-muted-foreground">Continue your faith journey</p>
+          <div className="mb-7">
+            <h2 className="text-2xl font-semibold text-foreground mb-1">Sign in</h2>
+            <p className="text-sm text-muted-foreground">Continue your reading journey</p>
           </div>
 
           {!IS_DEMO_MODE && (
@@ -220,7 +212,7 @@ export default function LoginPage() {
 
           <p className="text-center text-sm text-muted-foreground mt-6">
             Don&apos;t have an account?{" "}
-            <Link href="/auth/signup" className="font-semibold hover:underline" style={{ color: "var(--gold)" }}>
+            <Link href="/auth/signup" className="font-medium text-primary hover:underline">
               Create one
             </Link>
           </p>
