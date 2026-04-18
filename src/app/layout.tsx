@@ -7,13 +7,13 @@ import { AuthProvider } from "@/components/providers/AuthProvider";
 
 const fontSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  variable: "--font-sans",
+  variable: "--font-plus-jakarta",
   display: "swap",
 });
 
 const fontMono = JetBrains_Mono({
   subsets: ["latin"],
-  variable: "--font-mono",
+  variable: "--font-jetbrains",
   display: "swap",
 });
 

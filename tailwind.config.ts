@@ -47,8 +47,7 @@ const config: Config = {
       },
       fontFamily: {
         serif: ["Georgia", "Cambria", "Times New Roman", "serif"],
-        sans: ["Inter", "system-ui", "sans-serif"],
-        display: ["Playfair Display", "Georgia", "serif"],
+        display: ["var(--font-plus-jakarta)", "system-ui", "sans-serif"],
       },
       animation: {
         "fade-in": "fadeIn 0.5s ease-in-out",
