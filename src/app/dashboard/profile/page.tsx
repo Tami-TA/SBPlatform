@@ -116,9 +116,9 @@ export default function ProfilePage() {
                 onChange={(e) => setForm((f) => ({ ...f, displayName: e.target.value }))}
                 className="input-field text-xl font-display font-bold mb-1 py-1.5 w-full max-w-xs" />
             ) : (
-              <h1 className="text-2xl font-display font-bold text-page">{user.displayName}</h1>
+              <h1 className="text-2xl font-display font-bold text-foreground">{user.displayName}</h1>
             )}
-            <p className="text-sm text-secondary-page">@{user.username}</p>
+            <p className="text-sm text-muted-foreground">@{user.username}</p>
             <div className="flex items-center gap-3 mt-2">
               <span className={`text-sm font-semibold ${streakLevel.color}`}>{streakLevel.label}</span>
               {user.currentStreak > 0 && (
@@ -153,8 +153,8 @@ export default function ProfilePage() {
               placeholder="Write a short bio..." rows={2}
               className="input-field resize-none text-sm w-full" />
           ) : (
-            <p className="text-sm text-secondary-page leading-relaxed">
-              {user.bio || <span className="text-muted-page italic">No bio yet — add one to let friends know about you.</span>}
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {user.bio || <span className="text-muted-foreground italic">No bio yet — add one to let friends know about you.</span>}
             </p>
           )}
         </div>
@@ -162,7 +162,7 @@ export default function ProfilePage() {
 
       {/* Stats grid */}
       <div>
-        <h2 className="text-sm font-semibold text-secondary-page mb-3 uppercase tracking-wider">Stats</h2>
+        <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wider">Stats</h2>
         <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
           {STATS.map((stat) => {
             const IconComp = STAT_ICONS[stat.label] || Star;
@@ -173,7 +173,7 @@ export default function ProfilePage() {
                   <IconComp size={16} style={{ color: stat.color }} />
                 </div>
                 <p className="text-lg font-display font-bold" style={{ color: stat.color }}>{stat.value}</p>
-                <p className="text-xs text-muted-page mt-0.5 leading-tight">{stat.label}</p>
+                <p className="text-xs text-muted-foreground mt-0.5 leading-tight">{stat.label}</p>
               </div>
             );
           })}
@@ -182,7 +182,7 @@ export default function ProfilePage() {
 
       {/* Streak milestone tracker */}
       <div className="card p-5">
-        <h2 className="text-sm font-semibold text-page mb-4 flex items-center gap-2">
+        <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
           <Flame size={15} className="text-orange-400" />
           Streak Milestones
         </h2>
@@ -205,10 +205,10 @@ export default function ProfilePage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
-                    <span className="font-semibold text-sm text-page">{milestone.name}</span>
+                    <span className="font-semibold text-sm text-foreground">{milestone.name}</span>
                     {earned && <span className="badge-gold text-xs">Earned</span>}
                   </div>
-                  <p className="text-xs text-muted-page">{milestone.desc}</p>
+                  <p className="text-xs text-muted-foreground">{milestone.desc}</p>
                   {!earned && (
                     <div className="progress-gold mt-2">
                       <div className="progress-gold-fill" style={{ width: `${progress}%` }} />
@@ -222,7 +222,7 @@ export default function ProfilePage() {
                       <Check size={14} style={{ color: "var(--gold)" }} />
                     </div>
                   ) : (
-                    <span className="text-xs text-muted-page font-medium">{milestone.streak}d</span>
+                    <span className="text-xs text-muted-foreground font-medium">{milestone.streak}d</span>
                   )}
                 </div>
               </div>
@@ -234,7 +234,7 @@ export default function ProfilePage() {
       {/* Earned badges */}
       {user.badges.length > 0 && (
         <div className="card p-5">
-          <h2 className="text-sm font-semibold text-page mb-4 flex items-center gap-2">
+          <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
             <Trophy size={15} style={{ color: "var(--gold)" }} />
             My Badges ({user.badges.length})
           </h2>
@@ -250,7 +250,7 @@ export default function ProfilePage() {
                     style={{ background: "rgba(212,175,55,0.12)" }}>
                     <IconComp size={18} style={{ color: "var(--gold)" }} />
                   </div>
-                  <span className="text-xs font-medium text-secondary-page leading-tight">{badge.name}</span>
+                  <span className="text-xs font-medium text-muted-foreground leading-tight">{badge.name}</span>
                 </div>
               );
             })}
@@ -260,15 +260,15 @@ export default function ProfilePage() {
 
       {/* Preferences */}
       <div className="card p-5">
-        <h2 className="text-sm font-semibold text-page mb-4 flex items-center gap-2">
+        <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
           <Shield size={15} style={{ color: "var(--gold)" }} />
           Preferences
         </h2>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-page">Preferred Translation</p>
-              <p className="text-xs text-muted-page">Default Bible translation</p>
+              <p className="text-sm font-medium text-foreground">Preferred Translation</p>
+              <p className="text-xs text-muted-foreground">Default Bible translation</p>
             </div>
             {editing ? (
               <select value={form.preferredTranslation}
@@ -289,10 +289,10 @@ export default function ProfilePage() {
             <div className="flex items-center gap-3">
               {user.notificationsEnabled
                 ? <Bell size={16} style={{ color: "var(--gold)" }} />
-                : <BellOff size={16} className="text-muted-page" />}
+                : <BellOff size={16} className="text-muted-foreground" />}
               <div>
-                <p className="text-sm font-medium text-page">Reading Reminders</p>
-                <p className="text-xs text-muted-page">Daily notifications to read</p>
+                <p className="text-sm font-medium text-foreground">Reading Reminders</p>
+                <p className="text-xs text-muted-foreground">Daily notifications to read</p>
               </div>
             </div>
             <button
@@ -307,10 +307,10 @@ export default function ProfilePage() {
 
           <div className="flex items-center justify-between py-1">
             <div>
-              <p className="text-sm font-medium text-page">Account Email</p>
-              <p className="text-xs text-muted-page">{user.email}</p>
+              <p className="text-sm font-medium text-foreground">Account Email</p>
+              <p className="text-xs text-muted-foreground">{user.email}</p>
             </div>
-            <ChevronRight size={15} className="text-muted-page" />
+            <ChevronRight size={15} className="text-muted-foreground" />
           </div>
         </div>
       </div>
