@@ -253,17 +253,14 @@ export default function PlansPage() {
                     </div>
 
                     {/* Today's reading */}
-                    <div className="p-3 rounded-xl border"
-                      style={todayDone
-                        ? { background: "rgba(34,197,94,0.08)", borderColor: "rgba(34,197,94,0.3)" }
-                        : { background: "var(--bg-secondary)", borderColor: "var(--border)" }}>
+                    <div className={`p-3 rounded-xl border ${todayDone ? "bg-green-500/8 border-green-500/30" : "bg-secondary border-border"}`}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           {todayDone
-                            ? <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(34,197,94,0.2)" }}>
+                            ? <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-green-500/20">
                                 <Check size={16} className="text-green-500" />
                               </div>
-                            : <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "var(--primary)/0.1" }}>
+                            : <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-primary/10">
                                 <BookOpen size={16} className="text-primary" />
                               </div>
                           }
@@ -283,7 +280,7 @@ export default function PlansPage() {
                             <Link
                               href={`/dashboard/bible?book=${dayReading.bookId}&chapter=${dayReading.chapter}`}
                               className="text-xs px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors"
-                              style={{ background: "var(--accent)"}}>
+                              className="bg-accent">
                               Read <ArrowRight size={11} />
                             </Link>
                           )}
@@ -363,12 +360,12 @@ export default function PlansPage() {
                     <button onClick={() => handleStartPlan({ name: plan.name, description: plan.description || "", duration: plan.duration, tags: plan.tags || [], id: plan.id })}
                       className="btn-ghost text-xs px-3 py-1.5">Start</button>
                     <button onClick={() => openEdit(plan)} className="p-2 rounded-lg transition-colors text-muted-foreground hover:text-foreground"
-                      style={{ background: "var(--bg-secondary)" }} title="Edit">
+                      className="bg-secondary" title="Edit">
                       <Pencil size={14} />
                     </button>
                     <button onClick={() => handleDeletePlan(plan.id, plan.name)} disabled={deleting === plan.id}
                       className="p-2 rounded-lg transition-colors text-red-400 hover:text-red-300"
-                      style={{ background: "rgba(239,68,68,0.1)" }} title="Delete">
+                      className="bg-destructive/10" title="Delete">
                       {deleting === plan.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                     </button>
                   </div>
@@ -392,7 +389,7 @@ export default function PlansPage() {
                   <div key={plan.name} className="card p-5">
                     <div className="flex items-start justify-between mb-3">
                       <div className="w-11 h-11 rounded-2xl flex items-center justify-center"
-                        style={{ background: "linear-gradient(135deg, rgba(29,78,216,0.15), oklch(from var(--primary) l c h / 0.12))" }}>
+                        className="bg-primary/8">
                         <BookOpen size={20} className="text-primary" />
                       </div>
                       <span className="badge-cobalt">{plan.duration} days</span>
@@ -401,7 +398,7 @@ export default function PlansPage() {
                     <p className="text-xs text-muted-foreground mb-3 leading-relaxed">{plan.description}</p>
                     <div className="flex flex-wrap gap-1.5 mb-4">
                       {plan.tags.map((tag) => (
-                        <span key={tag} className="text-xs px-2.5 py-1 rounded-full" style={{ background: "var(--bg-secondary)", color: "var(--text-muted)" }}>
+                        <span key={tag} className="text-xs px-2.5 py-1 rounded-full" className="bg-secondary text-muted-foreground">
                           {tag}
                         </span>
                       ))}

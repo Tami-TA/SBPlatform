@@ -81,8 +81,7 @@ export default function GroupsPage() {
       {/* Create Group Modal */}
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
-          <div className="w-full max-w-md rounded-2xl p-6 animate-slide-up"
-            style={{ background: "var(--bg-card)", border: "1px solid var(--border)" }}>
+          <div className="w-full max-w-md rounded-2xl p-6 animate-slide-up bg-card border border-border">
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg font-display font-bold text-foreground">Create a Study Group</h2>
               <button onClick={() => setShowCreate(false)}><X size={20} className="text-muted-foreground" /></button>
@@ -102,13 +101,11 @@ export default function GroupsPage() {
                 <label className="block text-sm font-medium text-muted-foreground mb-2">Visibility</label>
                 <div className="flex gap-3">
                   <button type="button" onClick={() => setNewGroup((g) => ({ ...g, isPublic: true }))}
-                    className={`flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium border transition-all ${newGroup.isPublic ? "" : "opacity-60"}`}
-                    style={newGroup.isPublic ? { background: "var(--primary)/0.1", borderColor: "oklch(from var(--primary) l c h / 0.12)", color: "var(--primary)" } : { borderColor: "var(--border)", color: "var(--text-secondary)" }}>
+                    className={`flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium border transition-all ${newGroup.isPublic ? "bg-primary/10 border-primary/30 text-primary" : "border-border text-muted-foreground opacity-60"}`}>
                     <Globe size={16} /> Public
                   </button>
                   <button type="button" onClick={() => setNewGroup((g) => ({ ...g, isPublic: false }))}
-                    className={`flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium border transition-all ${!newGroup.isPublic ? "" : "opacity-60"}`}
-                    style={!newGroup.isPublic ? { background: "rgba(139,0,0,0.15)", borderColor: "rgba(139,0,0,0.4)", color: "#e05050" } : { borderColor: "var(--border)", color: "var(--text-secondary)" }}>
+                    className={`flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium border transition-all ${!newGroup.isPublic ? "bg-secondary border-border text-foreground" : "border-border text-muted-foreground opacity-60"}`}>
                     <Lock size={16} /> Private
                   </button>
                 </div>
@@ -128,7 +125,7 @@ export default function GroupsPage() {
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-40 rounded-2xl animate-pulse" style={{ background: "var(--bg-card)" }} />
+            <div key={i} className="h-40 rounded-2xl animate-pulse bg-card" />
           ))}
         </div>
       ) : groups.length === 0 ? (

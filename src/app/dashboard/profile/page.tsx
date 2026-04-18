@@ -72,12 +72,12 @@ export default function ProfilePage() {
   }
 
   const STATS = [
-    { label: "Days Read", value: user.totalDaysRead, color: "var(--primary)" },
-    { label: "Current Streak", value: `${user.currentStreak}d`, color: "#f97316" },
-    { label: "Longest Streak", value: `${user.longestStreak}d`, color: "#a855f7" },
-    { label: "Friends", value: user.friendIds?.length || 0, color: "#22c55e" },
-    { label: "Groups", value: user.groupIds?.length || 0, color: "#0891b2" },
-    { label: "Badges", value: user.badges.length, color: "#eab308" },
+    { label: "Days Read", value: user.totalDaysRead },
+    { label: "Current Streak", value: `${user.currentStreak}d` },
+    { label: "Longest Streak", value: `${user.longestStreak}d` },
+    { label: "Friends", value: user.friendIds?.length || 0 },
+    { label: "Groups", value: user.groupIds?.length || 0 },
+    { label: "Badges", value: user.badges.length },
   ];
 
   const MILESTONES = [
@@ -91,20 +91,17 @@ export default function ProfilePage() {
     <div className="max-w-3xl mx-auto px-4 md:px-6 py-6 space-y-6">
       {/* Profile header */}
       <div className="card p-6 relative overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 h-20"
-          style={{ background: "linear-gradient(135deg, rgba(29,78,216,0.18) 0%, oklch(from var(--primary) l c h / 0.12) 100%)" }} />
+        <div className="absolute top-0 left-0 right-0 h-20 bg-primary/10" />
 
         <div className="relative flex flex-col md:flex-row items-start md:items-end gap-5 pt-4">
           {/* Avatar */}
           <div className="relative flex-shrink-0">
-            <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-bold text-gray-900 overflow-hidden"
-              style={{ background: "var(--primary)", boxShadow: "0 0 20px oklch(from var(--primary) l c h / 0.12)" }}>
+            <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-bold text-gray-900 overflow-hidden bg-primary">
               {user.photoURL
                 ? <img src={user.photoURL} alt={user.displayName} className="w-20 h-20 object-cover" />
                 : getInitials(user.displayName)}
             </div>
-            <button className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center text-gray-900 border-2 border-[var(--bg-card)]"
-              style={{ background: "var(--primary)" }}
+            <button className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center text-gray-900 border-2 border-card bg-primary"
               title="Change photo">
               <Camera size={12} />
             </button>
@@ -168,11 +165,10 @@ export default function ProfilePage() {
             const IconComp = STAT_ICONS[stat.label] || Star;
             return (
               <div key={stat.label} className="card p-3 text-center">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center mx-auto mb-2"
-                  style={{ background: `${stat.color}18` }}>
-                  <IconComp size={16} style={{ color: stat.color }} />
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center mx-auto mb-2 bg-primary/10">
+                  <IconComp size={16} className="text-primary" />
                 </div>
-                <p className="text-lg font-display font-bold" style={{ color: stat.color }}>{stat.value}</p>
+                <p className="text-lg font-display font-bold text-foreground">{stat.value}</p>
                 <p className="text-xs text-muted-foreground mt-0.5 leading-tight">{stat.label}</p>
               </div>
             );
@@ -194,13 +190,8 @@ export default function ProfilePage() {
             const IconComp = MILESTONE_ICONS[milestone.streak] || Star;
             return (
               <div key={milestone.streak}
-                className={`p-4 rounded-xl flex items-center gap-4 transition-all ${earned ? "" : "opacity-70"}`}
-                style={{
-                  background: earned ? "oklch(from var(--primary) l c h / 0.12)" : "var(--bg-secondary)",
-                  border: earned ? "1px solid oklch(from var(--primary) l c h / 0.12)" : "1px solid transparent",
-                }}>
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: earned ? "oklch(from var(--primary) l c h / 0.12)" : "var(--border)" }}>
+                className={`p-4 rounded-xl flex items-center gap-4 transition-all border ${earned ? "bg-primary/8 border-primary/20" : "bg-secondary border-transparent opacity-70"}`}>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${earned ? "bg-primary/10" : "bg-border"}`}>
                   <IconComp size={18} className={earned ? "text-primary" : "text-muted-foreground"} />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -217,8 +208,7 @@ export default function ProfilePage() {
                 </div>
                 <div className="flex-shrink-0">
                   {earned ? (
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center"
-                      style={{ background: "var(--primary)/0.1" }}>
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center bg-primary/10">
                       <Check size={14} className="text-primary" />
                     </div>
                   ) : (
@@ -243,11 +233,9 @@ export default function ProfilePage() {
               const IconComp = BADGE_ICONS[badge.id] || Trophy;
               return (
                 <div key={badge.id}
-                  className="flex flex-col items-center gap-2 p-3 rounded-xl text-center hover:opacity-80 transition-all"
-                  style={{ background: "var(--bg-secondary)" }}
+                  className="flex flex-col items-center gap-2 p-3 rounded-xl text-center bg-secondary hover:opacity-80 transition-all"
                   title={badge.description}>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                    style={{ background: "var(--accent)"}}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-primary/10">
                     <IconComp size={18} className="text-primary" />
                   </div>
                   <span className="text-xs font-medium text-muted-foreground leading-tight">{badge.name}</span>
@@ -283,7 +271,7 @@ export default function ProfilePage() {
             )}
           </div>
 
-          <div className="h-px" style={{ background: "var(--border)" }} />
+          <div className="h-px bg-border" />
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -297,13 +285,12 @@ export default function ProfilePage() {
             </div>
             <button
               onClick={() => { if (editing) setForm((f) => ({ ...f, notificationsEnabled: !f.notificationsEnabled })); }}
-              className={`relative w-11 h-6 rounded-full transition-all ${(editing ? form.notificationsEnabled : user.notificationsEnabled) ? "" : "bg-gray-600"}`}
-              style={(editing ? form.notificationsEnabled : user.notificationsEnabled) ? { background: "linear-gradient(90deg, var(--primary), var(--primary))" } : {}}>
+              className={`relative w-11 h-6 rounded-full transition-all ${(editing ? form.notificationsEnabled : user.notificationsEnabled) ? "bg-primary" : "bg-muted-foreground/30"}`}>
               <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${(editing ? form.notificationsEnabled : user.notificationsEnabled) ? "translate-x-5" : "translate-x-0.5"}`} />
             </button>
           </div>
 
-          <div className="h-px" style={{ background: "var(--border)" }} />
+          <div className="h-px bg-border" />
 
           <div className="flex items-center justify-between py-1">
             <div>

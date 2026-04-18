@@ -139,7 +139,7 @@ export default function FriendsPage() {
           {loadingFriends ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-16 rounded-xl animate-pulse" style={{ background: "var(--bg-card)" }} />
+                <div key={i} className="h-16 rounded-xl animate-pulse bg-card" />
               ))}
             </div>
           ) : friends.length === 0 ? (
@@ -209,8 +209,7 @@ export default function FriendsPage() {
                   </div>
                   <div className="flex gap-2">
                     <button onClick={() => handleDecline(req)}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-red-400 transition-colors"
-                      style={{ background: "var(--bg-secondary)" }}>
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-red-400 transition-colors bg-secondary">
                       <X size={16} />
                     </button>
                     <button onClick={() => handleAccept(req)}

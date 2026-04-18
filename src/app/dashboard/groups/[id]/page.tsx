@@ -75,7 +75,7 @@ export default function GroupDetailPage() {
   return (
     <div className="h-full flex flex-col max-h-screen">
       {/* Group header */}
-      <div className="flex items-center gap-4 px-5 py-4 border-b border-border" style={{ background: "var(--bg-card)" }}>
+      <div className="flex items-center gap-4 px-5 py-4 border-b border-border bg-card">
         <Link href="/dashboard/groups" className="text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft size={20} />
         </Link>
@@ -158,11 +158,10 @@ export default function GroupDetailPage() {
             </div>
 
             {/* Message input */}
-            <form onSubmit={handleSend} className="flex items-center gap-3 p-4 border-t border-border"
-              style={{ background: "var(--bg-card)" }}>
+            <form onSubmit={handleSend} className="flex items-center gap-3 p-4 border-t border-border bg-card">
               <div className="flex gap-2 flex-shrink-0">
-                <button type="button" className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground"
-                  style={{ background: "var(--bg-secondary)" }} title="Share verse">
+                <button type="button" className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground bg-secondary"
+                  title="Share verse">
                   <BookOpen size={15} />
                 </button>
               </div>
@@ -221,24 +220,11 @@ export default function GroupDetailPage() {
             ) : (
               <div className="space-y-3">
                 {annotations.map((ann) => {
-                  const typeColors: Record<string, string> = {
-                    note: "rgba(96,165,250,0.15)",
-                    question: "rgba(251,146,60,0.15)",
-                    insight: "oklch(from var(--primary) l c h / 0.12)",
-                    prayer: "rgba(167,139,250,0.15)",
-                  };
-                  const typeBorders: Record<string, string> = {
-                    note: "rgba(96,165,250,0.4)",
-                    question: "rgba(251,146,60,0.4)",
-                    insight: "oklch(from var(--primary) l c h / 0.12)",
-                    prayer: "rgba(167,139,250,0.4)",
-                  };
                   return (
                     <div key={ann.id} className="card p-4">
                       <div className="flex items-start justify-between gap-3 mb-2">
                         <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-gray-900 flex-shrink-0"
-                            style={{ background: "var(--primary)" }}>
+                          <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-gray-900 flex-shrink-0 bg-primary">
                             {getInitials(ann.username)}
                           </div>
                           <div>
@@ -248,15 +234,13 @@ export default function GroupDetailPage() {
                             </span>
                           </div>
                         </div>
-                        <span className="text-xs px-2.5 py-1 rounded-full capitalize flex-shrink-0"
-                          style={{ background: typeColors[ann.type] || "var(--bg-secondary)", border: `1px solid ${typeBorders[ann.type] || "var(--border)"}`, color: "var(--text-secondary)" }}>
+                        <span className="text-xs px-2.5 py-1 rounded-full capitalize flex-shrink-0 bg-secondary text-muted-foreground border border-border">
                           {ann.type}
                         </span>
                       </div>
 
                       <Link href={`/dashboard/bible?book=${ann.verseRef.bookId}&chapter=${ann.verseRef.chapter}`}
-                        className="text-xs font-semibold mb-2 block hover:underline"
-                        className="text-primary">
+                        className="text-xs font-semibold mb-2 block hover:underline text-primary">
                         {ann.verseRef.bookName} {ann.verseRef.chapter}:{ann.verseRef.verse}
                       </Link>
 
@@ -283,7 +267,7 @@ export default function GroupDetailPage() {
             </h3>
             <div className="space-y-2">
               {group.memberIds.map((uid, i) => (
-                <div key={uid} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: "var(--bg-secondary)" }}>
+                <div key={uid} className="flex items-center gap-3 p-3 rounded-xl bg-secondary">
                   <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-gray-900"
                     style={{ background: "var(--primary)" }}>
                     {String.fromCharCode(65 + i)}
