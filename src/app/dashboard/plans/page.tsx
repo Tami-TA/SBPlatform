@@ -457,10 +457,7 @@ export default function PlansPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <h4 className="font-semibold text-foreground truncate">{plan.name}</h4>
-                      <span className="flex-shrink-0 text-xs px-2 py-0.5 rounded-full flex items-center gap-1"
-                        style={plan.isPublic
-                          ? { background: "rgba(34,197,94,0.1)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.3)" }
-                          : { background: "var(--bg-secondary)", color: "var(--text-muted)", border: "1px solid var(--border)" }}>
+                      <span className={`flex-shrink-0 text-xs px-2 py-0.5 rounded-full flex items-center gap-1 border ${plan.isPublic ? "bg-green-500/10 text-green-600 border-green-500/30" : "bg-secondary text-muted-foreground border-border"}`}>
                         {plan.isPublic ? <Globe size={10} /> : <Lock size={10} />}
                         {plan.isPublic ? "Public" : "Private"}
                       </span>
