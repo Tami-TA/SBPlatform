@@ -1,8 +1,21 @@
 import type { Metadata } from "next";
+import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
+
+const fontSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
+
+const fontMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Scripture — Bible Study Tracker",
@@ -23,7 +36,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body>
+      <body className={`${fontSans.variable} ${fontMono.variable} antialiased`}>
         <ThemeProvider>
           <AuthProvider>
             {children}
@@ -36,7 +49,7 @@ export default function RootLayout({
                   color: "var(--text-primary)",
                   border: "1px solid var(--border)",
                   borderRadius: "0.75rem",
-                  fontFamily: "Inter, sans-serif",
+                  fontFamily: "var(--font-sans), system-ui, sans-serif",
                   fontSize: "0.875rem",
                 },
                 success: {
