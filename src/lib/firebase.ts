@@ -46,8 +46,12 @@ function getInlinedConfig(): FirebaseConfig | null {
 
 async function getConfig(): Promise<FirebaseConfig> {
   const inlined = getInlinedConfig();
-  if (inlined) return inlined;
+  if (inlined) {
+    console.log("[Firebase] using inlined NEXT_PUBLIC_ config, apiKey prefix:", inlined.apiKey.slice(0, 8));
+    return inlined;
+  }
 
+  console.warn("[Firebase] NEXT_PUBLIC_ vars missing — fetching config from /api/config");
   // Fallback: fetch from the server-side /api/config endpoint.
   // The server reads process.env at request time so it always has current values.
   if (!_fetchPromise) {
@@ -60,7 +64,12 @@ async function getConfig(): Promise<FirebaseConfig> {
         }
         return res.json() as Promise<FirebaseConfig>;
       })
+      .then((cfg) => {
+        console.log("[Firebase] /api/config OK, apiKey prefix:", cfg.apiKey.slice(0, 8));
+        return cfg;
+      })
       .catch((err) => {
+        console.error("[Firebase] /api/config fetch failed:", err);
         _fetchPromise = null;
         throw err;
       });
