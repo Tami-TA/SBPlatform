@@ -48,41 +48,14 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const { auth, googleProvider } = await import("@/lib/firebase");
-      const { signInWithPopup } = await import("firebase/auth");
-      const { getUserProfile } = await import("@/lib/firestore");
-      const cred = await signInWithPopup(auth, googleProvider);
-      setFirebaseUser(cred.user);
-      let profile = null;
-      try { profile = await getUserProfile(cred.user.uid); } catch { /* handled below */ }
-      if (profile) {
-        setUser(profile);
-        toast.success("Signed in with Google!");
-        router.replace("/dashboard");
-      } else {
-        // No profile yet — send to setup
-        router.replace("/auth/setup");
-      }
+      const { signInWithRedirect } = await import("firebase/auth");
+      await signInWithRedirect(auth, googleProvider);
+      // Page redirects to Google — AuthProvider handles the result on return
     } catch (err: unknown) {
       const code = (err as { code?: string }).code ?? "";
       const msg = err instanceof Error ? err.message : String(err);
       console.error("Google login error — code:", code || "(none)", "| message:", msg, err);
-      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
-        // user dismissed — silent
-      } else if (code === "auth/popup-blocked") {
-        toast.error("Popup was blocked — allow popups and try again");
-      } else if (code === "auth/unauthorized-domain") {
-        const domain = typeof window !== "undefined" ? window.location.hostname : "unknown";
-        toast.error(`Domain "${domain}" not authorized — add it in Firebase console → Authentication → Settings → Authorized domains`);
-      } else if (code === "auth/operation-not-allowed") {
-        toast.error("Google sign-in isn't enabled — enable it in Firebase console → Authentication → Sign-in method");
-      } else if (code === "auth/invalid-api-key") {
-        toast.error("Firebase API key invalid — check .env.local and restart the dev server");
-      } else if (code) {
-        toast.error(`Google sign-in failed (${code})`);
-      } else {
-        toast.error(`Sign-in error: ${msg.slice(0, 120)}`);
-      }
-    } finally {
+      toast.error(`Sign-in error: ${msg.slice(0, 100)}`);
       setLoading(false);
     }
   }
