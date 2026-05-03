@@ -6,19 +6,20 @@ import { BookOpen, User, AtSign } from "lucide-react";
 import toast from "react-hot-toast";
 
 export default function SetupPage() {
-  const { firebaseUser, setUser } = useAuthStore();
+  const { firebaseUser, setUser, loading: authLoading } = useAuthStore();
   const router = useRouter();
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (authLoading) return; // wait for auth to initialize
     if (!firebaseUser) {
       router.replace("/auth/signup");
       return;
     }
     setDisplayName(firebaseUser.displayName || "");
-  }, [firebaseUser, router]);
+  }, [firebaseUser, authLoading, router]);
 
   function handleUsernameChange(val: string) {
     setUsername(val.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 20));
