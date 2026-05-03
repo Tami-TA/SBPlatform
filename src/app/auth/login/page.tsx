@@ -68,9 +68,19 @@ export default function LoginPage() {
       toast.success("Signed in with Google!");
       router.replace("/dashboard");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "";
-      if (!msg.includes("popup-closed-by-user") && !msg.includes("cancelled-popup-request")) {
-        toast.error("Google sign-in failed");
+      const code = (err as { code?: string }).code ?? "";
+      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
+        // user dismissed — silent
+      } else if (code === "auth/popup-blocked") {
+        toast.error("Popup was blocked — allow popups and try again");
+      } else if (code === "auth/unauthorized-domain") {
+        toast.error("This domain isn't authorized for Google sign-in. Check Firebase console.");
+        console.error("Google login error:", err);
+      } else if (code === "auth/operation-not-allowed") {
+        toast.error("Google sign-in isn't enabled. Enable it in Firebase console.");
+        console.error("Google login error:", err);
+      } else {
+        toast.error(`Google sign-in failed${code ? ` (${code})` : ""}`);
         console.error("Google login error:", err);
       }
     } finally {
@@ -101,9 +111,13 @@ export default function LoginPage() {
       toast.success("Signed in with Apple!");
       router.replace("/dashboard");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "";
-      if (!msg.includes("popup-closed-by-user") && !msg.includes("cancelled-popup-request")) {
-        toast.error("Apple sign-in failed");
+      const code = (err as { code?: string }).code ?? "";
+      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
+        // user dismissed — silent
+      } else if (code === "auth/popup-blocked") {
+        toast.error("Popup was blocked — allow popups and try again");
+      } else {
+        toast.error(`Apple sign-in failed${code ? ` (${code})` : ""}`);
         console.error("Apple login error:", err);
       }
     } finally {

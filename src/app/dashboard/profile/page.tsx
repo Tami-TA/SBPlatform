@@ -1,14 +1,17 @@
 "use client";
 import { useState } from "react";
 import { useAuthStore } from "@/store/auth-store";
+import { useThemeStore } from "@/store/theme-store";
 import { updateUserProfile } from "@/lib/firestore";
 import { getInitials, getStreakLevel } from "@/lib/utils";
 import { TRANSLATIONS } from "@/lib/bible-data";
+import { THEMES } from "@/lib/themes";
 import type { BibleTranslation } from "@/types";
+import type { ThemeId } from "@/lib/themes";
 import {
   Edit2, Save, X, Flame, Star, Trophy, BookOpen,
   Bell, BellOff, ChevronRight, Shield, Check, Camera,
-  Users, BookMarked, Zap, Award, ListChecks,
+  Users, BookMarked, Zap, Award, ListChecks, Palette,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -38,6 +41,7 @@ const BADGE_ICONS: Record<string, React.ElementType> = {
 
 export default function ProfilePage() {
   const { user, setUser } = useAuthStore();
+  const { theme: activeTheme, setTheme } = useThemeStore();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
     displayName: user?.displayName || "",
@@ -71,6 +75,17 @@ export default function ProfilePage() {
     }
   }
 
+  async function handleThemeChange(themeId: ThemeId) {
+    setTheme(themeId);
+    if (!user) return;
+    try {
+      await updateUserProfile(user.uid, { theme: themeId });
+      setUser({ ...user, theme: themeId });
+    } catch {
+      // Theme is already applied locally; Firestore sync failure is non-critical
+    }
+  }
+
   const STATS = [
     { label: "Days Read", value: user.totalDaysRead },
     { label: "Current Streak", value: `${user.currentStreak}d` },
@@ -87,8 +102,12 @@ export default function ProfilePage() {
     { streak: 365, name: "Year of Faith", desc: "Read for 365 consecutive days" },
   ];
 
+  const lightThemes = THEMES.filter((t) => !t.isDark);
+  const darkThemes  = THEMES.filter((t) =>  t.isDark);
+
   return (
     <div className="max-w-3xl mx-auto px-4 md:px-6 py-6 space-y-6">
+
       {/* Profile header */}
       <div className="card p-6 relative overflow-hidden">
         <div className="absolute top-0 left-0 right-0 h-20 bg-primary/10" />
@@ -151,7 +170,7 @@ export default function ProfilePage() {
               className="input-field resize-none text-sm w-full" />
           ) : (
             <p className="text-sm text-muted-foreground leading-relaxed">
-              {user.bio || <span className="text-muted-foreground italic">No bio yet — add one to let friends know about you.</span>}
+              {user.bio || <span className="italic">No bio yet — add one to let friends know about you.</span>}
             </p>
           )}
         </div>
@@ -197,7 +216,7 @@ export default function ProfilePage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
                     <span className="font-semibold text-sm text-foreground">{milestone.name}</span>
-                    {earned && <span className="badge-cobalt text-xs">Earned</span>}
+                    {earned && <span className="badge-accent text-xs">Earned</span>}
                   </div>
                   <p className="text-xs text-muted-foreground">{milestone.desc}</p>
                   {!earned && (
@@ -246,6 +265,31 @@ export default function ProfilePage() {
         </div>
       )}
 
+      {/* ── Appearance ──────────────────────────────────────────────────────── */}
+      <div className="card p-5">
+        <h2 className="text-sm font-semibold text-foreground mb-1 flex items-center gap-2">
+          <Palette size={15} className="text-primary" />
+          Appearance
+        </h2>
+        <p className="text-xs text-muted-foreground mb-5">Choose a theme for the app. Changes apply instantly.</p>
+
+        {/* Light themes */}
+        <p style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--ink-4)", fontWeight: 500, marginBottom: 10 }}>Light</p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 20 }}>
+          {lightThemes.map((t) => (
+            <ThemeCard key={t.id} theme={t} active={activeTheme === t.id} onSelect={handleThemeChange} />
+          ))}
+        </div>
+
+        {/* Dark themes */}
+        <p style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--ink-4)", fontWeight: 500, marginBottom: 10 }}>Dark</p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
+          {darkThemes.map((t) => (
+            <ThemeCard key={t.id} theme={t} active={activeTheme === t.id} onSelect={handleThemeChange} />
+          ))}
+        </div>
+      </div>
+
       {/* Preferences */}
       <div className="card p-5">
         <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
@@ -267,7 +311,7 @@ export default function ProfilePage() {
                 ))}
               </select>
             ) : (
-              <span className="badge-cobalt">{user.preferredTranslation}</span>
+              <span className="badge-accent">{user.preferredTranslation}</span>
             )}
           </div>
 
@@ -302,5 +346,89 @@ export default function ProfilePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// ── Theme card swatch ─────────────────────────────────────────────────────────
+
+interface ThemeCardProps {
+  theme: (typeof THEMES)[number];
+  active: boolean;
+  onSelect: (id: ThemeId) => void;
+}
+
+function ThemeCard({ theme, active, onSelect }: ThemeCardProps) {
+  const [bg, sidebar, accent] = theme.preview;
+
+  return (
+    <button
+      onClick={() => onSelect(theme.id)}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 6,
+        padding: 0,
+        background: "none",
+        border: "none",
+        cursor: "pointer",
+        outline: "none",
+        textAlign: "left",
+      }}
+    >
+      {/* Color preview */}
+      <div style={{
+        borderRadius: 8,
+        overflow: "hidden",
+        height: 52,
+        display: "flex",
+        border: active
+          ? "2px solid var(--accent-btn)"
+          : "2px solid var(--hairline)",
+        transition: "border-color 120ms",
+        boxShadow: active ? "0 0 0 3px var(--accent-soft)" : "none",
+      }}>
+        {/* Sidebar strip */}
+        <div style={{ width: "28%", background: sidebar, flexShrink: 0 }} />
+        {/* Main content area */}
+        <div style={{
+          flex: 1,
+          background: bg,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "flex-end",
+          padding: "5px 6px",
+          gap: 3,
+        }}>
+          {/* Mock card line */}
+          <div style={{ height: 4, borderRadius: 2, background: accent, width: "70%", opacity: 0.9 }} />
+          <div style={{ height: 3, borderRadius: 2, background: accent, width: "45%", opacity: 0.4 }} />
+        </div>
+      </div>
+
+      {/* Label */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingLeft: 1 }}>
+        <span style={{
+          fontSize: 11.5,
+          fontWeight: active ? 500 : 400,
+          color: active ? "var(--ink-1)" : "var(--ink-3)",
+          fontFamily: "var(--font-ui)",
+          transition: "color 120ms",
+        }}>
+          {theme.name}
+        </span>
+        {active && (
+          <div style={{
+            width: 14, height: 14,
+            borderRadius: "50%",
+            background: "var(--accent-btn)",
+            display: "grid",
+            placeItems: "center",
+            flexShrink: 0,
+          }}>
+            <Check size={9} color="white" />
+          </div>
+        )}
+      </div>
+    </button>
   );
 }

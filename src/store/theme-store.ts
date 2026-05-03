@@ -1,18 +1,16 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { ThemeId } from "@/lib/themes";
 
 interface ThemeState {
-  theme: "light" | "dark";
-  toggleTheme: () => void;
-  setTheme: (theme: "light" | "dark") => void;
+  theme: ThemeId;
+  setTheme: (theme: ThemeId) => void;
 }
 
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set) => ({
-      theme: "dark",
-      toggleTheme: () =>
-        set((state) => ({ theme: state.theme === "dark" ? "light" : "dark" })),
+      theme: "dark" as ThemeId,
       setTheme: (theme) => set({ theme }),
     }),
     { name: "sb-theme" }

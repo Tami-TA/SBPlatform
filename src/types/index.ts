@@ -17,6 +17,7 @@ export interface User {
   notificationsEnabled: boolean;
   dailyReminderTime?: string;
   interests?: string[];
+  theme?: string;
 }
 
 export interface Badge {
