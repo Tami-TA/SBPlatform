@@ -65,23 +65,18 @@ export default function SignupPage() {
     try {
       const { auth, googleProvider } = await import("@/lib/firebase");
       const { signInWithPopup } = await import("firebase/auth");
-      const { getUserProfile, createUserProfile } = await import("@/lib/firestore");
-      const { generateUsername } = await import("@/lib/utils");
+      const { getUserProfile } = await import("@/lib/firestore");
       const cred = await signInWithPopup(auth, googleProvider);
       setFirebaseUser(cred.user);
-      let profile = await getUserProfile(cred.user.uid);
-      if (!profile) {
-        const uname = generateUsername(cred.user.displayName || "user");
-        await createUserProfile(cred.user.uid, {
-          email: cred.user.email || "", username: uname,
-          displayName: cred.user.displayName || "Bible Reader",
-          photoURL: cred.user.photoURL || undefined,
-        });
-        profile = await getUserProfile(cred.user.uid);
+      let profile = null;
+      try { profile = await getUserProfile(cred.user.uid); } catch { /* handled below */ }
+      if (profile) {
+        setUser(profile);
+        router.replace("/dashboard");
+      } else {
+        // New user — collect username on the setup page
+        router.replace("/auth/setup");
       }
-      setUser(profile);
-      toast.success("Account created with Google!");
-      router.replace("/dashboard");
     } catch (err: unknown) {
       const code = (err as { code?: string }).code ?? "";
       const msg = err instanceof Error ? err.message : String(err);
