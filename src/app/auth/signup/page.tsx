@@ -91,7 +91,8 @@ export default function SignupPage() {
       } else if (code === "auth/popup-blocked") {
         toast.error("Popup was blocked — allow popups and try again");
       } else if (code === "auth/unauthorized-domain") {
-        toast.error("Domain not authorized — add localhost to Firebase console → Authentication → Settings → Authorized domains");
+        const domain = typeof window !== "undefined" ? window.location.hostname : "unknown";
+        toast.error(`Domain "${domain}" not authorized — add it in Firebase console → Authentication → Settings → Authorized domains`);
       } else if (code === "auth/operation-not-allowed") {
         toast.error("Google sign-in isn't enabled — enable it in Firebase console → Authentication → Sign-in method");
       } else if (code === "auth/invalid-api-key") {
