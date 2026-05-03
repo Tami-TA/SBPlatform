@@ -45,3 +45,5 @@ next-env.d.ts
 /data/*.sqlite
 /data/*.sqlite3
 
+.env.local
+.env*.local
