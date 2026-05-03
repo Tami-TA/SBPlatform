@@ -1,13 +1,22 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
+import { Inter_Tight, Newsreader, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 
-const fontSans = Plus_Jakarta_Sans({
+const fontSans = Inter_Tight({
   subsets: ["latin"],
-  variable: "--font-plus-jakarta",
+  weight: ["400", "500", "600"],
+  variable: "--font-inter-tight",
+  display: "swap",
+});
+
+const fontSerif = Newsreader({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600"],
+  style: ["normal", "italic"],
+  variable: "--font-newsreader",
   display: "swap",
 });
 
@@ -36,7 +45,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${fontSans.variable} ${fontMono.variable} antialiased`}>
+      <body className={`${fontSans.variable} ${fontSerif.variable} ${fontMono.variable} antialiased`}>
         <ThemeProvider>
           <AuthProvider>
             {children}

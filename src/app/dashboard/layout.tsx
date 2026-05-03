@@ -3,29 +3,124 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore } from "@/store/auth-store";
-import { useThemeStore } from "@/store/theme-store";
 import { useAuth } from "@/hooks/useAuth";
 import { getUserNotifications } from "@/lib/firestore";
 import { getInitials } from "@/lib/utils";
 import type { Notification } from "@/types";
-import {
-  BookOpen, LayoutDashboard, Users, UserPlus, ListChecks,
-  Sun, Moon, Bell, Menu, X, LogOut, ChevronRight, Layers,
-  Flame, Settings, ChevronDown, UserCircle,
-} from "lucide-react";
+
+// ── Icons (stroke-only, 1.6pt) ──────────────────────────────────────────────
+
+function IcoDashboard({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
+      <rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/>
+      <rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>
+    </svg>
+  );
+}
+function IcoBible({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
+      <path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5a1.5 1.5 0 0 0 0 3H19"/><path d="M19 18v3"/>
+    </svg>
+  );
+}
+function IcoPlans({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
+      <rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/>
+    </svg>
+  );
+}
+function IcoGroups({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
+      <circle cx="9" cy="9" r="3"/><circle cx="17" cy="10" r="2.3"/>
+      <path d="M3 19c0-2.8 2.7-5 6-5s6 2.2 6 5M15 19c0-2 1.6-3.6 4-3.6"/>
+    </svg>
+  );
+}
+function IcoFriends({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
+      <path d="M16 11c1.66 0 3-1.34 3-3s-1.34-3-3-3"/><path d="M19 16c1.5.5 3 1.5 3 3v1"/>
+      <circle cx="9" cy="8" r="3"/><path d="M3 20v-1c0-2.2 2.7-4 6-4s6 1.8 6 4v1"/>
+    </svg>
+  );
+}
+function IcoContext({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
+      <path d="M12 3l8 4v6c0 4-3.3 7-8 8-4.7-1-8-4-8-8V7z"/>
+    </svg>
+  );
+}
+function IcoSettings({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 14.5a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.9 2.9l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.9-2.9l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.9-2.9l.1.1a1.7 1.7 0 0 0 1.9.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.9 2.9l-.1.1a1.7 1.7 0 0 0-.3 1.9v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>
+    </svg>
+  );
+}
+function IcoSearch({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="14" height="14">
+      <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
+    </svg>
+  );
+}
+function IcoBell({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
+      <path d="M6 8a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 19a2 2 0 0 0 4 0"/>
+    </svg>
+  );
+}
+function IcoFlame({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="11" height="11">
+      <path d="M12 3s4 4 4 8a4 4 0 0 1-8 0c0-1 .5-2 1-2.5C9 11 8 13 8 14a4 4 0 0 0 8 0"/>
+    </svg>
+  );
+}
+function IcoMenu({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
+      <path d="M4 6h16M4 12h16M4 18h16"/>
+    </svg>
+  );
+}
+function IcoX({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="14" height="14">
+      <path d="M18 6 6 18M6 6l12 12"/>
+    </svg>
+  );
+}
+function IcoLogout({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="14" height="14">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+    </svg>
+  );
+}
+
+// ── Nav config ────────────────────────────────────────────────────────────────
 
 const NAV_ITEMS = [
-  { href: "/dashboard",         label: "Dashboard",   icon: LayoutDashboard, exact: true },
-  { href: "/dashboard/bible",   label: "Bible",        icon: BookOpen },
-  { href: "/dashboard/context", label: "Context",      icon: Layers },
-  { href: "/dashboard/groups",  label: "Groups",       icon: Users },
-  { href: "/dashboard/friends", label: "Friends",      icon: UserPlus },
-  { href: "/dashboard/plans",   label: "Reading Plans",icon: ListChecks },
+  { href: "/dashboard",          label: "Dashboard",    Icon: IcoDashboard,  exact: true },
+  { href: "/dashboard/bible",    label: "Bible",         Icon: IcoBible },
+  { href: "/dashboard/plans",    label: "Study Plans",   Icon: IcoPlans },
+  { href: "/dashboard/groups",   label: "Groups",        Icon: IcoGroups },
+  { href: "/dashboard/friends",  label: "Friends",       Icon: IcoFriends },
+  { href: "/dashboard/context",  label: "Context",       Icon: IcoContext },
 ];
+
+// ── Layout ────────────────────────────────────────────────────────────────────
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, loading, signOut } = useAuth();
-  const { theme, toggleTheme } = useThemeStore();
   const router   = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -55,10 +150,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 rounded-lg mx-auto mb-3 animate-pulse bg-primary/20" />
-          <p className="text-muted-foreground text-sm">Loading…</p>
+      <div style={{ minHeight: "100vh", background: "var(--paper)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ width: 28, height: 28, borderRadius: 6, background: "var(--ink-1)", margin: "0 auto 12px", fontFamily: "var(--font-serif)", fontStyle: "italic", color: "var(--paper)", display: "grid", placeItems: "center", fontSize: 16, fontWeight: 500 }}>α</div>
+          <p style={{ fontSize: 13, color: "var(--ink-3)" }}>Loading…</p>
         </div>
       </div>
     );
@@ -78,199 +173,234 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
-  const currentPage = NAV_ITEMS.find(n => isActive(n.href, n.exact))?.label ?? "Profile";
+  const initials = getInitials(user.displayName);
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div style={{ display: "flex", minHeight: "100vh", background: "var(--paper)" }}>
+
       {/* Mobile overlay */}
       {sidebarOpen && (
-        <div className="fixed inset-0 z-40 bg-black/40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        <div
+          style={{ position: "fixed", inset: 0, zIndex: 40, background: "oklch(0% 0 0 / 0.4)" }}
+          className="lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
       )}
 
       {/* ── Sidebar ── */}
-      <aside className={`
-        fixed top-0 left-0 h-full z-50 w-56 flex flex-col
-        border-r border-sidebar-border bg-sidebar
-        transition-transform duration-200
-        lg:translate-x-0 lg:static lg:z-auto
-        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-      `}>
-        {/* Logo */}
-        <div className="flex items-center justify-between px-4 h-14 border-b border-sidebar-border flex-shrink-0">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center flex-shrink-0">
-              <BookOpen size={14} className="text-primary-foreground" />
-            </div>
-            <span className="text-sm font-semibold text-sidebar-foreground tracking-tight">Scripture</span>
-          </Link>
-          <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-muted-foreground hover:text-foreground p-1">
-            <X size={16} />
+      <aside style={{
+        width: 220,
+        borderRight: "1px solid var(--hairline)",
+        background: "var(--paper-2)",
+        display: "flex",
+        flexDirection: "column",
+        padding: "18px 14px",
+        gap: 2,
+        flexShrink: 0,
+        position: "sticky",
+        top: 0,
+        height: "100vh",
+        overflowY: "auto",
+      }} className={`fixed top-0 left-0 z-50 lg:static lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:flex transition-transform duration-200`}>
+
+        {/* Brand */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 8px 18px 8px" }}>
+          <div style={{
+            width: 22, height: 22, borderRadius: 5,
+            background: "var(--ink-1)", color: "var(--paper)",
+            fontFamily: "var(--font-serif)", fontStyle: "italic", fontWeight: 500, fontSize: 14,
+            display: "grid", placeItems: "center", letterSpacing: "-0.02em", flexShrink: 0,
+          }}>α</div>
+          <span style={{ fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.01em", color: "var(--ink-1)" }}>Lectio</span>
+          <button onClick={() => setSidebarOpen(false)} className="lg:hidden ml-auto" style={{ color: "var(--ink-3)", background: "none", border: "none", cursor: "pointer", padding: 2 }}>
+            <IcoX />
           </button>
         </div>
 
-        {/* Nav */}
-        <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
-          {NAV_ITEMS.map(item => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setSidebarOpen(false)}
-              className={`nav-item ${isActive(item.href, item.exact) ? "active" : ""}`}
-            >
-              <item.icon size={16} strokeWidth={1.75} />
-              <span>{item.label}</span>
-              {isActive(item.href, item.exact) && (
-                <ChevronRight size={12} className="ml-auto opacity-40" />
-              )}
-            </Link>
-          ))}
-        </nav>
-
-        {/* Profile section */}
-        <div className="border-t border-sidebar-border p-3 space-y-1 flex-shrink-0">
-          <div ref={profileRef} className="relative">
-            <button
-              onClick={() => setProfileOpen(!profileOpen)}
-              className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md hover:bg-sidebar-accent transition-colors"
-            >
-              <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-semibold text-primary-foreground bg-primary overflow-hidden">
-                {user.photoURL
-                  ? <img src={user.photoURL} alt={user.displayName} className="w-7 h-7 rounded-full object-cover" />
-                  : getInitials(user.displayName)}
-              </div>
-              <div className="flex-1 min-w-0 text-left">
-                <p className="text-xs font-semibold text-sidebar-foreground truncate">{user.displayName}</p>
-                <p className="text-[11px] text-muted-foreground truncate">@{user.username}</p>
-              </div>
-              <ChevronDown size={12} className="text-muted-foreground flex-shrink-0" />
-            </button>
-
-            {profileOpen && (
-              <div className="absolute bottom-full left-0 right-0 mb-1 rounded-lg border border-border bg-popover shadow-md z-50 py-1 overflow-hidden">
-                <Link href="/dashboard/profile" onClick={() => setProfileOpen(false)}
-                  className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
-                  <UserCircle size={14} strokeWidth={1.75} /> View Profile
-                </Link>
-                <Link href="/dashboard/profile" onClick={() => setProfileOpen(false)}
-                  className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
-                  <Settings size={14} strokeWidth={1.75} /> Settings
-                </Link>
-                <div className="h-px my-1 bg-border" />
-                <button
-                  onClick={handleSignOut}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-accent transition-colors"
-                >
-                  <LogOut size={14} strokeWidth={1.75} /> Sign Out
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Theme toggle */}
-          <button
-            onClick={toggleTheme}
-            className="w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+        {/* Study section */}
+        <div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--ink-4)", padding: "14px 8px 6px", fontWeight: 500 }}>Study</div>
+        {NAV_ITEMS.map(({ href, label, Icon, exact }) => (
+          <Link
+            key={href}
+            href={href}
+            onClick={() => setSidebarOpen(false)}
+            className={`nav-item ${isActive(href, exact) ? "active" : ""}`}
           >
-            {theme === "dark" ? <Moon size={14} strokeWidth={1.75} /> : <Sun size={14} strokeWidth={1.75} />}
-            <span className="text-xs">{theme === "dark" ? "Dark" : "Light"}</span>
-            <span className={`ml-auto toggle-track ${theme !== "dark" ? "on" : ""}`} aria-hidden>
-              <span className="toggle-thumb" />
-            </span>
-          </button>
+            <Icon />
+            <span>{label}</span>
+          </Link>
+        ))}
+
+        {/* Personal section */}
+        <div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--ink-4)", padding: "14px 8px 6px", fontWeight: 500 }}>Personal</div>
+        <Link href="/dashboard/profile" onClick={() => setSidebarOpen(false)}
+          className={`nav-item ${pathname.startsWith("/dashboard/profile") ? "active" : ""}`}>
+          <IcoSettings />
+          <span>Settings</span>
+        </Link>
+
+        {/* Footer: streak pill */}
+        <div style={{ marginTop: "auto", borderTop: "1px solid var(--hairline)", paddingTop: 12 }}>
+          {user.currentStreak > 0 && (
+            <div ref={profileRef} style={{ position: "relative" }}>
+              <button
+                onClick={() => setProfileOpen(!profileOpen)}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 6,
+                  padding: "4px 8px", background: "var(--paper)", border: "1px solid var(--hairline)",
+                  borderRadius: 999, fontSize: 11.5, color: "var(--ink-2)", cursor: "pointer",
+                  fontFamily: "var(--font-ui)",
+                }}
+              >
+                <IcoFlame />
+                <span style={{ fontVariantNumeric: "tabular-nums" }}>{user.currentStreak} day streak</span>
+              </button>
+              {profileOpen && (
+                <div style={{
+                  position: "absolute", bottom: "100%", left: 0, marginBottom: 6,
+                  background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 8,
+                  boxShadow: "var(--shadow-modal)", zIndex: 50, minWidth: 160, overflow: "hidden",
+                }}>
+                  <Link href="/dashboard/profile" onClick={() => setProfileOpen(false)}
+                    style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", fontSize: 13, color: "var(--ink-2)", textDecoration: "none" }}
+                    className="hover:bg-[var(--paper-2)]">
+                    View Profile
+                  </Link>
+                  <div style={{ height: 1, background: "var(--hairline)", margin: "2px 0" }} />
+                  <button onClick={handleSignOut}
+                    style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", fontSize: 13, color: "oklch(0.577 0.245 27.325)", background: "none", border: "none", cursor: "pointer", width: "100%", fontFamily: "var(--font-ui)" }}>
+                    <IcoLogout /> Sign out
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+          {!user.currentStreak && (
+            <div ref={profileRef} style={{ position: "relative" }}>
+              <button onClick={() => setProfileOpen(!profileOpen)}
+                style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", cursor: "pointer", padding: "4px 8px", borderRadius: 6, fontFamily: "var(--font-ui)" }}>
+                <div style={{
+                  width: 24, height: 24, borderRadius: "50%", flexShrink: 0,
+                  background: "var(--ds-accent)", color: "white",
+                  display: "grid", placeItems: "center", fontSize: 11, fontWeight: 500,
+                }}>{initials}</div>
+                <span style={{ fontSize: 12, color: "var(--ink-2)" }}>{user.displayName.split(" ")[0]}</span>
+              </button>
+              {profileOpen && (
+                <div style={{
+                  position: "absolute", bottom: "100%", left: 0, marginBottom: 6,
+                  background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 8,
+                  boxShadow: "var(--shadow-modal)", zIndex: 50, minWidth: 160, overflow: "hidden",
+                }}>
+                  <Link href="/dashboard/profile" onClick={() => setProfileOpen(false)}
+                    style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", fontSize: 13, color: "var(--ink-2)", textDecoration: "none" }}>
+                    View Profile
+                  </Link>
+                  <div style={{ height: 1, background: "var(--hairline)", margin: "2px 0" }} />
+                  <button onClick={handleSignOut}
+                    style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", fontSize: 13, color: "oklch(0.577 0.245 27.325)", background: "none", border: "none", cursor: "pointer", width: "100%", fontFamily: "var(--font-ui)" }}>
+                    <IcoLogout /> Sign out
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </aside>
 
       {/* ── Main ── */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden" }}>
+
         {/* Topbar */}
-        <header className="h-14 flex items-center justify-between px-4 md:px-6 border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-30 flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-muted-foreground hover:text-foreground p-1">
-              <Menu size={18} />
-            </button>
-            {/* Desktop title */}
-            <div className="hidden lg:block">
-              <p className="text-sm font-semibold text-foreground">{currentPage}</p>
-              <p className="text-xs text-muted-foreground">
-                {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
-              </p>
-            </div>
-            {/* Mobile logo */}
-            <div className="lg:hidden flex items-center gap-2">
-              <div className="w-6 h-6 rounded-md bg-primary flex items-center justify-center">
-                <BookOpen size={12} className="text-primary-foreground" />
-              </div>
-              <span className="text-sm font-semibold text-foreground">Scripture</span>
-            </div>
+        <header style={{
+          display: "flex", alignItems: "center", gap: 12,
+          padding: "0 28px", borderBottom: "1px solid var(--hairline)",
+          background: "var(--paper)", height: 56, flexShrink: 0,
+          position: "sticky", top: 0, zIndex: 30,
+        }}>
+          {/* Mobile menu button */}
+          <button onClick={() => setSidebarOpen(true)} className="lg:hidden"
+            style={{ color: "var(--ink-3)", background: "none", border: "none", cursor: "pointer", padding: 4 }}>
+            <IcoMenu />
+          </button>
+
+          {/* Search */}
+          <div className="ds-search" style={{ flex: 1, maxWidth: 480 }}>
+            <IcoSearch />
+            <input placeholder="Search verses, books, notes…" />
+            <kbd style={{ fontFamily: "var(--font-mono-ds)", fontSize: 10.5, color: "var(--ink-3)", background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 4, padding: "1px 5px" }}>⌘K</kbd>
           </div>
 
-          <div className="flex items-center gap-1.5">
-            {/* Streak */}
-            {user.currentStreak > 0 && (
-              <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium text-muted-foreground bg-secondary border border-border">
-                <Flame size={11} className="text-orange-400" />
-                {user.currentStreak}
-              </div>
-            )}
+          <div style={{ flex: 1 }} />
 
-            {/* Theme toggle */}
+          {/* Notification bell */}
+          <div ref={notifRef} style={{ position: "relative" }}>
             <button
-              onClick={toggleTheme}
-              className="w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-              aria-label="Toggle theme"
+              onClick={() => setNotifOpen(!notifOpen)}
+              style={{
+                width: 32, height: 32, display: "grid", placeItems: "center",
+                borderRadius: 6, color: "var(--ink-2)", background: "transparent",
+                border: "1px solid transparent", cursor: "pointer", position: "relative",
+              }}
+              title="Notifications"
             >
-              {theme === "dark" ? <Moon size={14} strokeWidth={1.75} /> : <Sun size={14} strokeWidth={1.75} />}
+              <IcoBell />
+              {unreadCount > 0 && (
+                <span style={{
+                  position: "absolute", top: 7, right: 8,
+                  width: 6, height: 6, borderRadius: "50%",
+                  background: "var(--ds-accent)", border: "1.5px solid var(--paper)",
+                }} />
+              )}
             </button>
 
-            {/* Notifications */}
-            <div ref={notifRef} className="relative">
-              <button
-                onClick={() => setNotifOpen(!notifOpen)}
-                className="relative w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-              >
-                <Bell size={15} strokeWidth={1.75} />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-bold text-white bg-primary">
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                  </span>
-                )}
-              </button>
-
-              {notifOpen && (
-                <div className="absolute right-0 top-full mt-1.5 w-72 rounded-lg border border-border bg-popover shadow-md z-50 overflow-hidden">
-                  <div className="flex items-center justify-between px-4 py-2.5 border-b border-border">
-                    <p className="text-sm font-semibold text-foreground">Notifications</p>
-                    <button onClick={() => setNotifOpen(false)} className="text-muted-foreground hover:text-foreground">
-                      <X size={13} />
-                    </button>
-                  </div>
-                  {notifications.length === 0 ? (
-                    <div className="py-8 text-center">
-                      <Bell size={18} className="mx-auto mb-2 text-muted-foreground opacity-30" />
-                      <p className="text-sm text-muted-foreground">No notifications</p>
-                    </div>
-                  ) : (
-                    <div className="max-h-64 overflow-y-auto divide-y divide-border">
-                      {notifications.slice(0, 20).map(n => (
-                        <div key={n.id} className={`px-4 py-2.5 hover:bg-accent transition-colors ${!n.isRead ? "bg-primary/[0.03]" : ""}`}>
-                          <div className="flex items-start gap-2">
-                            {!n.isRead && <span className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 bg-primary" />}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-foreground leading-tight">{n.title}</p>
-                              <p className="text-xs text-muted-foreground mt-0.5">{n.body}</p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+            {notifOpen && (
+              <div style={{
+                position: "absolute", right: 0, top: "100%", marginTop: 6,
+                width: 288, borderRadius: 8, border: "1px solid var(--hairline)",
+                background: "var(--paper)", boxShadow: "var(--shadow-modal)", zIndex: 50, overflow: "hidden",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: "1px solid var(--hairline)" }}>
+                  <p style={{ fontSize: 13, fontWeight: 500, color: "var(--ink-1)", margin: 0 }}>Notifications</p>
+                  <button onClick={() => setNotifOpen(false)} style={{ color: "var(--ink-3)", background: "none", border: "none", cursor: "pointer" }}><IcoX /></button>
                 </div>
-              )}
-            </div>
+                {notifications.length === 0 ? (
+                  <div style={{ padding: "32px 16px", textAlign: "center" }}>
+                    <IcoBell className="mx-auto" />
+                    <p style={{ fontSize: 13, color: "var(--ink-3)", marginTop: 8 }}>No notifications</p>
+                  </div>
+                ) : (
+                  <div style={{ maxHeight: 256, overflowY: "auto" }}>
+                    {notifications.slice(0, 20).map(n => (
+                      <div key={n.id} style={{
+                        padding: "10px 16px", borderTop: "1px solid var(--hairline)",
+                        background: !n.isRead ? "var(--ds-accent-soft)" : "transparent",
+                      }}>
+                        <p style={{ fontSize: 13, fontWeight: 500, color: "var(--ink-1)", margin: "0 0 2px" }}>{n.title}</p>
+                        <p style={{ fontSize: 12, color: "var(--ink-3)", margin: 0 }}>{n.body}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Avatar */}
+          <div style={{
+            width: 28, height: 28, borderRadius: "50%",
+            background: "var(--ds-accent)", color: "white",
+            display: "grid", placeItems: "center", fontSize: 11, fontWeight: 500,
+            cursor: "pointer", border: "1px solid var(--hairline)", flexShrink: 0, overflow: "hidden",
+          }}>
+            {user.photoURL
+              ? <img src={user.photoURL} alt={user.displayName} style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }} />
+              : initials}
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto">
+        {/* Page content */}
+        <main style={{ flex: 1, overflowY: "auto" }}>
           {children}
         </main>
       </div>

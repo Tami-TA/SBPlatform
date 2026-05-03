@@ -3,8 +3,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --font-family-serif: Georgia, Cambria, "Times New Roman", serif;
-  --font-family-display: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-family-serif: "Newsreader", "Iowan Old Style", Georgia, serif;
+  --font-family-display: "Inter Tight", system-ui, sans-serif;
 
   --animate-fade-in: fadeIn 0.5s ease-in-out;
   --animate-slide-up: slideUp 0.4s ease-out;
@@ -30,34 +30,57 @@
   --cobalt-dark: var(--primary);
 
   /* ── Monotone neutral palette with muted blue accent ── */
-  --background:              oklch(0.985 0.004 240);
-  --foreground:              oklch(0.145 0.010 245);
-  --card:                    oklch(1.000 0.000 0);
-  --card-foreground:         oklch(0.145 0.010 245);
-  --popover:                 oklch(1.000 0.000 0);
-  --popover-foreground:      oklch(0.145 0.010 245);
-  --primary:                 oklch(0.490 0.095 243);
-  --primary-foreground:      oklch(0.990 0.000 0);
-  --secondary:               oklch(0.945 0.006 245);
-  --secondary-foreground:    oklch(0.350 0.012 245);
-  --muted:                   oklch(0.945 0.006 245);
-  --muted-foreground:        oklch(0.510 0.014 245);
-  --accent:                  oklch(0.930 0.012 243);
-  --accent-foreground:       oklch(0.250 0.012 245);
+  --background:              oklch(99% 0.003 250);
+  --foreground:              oklch(22% 0.012 255);
+  --card:                    oklch(99% 0.003 250);
+  --card-foreground:         oklch(22% 0.012 255);
+  --popover:                 oklch(99% 0.003 250);
+  --popover-foreground:      oklch(22% 0.012 255);
+  --primary:                 oklch(62% 0.045 245);
+  --primary-foreground:      oklch(99% 0.000 0);
+  --secondary:               oklch(97.5% 0.004 250);
+  --secondary-foreground:    oklch(38% 0.010 255);
+  --muted:                   oklch(95.5% 0.005 250);
+  --muted-foreground:        oklch(54% 0.008 255);
+  --accent:                  oklch(94% 0.015 245);
+  --accent-foreground:       oklch(42% 0.055 245);
   --destructive:             oklch(0.577 0.245 27.325);
   --destructive-foreground:  oklch(1.000 0.000 0);
-  --border:                  oklch(0.888 0.009 245);
-  --input:                   oklch(0.888 0.009 245);
-  --ring:                    oklch(0.490 0.095 243);
-  --sidebar:                 oklch(0.972 0.004 245);
-  --sidebar-foreground:      oklch(0.270 0.012 245);
-  --sidebar-primary:         oklch(0.490 0.095 243);
-  --sidebar-primary-foreground: oklch(0.990 0.000 0);
-  --sidebar-accent:          oklch(0.930 0.012 243);
-  --sidebar-accent-foreground: oklch(0.270 0.012 245);
-  --sidebar-border:          oklch(0.888 0.009 245);
-  --sidebar-ring:            oklch(0.490 0.095 243);
-  --radius:                  0.625rem;
+  --border:                  oklch(91% 0.006 250);
+  --input:                   oklch(87% 0.008 250);
+  --ring:                    oklch(62% 0.045 245);
+  --sidebar:                 oklch(97.5% 0.004 250);
+  --sidebar-foreground:      oklch(22% 0.012 255);
+  --sidebar-primary:         oklch(62% 0.045 245);
+  --sidebar-primary-foreground: oklch(99% 0.000 0);
+  --sidebar-accent:          oklch(94% 0.015 245);
+  --sidebar-accent-foreground: oklch(42% 0.055 245);
+  --sidebar-border:          oklch(91% 0.006 250);
+  --sidebar-ring:            oklch(62% 0.045 245);
+  --radius:                  0.5rem;
+
+  /* ── Design tokens (Lectio design system) ── */
+  --paper:        oklch(99% 0.003 250);
+  --paper-2:      oklch(97.5% 0.004 250);
+  --paper-3:      oklch(95.5% 0.005 250);
+  --hairline:     oklch(91% 0.006 250);
+  --hairline-2:   oklch(87% 0.008 250);
+  --ink-1:        oklch(22% 0.012 255);
+  --ink-2:        oklch(38% 0.010 255);
+  --ink-3:        oklch(54% 0.008 255);
+  --ink-4:        oklch(68% 0.006 250);
+  --ds-accent:    oklch(62% 0.045 245);
+  --ds-accent-ink: oklch(42% 0.055 245);
+  --ds-accent-soft: oklch(94% 0.015 245);
+  --ds-accent-soft-2: oklch(89% 0.022 245);
+  --hl-yellow:    oklch(94% 0.045 95);
+  --hl-blue:      oklch(93% 0.025 245);
+  --hl-green:     oklch(93% 0.030 155);
+  --font-ui:      var(--font-inter-tight, "Inter Tight", system-ui, sans-serif);
+  --font-serif:   var(--font-newsreader, "Newsreader", "Iowan Old Style", Georgia, serif);
+  --font-mono-ds: var(--font-jetbrains, "JetBrains Mono", ui-monospace, monospace);
+  --shadow-soft:  0 1px 2px oklch(20% 0.02 250 / 0.04), 0 8px 24px oklch(20% 0.02 250 / 0.06);
+  --shadow-modal: 0 1px 2px oklch(20% 0.02 250 / 0.06), 0 24px 64px oklch(20% 0.02 250 / 0.16);
 
   /* Lightweight shadows */
   --shadow:     0 1px 3px 0 rgb(0 0 0 / 0.06);
@@ -162,7 +185,7 @@
   --shadow-lg:  var(--shadow-lg);
   --shadow-xl:  var(--shadow-xl);
   --shadow-2xl: var(--shadow-2xl);
-  --font-sans: var(--font-plus-jakarta), system-ui, sans-serif;
+  --font-sans: var(--font-inter-tight, var(--font-plus-jakarta)), system-ui, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, monospace;
 }
 
@@ -174,13 +197,17 @@
 *, *::before, *::after { box-sizing: border-box; }
 
 body {
-  font-family: var(--font-sans), system-ui, sans-serif;
+  font-family: var(--font-ui);
   transition: background-color 0.2s ease, color 0.2s ease;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 14px;
+  line-height: 1.5;
+  font-feature-settings: "ss01", "cv11";
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-sans);
+  font-family: var(--font-ui);
 }
 
 ::selection {
@@ -204,16 +231,14 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ── Card ── */
 .card {
-  background-color: var(--card);
-  color: var(--card-foreground);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
-  transition: box-shadow 0.15s ease, transform 0.15s ease;
+  background-color: var(--paper);
+  color: var(--ink-1);
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  padding: 18px;
 }
-.card:hover {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
+.card-tinted {
+  background-color: var(--paper-2);
 }
 
 .card-gold {
@@ -229,20 +254,21 @@ h1, h2, h3, h4, h5, h6 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
-  background-color: var(--primary);
-  color: var(--primary-foreground);
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 6px;
+  font-size: 13px;
   font-weight: 500;
-  padding: 0.5rem 1.125rem;
-  border-radius: var(--radius);
-  transition: opacity 0.15s ease, transform 0.1s ease;
+  background-color: var(--ds-accent);
+  color: white;
+  border: 1px solid oklch(55% 0.05 245);
   cursor: pointer;
-  border: none;
+  transition: background-color 80ms;
   outline: none;
-  font-size: 0.875rem;
-  letter-spacing: 0.01em;
+  font-family: var(--font-ui);
 }
-.btn-primary:hover, .btn-crimson:hover, .btn-cobalt:hover { opacity: 0.88; }
+.btn-primary:hover, .btn-crimson:hover, .btn-cobalt:hover { background-color: oklch(58% 0.05 245); }
 .btn-primary:active, .btn-crimson:active, .btn-cobalt:active { transform: scale(0.97); }
 .btn-primary:disabled, .btn-crimson:disabled, .btn-cobalt:disabled { opacity: 0.45; cursor: not-allowed; }
 
@@ -272,20 +298,45 @@ h1, h2, h3, h4, h5, h6 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
-  border: 1px solid var(--border);
-  color: var(--muted-foreground);
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 6px;
+  font-size: 13px;
   font-weight: 500;
-  padding: 0.5rem 1.125rem;
-  border-radius: var(--radius);
-  transition: background-color 0.15s ease, color 0.15s ease;
-  cursor: pointer;
+  border: 1px solid transparent;
   background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: background-color 80ms;
   outline: none;
-  font-size: 0.875rem;
+  font-family: var(--font-ui);
 }
-.btn-ghost:hover { background-color: var(--accent); color: var(--accent-foreground); }
+.btn-ghost:hover { background-color: var(--paper-2); }
 .btn-ghost:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Default secondary button */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--hairline-2);
+  background: var(--paper);
+  color: var(--ink-1);
+  cursor: pointer;
+  transition: background-color 80ms;
+  outline: none;
+  font-family: var(--font-ui);
+}
+.btn:hover { background-color: var(--paper-2); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-sm { height: 26px; font-size: 12px; padding: 0 10px; }
 
 /* ── Input ── */
 .input-field {
@@ -316,27 +367,27 @@ h1, h2, h3, h4, h5, h6 {
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: var(--radius);
-  color: var(--sidebar-foreground);
+  gap: 10px;
+  padding: 7px 8px;
+  border-radius: 6px;
+  color: var(--ink-2);
+  font-size: 13px;
   font-weight: 450;
-  font-size: 0.875rem;
-  transition: background-color 0.12s ease, color 0.12s ease;
   cursor: pointer;
+  user-select: none;
+  border: 1px solid transparent;
   text-decoration: none;
-  opacity: 0.75;
+  transition: background-color 0.1s ease;
 }
 .nav-item:hover {
-  background-color: var(--sidebar-accent);
-  color: var(--sidebar-accent-foreground);
-  opacity: 1;
+  background-color: var(--paper-3);
+  color: var(--ink-1);
 }
 .nav-item.active {
-  background-color: var(--sidebar-accent);
-  color: var(--sidebar-primary);
-  font-weight: 550;
-  opacity: 1;
+  background-color: var(--ds-accent-soft);
+  color: var(--ds-accent-ink);
+  border-color: oklch(85% 0.025 245);
+  font-weight: 500;
 }
 
 /* ── Progress ── */
@@ -400,18 +451,21 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ── Bible reader ── */
 .verse-text {
-  font-family: Georgia, 'Times New Roman', serif;
-  line-height: 1.95;
-  font-size: 1.025rem;
+  font-family: var(--font-serif);
+  line-height: 1.7;
+  font-size: 18px;
 }
 .verse-number {
-  font-family: var(--font-sans), sans-serif;
-  font-size: 0.58rem;
-  font-weight: 600;
-  color: var(--muted-foreground);
-  opacity: 0.65;
-  vertical-align: super;
-  margin-right: 3px;
+  font-family: var(--font-mono-ds), ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 400;
+  color: var(--ink-4);
+  user-select: none;
+  min-width: 22px;
+  display: inline-block;
+  text-align: right;
+  vertical-align: baseline;
+  margin-right: 12px;
 }
 
 /* Highlight colours */
@@ -535,3 +589,114 @@ h1, h2, h3, h4, h5, h6 {
 .dark .seg-item.active {
   background-color: var(--card);
 }
+
+/* ── Design system: underline tabs ── */
+.underline-tabs {
+  display: flex;
+  gap: 24px;
+  border-bottom: 1px solid var(--hairline);
+}
+.utab {
+  padding: 10px 0;
+  font-size: 13px;
+  font-weight: 450;
+  color: var(--ink-3);
+  border: none;
+  background: transparent;
+  border-bottom: 1.5px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+  font-family: var(--font-ui);
+}
+.utab:hover { color: var(--ink-1); }
+.utab.active {
+  color: var(--ds-accent-ink);
+  border-bottom-color: var(--ds-accent);
+  font-weight: 500;
+}
+
+/* ── Design system: segmented tabs ── */
+.ds-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--paper-2);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  padding: 3px;
+}
+.ds-tab {
+  padding: 5px 12px;
+  font-size: 12.5px;
+  font-weight: 450;
+  color: var(--ink-3);
+  border-radius: 5px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--font-ui);
+}
+.ds-tab:hover { color: var(--ink-1); }
+.ds-tab.active {
+  background: var(--paper);
+  color: var(--ds-accent-ink);
+  font-weight: 500;
+  box-shadow: 0 1px 2px oklch(20% 0.02 250 / 0.06);
+}
+
+/* ── Design system: badge accent ── */
+.badge-accent {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  background: var(--ds-accent-soft);
+  color: var(--ds-accent-ink);
+  border: 1px solid oklch(85% 0.025 245);
+}
+
+/* ── Design system: page header serif title ── */
+.page-title-serif {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 28px;
+  letter-spacing: -0.015em;
+  color: var(--ink-1);
+  margin: 0 0 4px 0;
+}
+
+/* ── Design system: card title uppercase ── */
+.card-label {
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+  font-weight: 500;
+}
+
+/* ── Design system: search bar ── */
+.ds-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--paper-2);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  padding: 6px 10px;
+  color: var(--ink-3);
+  font-size: 13px;
+}
+.ds-search input {
+  border: none;
+  background: transparent;
+  outline: none;
+  flex: 1;
+  font-size: 13px;
+  color: var(--ink-1);
+  padding: 0;
+  font-family: var(--font-ui);
+}
+.ds-search input::placeholder { color: var(--ink-4); }

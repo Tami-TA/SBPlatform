@@ -67,14 +67,14 @@ export default function GroupsPage() {
   ];
 
   return (
-    <div className="max-w-5xl mx-auto px-4 md:px-6 py-6">
-      <div className="flex items-center justify-between mb-6">
+    <div style={{ maxWidth: 1120, margin: "0 auto", padding: "28px 32px 48px" }}>
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 24, gap: 16 }}>
         <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Study Groups</h1>
-          <p className="text-sm text-muted-foreground mt-1">Grow together in faith</p>
+          <h1 style={{ fontFamily: "var(--font-serif)", fontWeight: 400, fontSize: 28, letterSpacing: "-0.015em", margin: "0 0 4px", color: "var(--ink-1)" }}>Groups</h1>
+          <p style={{ fontSize: 13, color: "var(--ink-3)", margin: 0 }}>Read together. Annotate together.</p>
         </div>
-        <button onClick={() => setShowCreate(true)} className="btn-primary px-4 py-2.5 text-sm">
-          <Plus size={16} /> New Group
+        <button onClick={() => setShowCreate(true)} className="btn-primary" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <Plus size={13} /> New group
         </button>
       </div>
 
@@ -138,41 +138,61 @@ export default function GroupsPage() {
           </button>
         </div>
       ) : (
-        <>
-          <h2 className="text-base font-semibold text-foreground mb-3">My Groups ({groups.length})</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {groups.map((group, i) => (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
+          {groups.map((group, i) => {
+            const hues = [30, 100, 170, 240, 300];
+            return (
               <Link key={group.id} href={`/dashboard/groups/${group.id}`}
-                className="card p-5 group cursor-pointer overflow-hidden relative">
-                <div className={`absolute inset-0 bg-gradient-to-br ${GROUP_COLORS[i % GROUP_COLORS.length]} opacity-50`} />
-                <div className="relative">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-bold text-gray-900"
-                      style={{ background: "var(--primary)" }}>
-                      {getInitials(group.name)}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      {group.isPublic
-                        ? <Globe size={13} className="text-muted-foreground" />
-                        : <Lock size={13} className="text-muted-foreground" />}
-                    </div>
+                className="card" style={{ padding: 20, textDecoration: "none", display: "block" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+                  <div>
+                    <div style={{ fontFamily: "var(--font-serif)", fontSize: 22, letterSpacing: "-0.01em", marginBottom: 2, color: "var(--ink-1)" }}>{group.name}</div>
+                    {group.description && (
+                      <div style={{ fontSize: 12, color: "var(--ink-3)" }}>{group.description}</div>
+                    )}
                   </div>
-                  <h3 className="font-semibold text-foreground mb-1 group-hover:text-gold-500 transition-colors">{group.name}</h3>
-                  {group.description && (
-                    <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{group.description}</p>
-                  )}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1"><Users size={12} />{group.memberIds.length}</span>
-                      <span className="flex items-center gap-1"><MessageCircle size={12} />Active</span>
-                    </div>
-                    <ArrowRight size={14} className="text-muted-foreground group-hover:text-gold-500 transition-colors" />
+                  <span className={`badge-accent`} style={{ marginLeft: 8 }}>Active</span>
+                </div>
+                {/* Member avatar stack */}
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+                  <div style={{ display: "flex" }}>
+                    {group.memberIds.slice(0, 4).map((_, j) => (
+                      <div key={j} style={{
+                        width: 24, height: 24, borderRadius: "50%", fontSize: 10, fontWeight: 500,
+                        marginLeft: j ? -6 : 0,
+                        background: `oklch(72% 0.04 ${hues[j % hues.length]})`,
+                        border: "2px solid var(--paper)", color: "white",
+                        display: "grid", placeItems: "center",
+                      }}>
+                        {String.fromCharCode(65 + j)}
+                      </div>
+                    ))}
                   </div>
+                  <div style={{ fontSize: 12, color: "var(--ink-3)" }}>{group.memberIds.length} member{group.memberIds.length !== 1 ? "s" : ""}</div>
+                </div>
+                <hr style={{ border: "none", borderTop: "1px solid var(--hairline)", margin: "4px 0 12px" }} />
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ fontSize: 12, color: "var(--ink-3)" }}>
+                    {group.isPublic ? "Public" : "Private"} group
+                  </div>
+                  <span className="btn btn-sm">Open</span>
                 </div>
               </Link>
-            ))}
-          </div>
-        </>
+            );
+          })}
+          {/* New group card */}
+          <button onClick={() => setShowCreate(true)} style={{
+            border: "1px dashed var(--hairline-2)", borderRadius: 12,
+            display: "grid", placeItems: "center", minHeight: 180, color: "var(--ink-3)",
+            fontSize: 13, background: "transparent", cursor: "pointer", fontFamily: "var(--font-ui)",
+          }}>
+            <div style={{ textAlign: "center" }}>
+              <Plus size={18} style={{ color: "var(--ink-4)", margin: "0 auto 8px" }} />
+              <div>Start a new group</div>
+              <div style={{ fontSize: 11.5, color: "var(--ink-4)", marginTop: 2 }}>Invite up to 12 members</div>
+            </div>
+          </button>
+        </div>
       )}
 
       {/* Features info */}

@@ -350,12 +350,17 @@ export default function BiblePage() {
       {/* Chapter content */}
       <div className="flex-1 overflow-y-auto" ref={containerRef}>
         <div className="max-w-3xl mx-auto px-4 md:px-8 py-8 relative">
-          {/* Chapter header */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-display font-bold text-foreground">
-              {book?.name} {selectedChapter}
+          {/* Chapter header — design system style */}
+          <div style={{ marginBottom: 28, paddingBottom: 20, borderBottom: "1px solid var(--hairline)" }}>
+            <div style={{ fontSize: 11.5, color: "var(--ink-4)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>
+              {book?.name} · Chapter
+            </div>
+            <h1 style={{ fontFamily: "var(--font-serif)", fontWeight: 400, fontSize: 48, letterSpacing: "-0.025em", margin: "0 0 8px", color: "var(--ink-1)", lineHeight: 1 }}>
+              {selectedChapter}
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">{translation} Translation</p>
+            <div style={{ fontSize: 13, color: "var(--ink-3)", fontStyle: "italic", fontFamily: "var(--font-serif)" }}>
+              {book?.name} · {translation}
+            </div>
           </div>
 
           {loading ? (
@@ -418,19 +423,46 @@ export default function BiblePage() {
                 </div>
               )}
 
-              {/* Verses */}
-              <div className="verse-text space-y-0" style={{ fontSize: `${fontSize}px` }}>
+              {/* Verses — design system row style */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 {chapter.verses.map((verse) => {
                   const key = `${verse.bookId}.${verse.chapter}.${verse.verse}`;
                   const highlightColor = highlights.get(key);
+                  const hlBg = highlightColor === "yellow" ? "var(--hl-yellow)"
+                    : highlightColor === "blue" ? "var(--hl-blue)"
+                    : highlightColor === "green" ? "var(--hl-green)"
+                    : highlightColor === "pink" ? "oklch(93% 0.025 350)"
+                    : highlightColor === "orange" ? "oklch(93% 0.04 60)"
+                    : "transparent";
                   return (
-                    <span
+                    <div
                       key={verse.verse}
-                      className={`verse-selectable inline ${selectedVerse === verse.verse ? "selected" : ""} ${highlightColor ? `highlight-${highlightColor}` : ""}`}
-                      onClick={(e) => handleVerseClick(verse.verse, e)}>
-                      <sup className="verse-number">{verse.verse}</sup>
-                      {verse.text}{" "}
-                    </span>
+                      style={{
+                        display: "flex", gap: 16, padding: "6px 8px",
+                        borderRadius: 6, cursor: "text", position: "relative",
+                        background: selectedVerse === verse.verse ? "var(--ds-accent-soft)" : "transparent",
+                      }}
+                      onClick={(e) => handleVerseClick(verse.verse, e)}
+                    >
+                      <div style={{
+                        fontFamily: "var(--font-mono-ds)", fontSize: 10.5,
+                        color: "var(--ink-4)", minWidth: 22, paddingTop: 7, textAlign: "right",
+                        userSelect: "none", flexShrink: 0,
+                      }}>{verse.verse}</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <span style={{
+                          fontFamily: "var(--font-serif)",
+                          fontSize: `${fontSize}px`,
+                          lineHeight: 1.7,
+                          color: "var(--ink-1)",
+                          background: hlBg,
+                          boxDecorationBreak: "clone",
+                          WebkitBoxDecorationBreak: "clone",
+                          padding: highlightColor ? "1px 2px" : "0",
+                          borderRadius: 2,
+                        }}>{verse.text}</span>
+                      </div>
+                    </div>
                   );
                 })}
               </div>
@@ -448,16 +480,14 @@ export default function BiblePage() {
 
           {/* Chapter navigation */}
           {chapter && (
-            <div className="flex items-center justify-between mt-12 pt-6 border-t border-border">
-              <button onClick={() => navigateChapter("prev")}
-                className="btn-ghost flex items-center gap-2 text-sm">
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 48, paddingTop: 24, borderTop: "1px solid var(--hairline)" }}>
+              <button onClick={() => navigateChapter("prev")} className="btn-ghost" style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <ChevronLeft size={16} /> Previous
               </button>
-              <span className="text-xs text-muted-foreground">
+              <span style={{ fontSize: 12, color: "var(--ink-3)", fontFamily: "var(--font-mono-ds)" }}>
                 {book?.name} {selectedChapter} / {book?.chapters}
               </span>
-              <button onClick={() => navigateChapter("next")}
-                className="btn-ghost flex items-center gap-2 text-sm">
+              <button onClick={() => navigateChapter("next")} className="btn-ghost" style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 Next <ChevronRight size={16} />
               </button>
             </div>

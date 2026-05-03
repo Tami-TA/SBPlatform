@@ -2,32 +2,89 @@
 import { useState, useEffect } from "react";
 import { useAuthStore } from "@/store/auth-store";
 import Link from "next/link";
-import {
-  BookOpen, Flame, Users, ListChecks, ArrowRight,
-  Share2, Copy, ChevronRight, Target, Award,
-  BookMarked, Trophy, Zap, Star,
-} from "lucide-react";
 import { getTodaysVerse } from "@/lib/bible-data";
 import { getUserPlanProgress } from "@/lib/firestore";
-import { getStreakLevel, formatVerseRef, shareVerse } from "@/lib/utils";
-import { getBadgeStatus } from "@/lib/badges";
+import { formatVerseRef } from "@/lib/utils";
 import type { UserPlanProgress } from "@/types";
-import toast from "react-hot-toast";
 
-const BADGE_ICONS: Record<string, React.ElementType> = {
-  streak_1: BookOpen, streak_7: Flame, streak_30: Star,
-  streak_100: Zap, streak_365: Award,
-  reading_10: BookMarked, reading_50: Star, reading_200: BookOpen,
-  social_friend: Users, social_group: Users,
-  achievement_plan: ListChecks, achievement_longest_7: Trophy,
-};
+// ── Minimal icons ─────────────────────────────────────────────────────────────
 
-const QUICK_LINKS = [
-  { href: "/dashboard/bible",   icon: BookOpen,   label: "Bible" },
-  { href: "/dashboard/plans",   icon: ListChecks, label: "Plans" },
-  { href: "/dashboard/groups",  icon: Users,      label: "Groups" },
-  { href: "/dashboard/context", icon: BookMarked, label: "Context" },
-];
+function IcoBookmark() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="13" height="13">
+      <path d="M6 3h12v18l-6-4-6 4z"/>
+    </svg>
+  );
+}
+function IcoCopy() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="13" height="13">
+      <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+    </svg>
+  );
+}
+function IcoChevron() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="13" height="13">
+      <path d="m9 6 6 6-6 6"/>
+    </svg>
+  );
+}
+function IcoCheck() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" width="11" height="11">
+      <path d="m5 12 5 5 9-11"/>
+    </svg>
+  );
+}
+function IcoFlame() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="12" height="12">
+      <path d="M12 3s4 4 4 8a4 4 0 0 1-8 0c0-1 .5-2 1-2.5C9 11 8 13 8 14a4 4 0 0 0 8 0"/>
+    </svg>
+  );
+}
+function IcoPlans() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="22" height="22">
+      <rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/>
+    </svg>
+  );
+}
+
+// ── Streak dots for the week ──────────────────────────────────────────────────
+
+function StreakDots({ currentStreak }: { currentStreak: number }) {
+  const days = ["M", "T", "W", "T", "F", "S", "S"];
+  const today = new Date().getDay();
+  const mondayOffset = today === 0 ? 6 : today - 1;
+  const done = days.map((_, i) => {
+    const daysAgo = mondayOffset - i;
+    if (daysAgo < 0) return false;
+    return daysAgo < currentStreak;
+  });
+
+  return (
+    <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+      {days.map((d, i) => (
+        <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+          <div style={{
+            width: 22, height: 22, borderRadius: "50%",
+            background: done[i] ? "var(--ds-accent-soft-2)" : "var(--paper-2)",
+            border: "1px solid " + (done[i] ? "oklch(82% 0.03 245)" : "var(--hairline)"),
+            display: "grid", placeItems: "center",
+            color: done[i] ? "var(--ds-accent-ink)" : "var(--ink-4)",
+          }}>
+            {done[i] && <IcoCheck />}
+          </div>
+          <div style={{ fontSize: 10.5, color: "var(--ink-4)", fontWeight: 500 }}>{d}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
@@ -44,8 +101,6 @@ export default function DashboardPage() {
 
   if (!user) return null;
 
-  const streakLevel = getStreakLevel(user.currentStreak);
-
   function greeting() {
     const h = new Date().getHours();
     if (h < 12) return "Good morning";
@@ -53,214 +108,185 @@ export default function DashboardPage() {
     return "Good evening";
   }
 
-  function handleShareVerse() {
-    shareVerse(todaysVerse.text, formatVerseRef(todaysVerse.bookName, todaysVerse.chapter, todaysVerse.verse));
-    toast.success("Copied!");
-  }
+  const dateLabel = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+  const activePlan = plans[0] ?? null;
+  const verseRef = formatVerseRef(todaysVerse.bookName, todaysVerse.chapter, todaysVerse.verse);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 md:px-6 py-6 space-y-5">
+    <div style={{ padding: "28px 32px 48px", maxWidth: 1120, margin: "0 auto" }}>
 
-      {/* Header */}
-      <div>
-        <h1 className="text-xl font-semibold text-foreground">
-          {greeting()}, {user.displayName.split(" ")[0]}
-        </h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
-        </p>
-      </div>
-
-      {/* Top row: Streak + Verse */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-        {/* Streak */}
-        <div className="card p-5">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Reading Streak</p>
-            <span className="text-xs font-medium text-muted-foreground">{streakLevel.label}</span>
+      {/* Page header */}
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 24, gap: 16 }}>
+        <div>
+          <div style={{ fontSize: 12, color: "var(--ink-3)", letterSpacing: "0.04em", textTransform: "uppercase", marginBottom: 6, fontWeight: 500 }}>
+            {dateLabel}
           </div>
-          <div className="flex items-end gap-3 mb-4">
-            <p className="text-4xl font-bold text-foreground tabular-nums">{user.currentStreak}</p>
-            <p className="text-sm text-muted-foreground mb-1">days</p>
-          </div>
-          <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground mb-4">
-            <div className="bg-secondary rounded-md px-2.5 py-1.5">
-              <p className="text-[10px] uppercase tracking-wider mb-0.5">Best</p>
-              <p className="font-semibold text-foreground">{user.longestStreak}d</p>
-            </div>
-            <div className="bg-secondary rounded-md px-2.5 py-1.5">
-              <p className="text-[10px] uppercase tracking-wider mb-0.5">Total</p>
-              <p className="font-semibold text-foreground">{user.totalDaysRead}d</p>
-            </div>
-          </div>
-          {user.currentStreak < 7 && (
-            <div>
-              <div className="flex justify-between text-[11px] text-muted-foreground mb-1">
-                <span>Next: Week Warrior</span>
-                <span>{7 - user.currentStreak} days left</span>
-              </div>
-              <div className="progress-gold">
-                <div className="progress-gold-fill" style={{ width: `${(user.currentStreak / 7) * 100}%` }} />
-              </div>
-            </div>
-          )}
-          {user.currentStreak >= 7 && user.currentStreak < 30 && (
-            <div>
-              <div className="flex justify-between text-[11px] text-muted-foreground mb-1">
-                <span>Next: Monthly Devotee</span>
-                <span>{30 - user.currentStreak} days left</span>
-              </div>
-              <div className="progress-gold">
-                <div className="progress-gold-fill" style={{ width: `${(user.currentStreak / 30) * 100}%` }} />
-              </div>
-            </div>
+          <h1 style={{ fontFamily: "var(--font-serif)", fontWeight: 400, fontSize: 28, letterSpacing: "-0.015em", margin: "0 0 4px", color: "var(--ink-1)" }}>
+            {greeting()}, {user.displayName.split(" ")[0]}.
+          </h1>
+          <p style={{ fontSize: 13, color: "var(--ink-3)", margin: 0 }}>
+            {activePlan ? `Continue ${activePlan.planName} · Day ${activePlan.currentDay}` : "Start a reading plan to track your progress."}
+          </p>
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <Link href="/dashboard/plans" className="btn"><IcoBookmark /> Plans</Link>
+          {activePlan ? (
+            <Link href="/dashboard/bible" className="btn-primary">Continue reading <IcoChevron /></Link>
+          ) : (
+            <Link href="/dashboard/plans" className="btn-primary">Start reading <IcoChevron /></Link>
           )}
         </div>
+      </div>
 
-        {/* Verse of the Day */}
-        <div className="lg:col-span-2 card p-5">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Verse of the Day</p>
-            <div className="flex items-center gap-1">
-              <button onClick={handleShareVerse}
-                className="w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-                title="Share">
-                <Share2 size={12} strokeWidth={1.75} />
-              </button>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(`"${todaysVerse.text}" — ${formatVerseRef(todaysVerse.bookName, todaysVerse.chapter, todaysVerse.verse)}`);
-                  toast.success("Copied!");
-                }}
-                className="w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-                title="Copy">
-                <Copy size={12} strokeWidth={1.75} />
-              </button>
-            </div>
-          </div>
-          <blockquote className="verse-text text-foreground mb-3 leading-relaxed">
-            &ldquo;{todaysVerse.text}&rdquo;
-          </blockquote>
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-muted-foreground">
-              — {formatVerseRef(todaysVerse.bookName, todaysVerse.chapter, todaysVerse.verse)}
-            </p>
+      {/* Verse of the day — full width */}
+      <div className="card" style={{ padding: "28px 32px", marginBottom: 20, background: "var(--paper-2)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+          <div className="card-label">Verse of the day</div>
+          <div style={{ display: "flex", gap: 6 }}>
+            <button
+              className="btn-ghost btn-sm"
+              onClick={() => navigator.clipboard?.writeText(`"${todaysVerse.text}" — ${verseRef}`)}
+              title="Copy"
+            >
+              <IcoCopy />
+            </button>
             <Link href={`/dashboard/bible?book=${todaysVerse.bookId}&chapter=${todaysVerse.chapter}`}
-              className="text-xs text-primary hover:underline flex items-center gap-1 transition-colors">
-              Read chapter <ChevronRight size={11} />
+              className="btn-ghost btn-sm" title="Read chapter">
+              <IcoChevron />
             </Link>
           </div>
         </div>
+        <p style={{ fontFamily: "var(--font-serif)", fontSize: 24, lineHeight: 1.45, fontWeight: 400, letterSpacing: "-0.005em", color: "var(--ink-1)", margin: "0 0 12px", maxWidth: 760 }}>
+          &ldquo;{todaysVerse.text}&rdquo;
+        </p>
+        <div style={{ fontSize: 12.5, color: "var(--ink-3)", fontVariant: "small-caps", letterSpacing: "0.04em" }}>
+          {verseRef}
+        </div>
       </div>
 
-      {/* Quick access */}
-      <div className="grid grid-cols-4 gap-2.5">
-        {QUICK_LINKS.map(link => (
-          <Link key={link.href} href={link.href}
-            className="card p-3.5 flex flex-col items-center gap-2 text-center group cursor-pointer hover:border-primary/30 transition-colors">
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-secondary group-hover:bg-primary/10 transition-colors">
-              <link.icon size={17} strokeWidth={1.75} className="text-muted-foreground group-hover:text-primary transition-colors" />
-            </div>
-            <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">{link.label}</span>
-          </Link>
-        ))}
-      </div>
+      {/* Three columns */}
+      <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr 1fr", gap: 16, marginBottom: 20 }}>
 
-      {/* Plans + Achievements */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
-        {/* Active Reading Plans */}
-        <div className="card p-5">
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Active Plans</p>
-            <Link href="/dashboard/plans" className="text-xs text-primary hover:underline flex items-center gap-0.5">
-              View all <ArrowRight size={11} />
-            </Link>
+        {/* Today's reading */}
+        <div className="card">
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+            <div className="card-label">Today&apos;s reading</div>
+            {activePlan && (
+              <span className="badge-accent">Day {activePlan.currentDay}</span>
+            )}
           </div>
           {loadingPlans ? (
-            <div className="space-y-2">
-              {[1, 2].map(i => (
-                <div key={i} className="h-12 rounded-md animate-pulse bg-secondary" />
-              ))}
-            </div>
-          ) : plans.length === 0 ? (
-            <div className="text-center py-8">
-              <Target size={22} className="mx-auto mb-2 text-muted-foreground opacity-40" strokeWidth={1.5} />
-              <p className="text-sm text-muted-foreground mb-3">No active reading plans</p>
-              <Link href="/dashboard/plans" className="btn-primary text-xs px-4 py-1.5 inline-flex items-center gap-1.5">
-                <ListChecks size={13} /> Start a Plan
-              </Link>
-            </div>
+            <div style={{ height: 40, borderRadius: 6, background: "var(--paper-2)", animation: "pulse 1.5s infinite" }} />
+          ) : activePlan ? (
+            <>
+              <div style={{ fontFamily: "var(--font-serif)", fontSize: 22, letterSpacing: "-0.01em", marginBottom: 4 }}>
+                {activePlan.planName}
+              </div>
+              <p style={{ fontSize: 12.5, color: "var(--ink-3)", margin: "0 0 14px", lineHeight: 1.55 }}>
+                Day {activePlan.currentDay} of {(activePlan as UserPlanProgress & { plan?: { duration: number } }).plan?.duration ?? 30}
+              </p>
+              <div style={{ height: 4, background: "var(--paper-3)", borderRadius: 2, overflow: "hidden", marginBottom: 6 }}>
+                <div style={{
+                  width: `${Math.min(100, Math.round((activePlan.completedDays.length / ((activePlan as UserPlanProgress & { plan?: { duration: number } }).plan?.duration ?? 30)) * 100))}%`,
+                  height: "100%", background: "var(--ds-accent)",
+                }} />
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--ink-3)", marginBottom: 12 }}>
+                <span>{activePlan.completedDays.length} completed</span>
+                <span>{((activePlan as UserPlanProgress & { plan?: { duration: number } }).plan?.duration ?? 30) - activePlan.completedDays.length} remaining</span>
+              </div>
+              <hr style={{ border: "none", borderTop: "1px solid var(--hairline)", margin: "0 0 12px" }} />
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ fontSize: 12, color: "var(--ink-3)" }}>Keep your streak going</div>
+                <Link href="/dashboard/bible" className="btn btn-sm btn-primary">Resume</Link>
+              </div>
+            </>
           ) : (
-            <div className="space-y-2">
-              {plans.slice(0, 3).map(plan => {
-                const planRef = plan as UserPlanProgress & { plan?: { duration: number } };
-                const total = planRef.plan?.duration || 30;
-                const pct = Math.min(100, Math.round((plan.completedDays.length / total) * 100));
-                return (
-                  <div key={plan.id} className="p-3 rounded-md bg-secondary">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-foreground truncate">{plan.planName}</span>
-                      <span className="text-xs font-semibold text-primary ml-2 flex-shrink-0">{pct}%</span>
-                    </div>
-                    <div className="progress-gold">
-                      <div className="progress-gold-fill" style={{ width: `${pct}%` }} />
-                    </div>
-                    <p className="text-[11px] text-muted-foreground mt-1.5">Day {plan.currentDay} of {total}</p>
-                  </div>
-                );
-              })}
+            <div style={{ textAlign: "center", padding: "20px 0" }}>
+              <IcoPlans />
+              <p style={{ fontSize: 13, color: "var(--ink-3)", margin: "8px 0 12px" }}>No active plan</p>
+              <Link href="/dashboard/plans" className="btn btn-sm btn-primary">Start a plan</Link>
             </div>
           )}
         </div>
 
-        {/* Achievements */}
-        {(() => {
-          const badgeStatuses = getBadgeStatus(user);
-          const earnedCount = badgeStatuses.filter(b => b.earned).length;
-          const nextUnearned = badgeStatuses.find(b => !b.earned && b.progress.current > 0)
-            ?? badgeStatuses.find(b => !b.earned);
-          return (
-            <div className="card p-5">
-              <div className="flex items-center justify-between mb-4">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Achievements</p>
-                <span className="text-xs font-medium text-muted-foreground">{earnedCount} / {badgeStatuses.length}</span>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                {badgeStatuses.slice(0, 6).map(b => {
-                  const IconComp = BADGE_ICONS[b.id] || Trophy;
-                  const pct = Math.round((b.progress.current / b.progress.target) * 100);
-                  return (
-                    <div key={b.id} title={b.description}
-                      className={`flex flex-col items-center gap-1.5 p-2.5 rounded-md text-center border transition-opacity
-                        ${b.earned ? "bg-primary/8 border-primary/20" : "bg-secondary border-border opacity-50"}`}>
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center
-                        ${b.earned ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"}`}>
-                        <IconComp size={15} strokeWidth={1.75} />
-                      </div>
-                      <span className="text-[10px] font-medium leading-tight text-foreground">{b.name}</span>
-                      {!b.earned && pct > 0 && (
-                        <div className="w-full">
-                          <div className="progress-gold">
-                            <div className="progress-gold-fill" style={{ width: `${pct}%` }} />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              {nextUnearned && !nextUnearned.earned && (
-                <div className="mt-3 p-2.5 rounded-md bg-secondary border border-border">
-                  <p className="text-xs text-muted-foreground">
-                    {nextUnearned.progress.target - nextUnearned.progress.current} more to unlock &ldquo;{nextUnearned.name}&rdquo;
-                  </p>
-                </div>
-              )}
+        {/* Streak */}
+        <div className="card">
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+            <div className="card-label">Streak</div>
+            <span style={{ fontSize: 11, color: "var(--ink-3)" }}>This week</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+            <div style={{ fontFamily: "var(--font-serif)", fontSize: 38, fontWeight: 400, color: "var(--ink-1)", lineHeight: 1 }}>
+              {user.currentStreak}
             </div>
-          );
-        })()}
+            <div style={{ fontSize: 12, color: "var(--ink-3)" }}>days</div>
+          </div>
+          <StreakDots currentStreak={user.currentStreak} />
+          <hr style={{ border: "none", borderTop: "1px solid var(--hairline)", margin: "12px 0" }} />
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+            <span style={{ color: "var(--ink-3)" }}>Longest</span>
+            <span style={{ fontVariantNumeric: "tabular-nums", color: "var(--ink-1)" }}>{user.longestStreak} days</span>
+          </div>
+        </div>
+
+        {/* Active plan progress bar */}
+        <div className="card">
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+            <div className="card-label">Active plan</div>
+          </div>
+          {activePlan ? (
+            <>
+              <div style={{ fontFamily: "var(--font-serif)", fontSize: 18, letterSpacing: "-0.01em", marginBottom: 2 }}>{activePlan.planName}</div>
+              <div style={{ fontSize: 12, color: "var(--ink-3)", marginBottom: 14 }}>
+                Started {activePlan.startDate}
+              </div>
+              <div style={{ display: "flex", gap: 3, marginBottom: 12 }}>
+                {Array.from({ length: Math.min(30, (activePlan as UserPlanProgress & { plan?: { duration: number } }).plan?.duration ?? 30) }).map((_, i) => (
+                  <div key={i} style={{
+                    flex: 1, height: 18,
+                    background: i < activePlan.completedDays.length ? "var(--ds-accent-soft-2)" : "var(--paper-3)",
+                    borderRadius: 1,
+                    borderTop: i === activePlan.currentDay - 1 ? "2px solid var(--ds-accent)" : "none",
+                  }} />
+                ))}
+              </div>
+              <div style={{ fontSize: 11, color: "var(--ink-3)", display: "flex", justifyContent: "space-between" }}>
+                <span>Day {activePlan.currentDay}</span>
+                <span>{((activePlan as UserPlanProgress & { plan?: { duration: number } }).plan?.duration ?? 30) - activePlan.currentDay} left</span>
+              </div>
+            </>
+          ) : (
+            <div style={{ textAlign: "center", padding: "20px 0" }}>
+              <p style={{ fontSize: 13, color: "var(--ink-3)" }}>No plan started yet</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Stats row */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+        <div className="card" style={{ padding: 16 }}>
+          <div className="card-label" style={{ marginBottom: 8 }}>Total days read</div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+            <div style={{ fontFamily: "var(--font-serif)", fontSize: 30, fontWeight: 400, letterSpacing: "-0.02em", color: "var(--ink-1)" }}>{user.totalDaysRead}</div>
+            <div style={{ fontSize: 12, color: "var(--ink-3)" }}>days</div>
+          </div>
+        </div>
+        <div className="card" style={{ padding: 16 }}>
+          <div className="card-label" style={{ marginBottom: 8 }}>Active plans</div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+            <div style={{ fontFamily: "var(--font-serif)", fontSize: 30, fontWeight: 400, letterSpacing: "-0.02em", color: "var(--ds-accent-ink)" }}>{plans.length}</div>
+            <div style={{ fontSize: 12, color: "var(--ink-3)" }}>in progress</div>
+          </div>
+        </div>
+        <div className="card" style={{ padding: 16 }}>
+          <div className="card-label" style={{ marginBottom: 8 }}>Longest streak</div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+            <div style={{ fontFamily: "var(--font-serif)", fontSize: 30, fontWeight: 400, letterSpacing: "-0.02em", color: "var(--ink-1)" }}>{user.longestStreak}</div>
+            <div style={{ fontSize: 12, color: "var(--ink-3)" }}>days</div>
+          </div>
+        </div>
       </div>
     </div>
   );

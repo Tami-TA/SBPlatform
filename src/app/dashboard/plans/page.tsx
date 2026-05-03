@@ -193,14 +193,14 @@ export default function PlansPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 md:px-6 py-6">
-      <div className="flex items-center justify-between mb-6">
+    <div style={{ maxWidth: 1120, margin: "0 auto", padding: "28px 32px 48px" }}>
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 24, gap: 16 }}>
         <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Reading Plans</h1>
-          <p className="text-sm text-muted-foreground mt-1">Structure your daily Scripture reading</p>
+          <h1 style={{ fontFamily: "var(--font-serif)", fontWeight: 400, fontSize: 28, letterSpacing: "-0.015em", margin: "0 0 4px", color: "var(--ink-1)" }}>Study plans</h1>
+          <p style={{ fontSize: 13, color: "var(--ink-3)", margin: 0 }}>Structured reading paths — daily, weekly, by theme.</p>
         </div>
-        <button onClick={openCreate} className="btn-primary px-4 py-2.5 text-sm">
-          <Plus size={16} /> New Plan
+        <button onClick={openCreate} className="btn-primary" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <Plus size={13} /> New Plan
         </button>
       </div>
 
@@ -314,19 +314,17 @@ export default function PlansPage() {
       )}
 
       {/* Tabs */}
-      <div className="tab-list mb-6">
+      <div className="underline-tabs" style={{ marginBottom: 24 }}>
         {[
           { id: "active", label: "My Plans", badge: myProgress.length },
           { id: "create", label: "My Created", badge: myCreatedPlans.length },
           { id: "browse", label: "Browse", badge: 0 },
         ].map((tab) => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id as "active" | "browse" | "create")}
-            className={activeTab === tab.id ? "tab-item active" : "tab-item"}>
+            className={activeTab === tab.id ? "utab active" : "utab"}>
             {tab.label}
             {tab.badge > 0 && (
-              <span className="ml-1.5 w-4 h-4 rounded-full inline-flex items-center justify-center text-[10px] font-bold bg-primary text-primary-foreground">
-                {tab.badge}
-              </span>
+              <span style={{ color: "var(--ink-4)", marginLeft: 4 }}>{tab.badge}</span>
             )}
           </button>
         ))}
@@ -361,21 +359,21 @@ export default function PlansPage() {
                 const dayReading = getPlanDayReading(prog.planName, todayNum);
 
                 return (
-                  <div key={prog.id} className="card p-5">
-                    <div className="flex items-start justify-between mb-4">
+                  <div key={prog.id} className="card" style={{ padding: 20 }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 16 }}>
                       <div>
-                        <h3 className="font-semibold text-foreground text-base mb-1">{prog.planName}</h3>
-                        <p className="text-xs text-muted-foreground">Started {prog.startDate} · Day {todayNum} of {durationEstimate}</p>
+                        <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 20, fontWeight: 400, letterSpacing: "-0.01em", color: "var(--ink-1)", margin: "0 0 4px" }}>{prog.planName}</h3>
+                        <p style={{ fontSize: 12, color: "var(--ink-3)", margin: 0 }}>Started {prog.startDate} · Day {todayNum} of {durationEstimate}</p>
                       </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-display font-bold text-primary">{pct}%</p>
-                        <p className="text-xs text-muted-foreground">complete</p>
+                      <div style={{ textAlign: "right" }}>
+                        <p style={{ fontFamily: "var(--font-serif)", fontSize: 28, fontWeight: 400, color: "var(--ds-accent-ink)", margin: 0, letterSpacing: "-0.02em" }}>{pct}%</p>
+                        <p style={{ fontSize: 11, color: "var(--ink-3)", margin: 0 }}>complete</p>
                       </div>
                     </div>
 
                     {/* Progress bar */}
-                    <div className="progress-gold mb-4">
-                      <div className="progress-gold-fill" style={{ width: `${pct}%` }} />
+                    <div style={{ height: 4, background: "var(--paper-3)", borderRadius: 2, overflow: "hidden", marginBottom: 16 }}>
+                      <div style={{ width: `${pct}%`, height: "100%", background: "var(--ds-accent)", borderRadius: 2 }} />
                     </div>
 
                     {/* Today's reading */}
@@ -497,34 +495,25 @@ export default function PlansPage() {
               <Star size={15} className="text-primary" />
               Popular Plans
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
               {PRESET_READING_PLANS.map((plan) => {
                 const alreadyStarted = myProgress.some((p) => p.planName === plan.name);
                 return (
-                  <div key={plan.name} className="card p-5">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="w-11 h-11 rounded-2xl flex items-center justify-center bg-primary/8">
-                        <BookOpen size={20} className="text-primary" />
-                      </div>
-                      <span className="badge-cobalt">{plan.duration} days</span>
+                  <div key={plan.name} className="card card-tinted" style={{ padding: 16 }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10 }}>
+                      <div style={{ fontFamily: "var(--font-serif)", fontSize: 16, letterSpacing: "-0.01em", color: "var(--ink-1)", flex: 1 }}>{plan.name}</div>
+                      <span className="badge-accent" style={{ marginLeft: 8, flexShrink: 0 }}>{plan.duration}d</span>
                     </div>
-                    <h3 className="font-semibold text-foreground mb-1">{plan.name}</h3>
-                    <p className="text-xs text-muted-foreground mb-3 leading-relaxed">{plan.description}</p>
-                    <div className="flex flex-wrap gap-1.5 mb-4">
-                      {plan.tags.map((tag) => (
-                        <span key={tag} className="text-xs px-2.5 py-1 rounded-full bg-secondary text-muted-foreground">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
+                    <p style={{ fontSize: 12, color: "var(--ink-3)", marginBottom: 12, lineHeight: 1.55 }}>{plan.description}</p>
                     <button
                       onClick={() => handleStartPlan(plan)}
                       disabled={alreadyStarted || starting === plan.name}
-                      className={`w-full text-sm py-2.5 rounded-xl font-semibold transition-all ${alreadyStarted ? "bg-secondary text-muted-foreground opacity-60 cursor-default" : "bg-primary text-primary-foreground"}`}>
+                      className={alreadyStarted ? "btn" : "btn-primary"}
+                      style={{ width: "100%", justifyContent: "center" }}>
                       {starting === plan.name ? (
-                        <Loader2 size={16} className="animate-spin mx-auto" />
+                        <Loader2 size={14} className="animate-spin" />
                       ) : alreadyStarted ? (
-                        <span className="flex items-center justify-center gap-1.5"><Check size={14} /> In Progress</span>
+                        <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Check size={12} /> In Progress</span>
                       ) : (
                         "Start Plan"
                       )}
