@@ -64,14 +64,19 @@ export default function SignupPage() {
     setLoading(true);
     try {
       const { auth, googleProvider } = await import("@/lib/firebase");
-      const { signInWithRedirect } = await import("firebase/auth");
-      await signInWithRedirect(auth, googleProvider);
-      // Page redirects to Google — AuthProvider handles the result on return
+      const { signInWithPopup } = await import("firebase/auth");
+      await signInWithPopup(auth, googleProvider);
+      // Dashboard layout routes to /auth/setup (new user) or /dashboard (existing).
+      router.replace("/dashboard");
     } catch (err: unknown) {
       const code = (err as { code?: string }).code ?? "";
-      const msg = err instanceof Error ? err.message : String(err);
-      console.error("Google signup error — code:", code || "(none)", "| message:", msg, err);
-      toast.error(`Sign-in error: ${msg.slice(0, 100)}`);
+      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
+        // user dismissed — silent
+      } else {
+        const msg = err instanceof Error ? err.message : String(err);
+        toast.error(code ? `Sign-up failed (${code})` : msg.slice(0, 100));
+        console.error("Google signup error:", err);
+      }
       setLoading(false);
     }
   }

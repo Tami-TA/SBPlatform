@@ -48,14 +48,20 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const { auth, googleProvider } = await import("@/lib/firebase");
-      const { signInWithRedirect } = await import("firebase/auth");
-      await signInWithRedirect(auth, googleProvider);
-      // Page redirects to Google — AuthProvider handles the result on return
+      const { signInWithPopup } = await import("firebase/auth");
+      await signInWithPopup(auth, googleProvider);
+      // AuthProvider's onAuthStateChanged picks up the user.
+      // Dashboard layout routes to /auth/setup or dashboard based on profile.
+      router.replace("/dashboard");
     } catch (err: unknown) {
       const code = (err as { code?: string }).code ?? "";
-      const msg = err instanceof Error ? err.message : String(err);
-      console.error("Google login error — code:", code || "(none)", "| message:", msg, err);
-      toast.error(`Sign-in error: ${msg.slice(0, 100)}`);
+      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
+        // user dismissed — silent
+      } else {
+        const msg = err instanceof Error ? err.message : String(err);
+        toast.error(code ? `Sign-in failed (${code})` : msg.slice(0, 100));
+        console.error("Google login error:", err);
+      }
       setLoading(false);
     }
   }

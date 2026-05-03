@@ -121,6 +121,7 @@ const NAV_ITEMS = [
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, loading, signOut } = useAuth();
+  const { firebaseUser } = useAuthStore();
   const router   = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -131,8 +132,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const profileRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!loading && !user) router.replace("/auth/login");
-  }, [user, loading, router]);
+    if (loading) return;
+    if (!firebaseUser) { router.replace("/auth/login"); return; }
+    if (!user) { router.replace("/auth/setup"); return; }
+  }, [user, firebaseUser, loading, router]);
 
   useEffect(() => {
     if (!user) return;
