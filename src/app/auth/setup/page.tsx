@@ -33,23 +33,36 @@ export default function SetupPage() {
     setLoading(true);
     try {
       const { createUserProfile, getUserProfile } = await import("@/lib/firestore");
-      await createUserProfile(firebaseUser.uid, {
-        email: firebaseUser.email || "",
-        username,
-        displayName: displayName.trim(),
-        photoURL: firebaseUser.photoURL || undefined,
-      });
+
+      const timeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Request timed out — check Firestore security rules")), 10000)
+      );
+
+      await Promise.race([
+        createUserProfile(firebaseUser.uid, {
+          email: firebaseUser.email || "",
+          username,
+          displayName: displayName.trim(),
+          photoURL: firebaseUser.photoURL || undefined,
+        }),
+        timeout,
+      ]);
+
       const profile = await getUserProfile(firebaseUser.uid);
       setUser(profile);
       toast.success("Welcome to Scripture!");
       router.replace("/dashboard");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
+      console.error("Setup error:", msg, err);
       if (msg.includes("username-already-taken")) {
         toast.error("Username already taken — try another");
+      } else if (msg.includes("permission") || msg.includes("PERMISSION")) {
+        toast.error("Firestore permission denied — update your security rules in Firebase console");
+      } else if (msg.includes("timed out")) {
+        toast.error("Timed out — Firestore may be blocking writes. Check security rules in Firebase console.");
       } else {
-        toast.error("Failed to save profile. Please try again.");
-        console.error("Setup error:", err);
+        toast.error(`Error: ${msg.slice(0, 100)}`);
       }
     } finally {
       setLoading(false);
