@@ -125,7 +125,7 @@ export default function SetupPage() {
         );
       } else if (code === "not-found") {
         toast.error(
-          "Firestore database not found — create it in Firebase Console → Build → Firestore Database.",
+          "Permission denied (rules are blocking the write). Go to Firebase Console → Firestore Database → Rules and publish rules that allow authenticated users to write.",
           { duration: 10000 }
         );
       } else {
