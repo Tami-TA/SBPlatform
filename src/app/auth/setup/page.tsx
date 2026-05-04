@@ -119,24 +119,7 @@ export default function SetupPage() {
       const code = (err as { code?: string }).code ?? "";
       console.error("Setup error:", code, msg, err);
 
-      if (code === "permission-denied" || code === "permission_denied") {
-        toast.error(
-          "Permission denied — go to Firebase Console → Firestore Database → Rules and publish the security rules.",
-          { duration: 10000 }
-        );
-      } else if (code === "deadline-exceeded" || code === "unavailable") {
-        toast.error(
-          `Could not reach Firestore (${code}). Make sure the database exists and is in Native mode in Firebase Console.`,
-          { duration: 10000 }
-        );
-      } else if (code === "not-found") {
-        toast.error(
-          "Permission denied (rules are blocking the write). Go to Firebase Console → Firestore Database → Rules and publish rules that allow authenticated users to write.",
-          { duration: 10000 }
-        );
-      } else {
-        toast.error(`Error (${code || "unknown"}): ${msg.slice(0, 150)}`, { duration: 10000 });
-      }
+      toast.error(`[${code || "unknown"}] ${msg.slice(0, 300)}`, { duration: 15000 });
     } finally {
       setSaving(false);
     }
