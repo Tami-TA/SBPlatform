@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, OAuthProvider } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { initializeFirestore, memoryLocalCache } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 // Firebase config values are intentionally public (NEXT_PUBLIC_).
@@ -20,7 +20,9 @@ const firebaseConfig = {
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+// memoryLocalCache disables offline queuing so writes fail fast with a real
+// error code instead of hanging silently when the server is unreachable.
+export const db = initializeFirestore(app, { localCache: memoryLocalCache() });
 export const storage = getStorage(app);
 
 export const googleProvider = new GoogleAuthProvider();
