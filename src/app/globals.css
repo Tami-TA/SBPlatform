@@ -60,11 +60,16 @@
   --accent-soft:   oklch(94%   0.015 245);   /* very light blue tint */
   --accent-soft-2: oklch(89%   0.022 245);   /* slightly darker tint */
   --accent-border: oklch(85%   0.025 245);   /* tinted border for active states */
-  --hl-yellow:     oklch(94%   0.045 95);
-  --hl-blue:       oklch(93%   0.025 245);
-  --hl-green:      oklch(93%   0.030 155);
-  --hl-pink:       oklch(93%   0.025 350);
-  --hl-orange:     oklch(93%   0.040 60);
+  --hl-yellow:     oklch(88%   0.065 95);
+  --hl-blue:       oklch(88%   0.040 245);
+  --hl-green:      oklch(88%   0.050 155);
+  --hl-pink:       oklch(88%   0.042 350);
+  --hl-orange:     oklch(88%   0.058 60);
+  --hl-yellow-border: oklch(76%   0.075 95);
+  --hl-blue-border:   oklch(76%   0.055 245);
+  --hl-green-border:  oklch(76%   0.065 155);
+  --hl-pink-border:   oklch(76%   0.055 350);
+  --hl-orange-border: oklch(76%   0.070 60);
   --font-ui:       var(--font-inter-tight,  "Inter Tight",    system-ui, sans-serif);
   --font-serif:    var(--font-newsreader,   "Newsreader",     "Iowan Old Style", Georgia, serif);
   --font-mono-ds:  var(--font-jetbrains,   "JetBrains Mono", ui-monospace, monospace);

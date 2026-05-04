@@ -47,6 +47,14 @@ const CULTURAL_BG: Record<CulturalNote["category"], string> = {
   geography: "var(--hl-orange)",
 };
 
+const CULTURAL_BORDER: Record<CulturalNote["category"], string> = {
+  customs:   "var(--hl-yellow-border)",
+  law:       "var(--hl-blue-border)",
+  worship:   "var(--hl-pink-border)",
+  social:    "var(--hl-green-border)",
+  geography: "var(--hl-orange-border)",
+};
+
 // ─── sub-components ───────────────────────────────────────────────────────────
 
 function GenealogyTree({ nodes }: { nodes: GenealogyNode[] }) {
@@ -130,7 +138,7 @@ function TagGroup({ title, items, color = "default" }: { title: string; items: s
         {items.map(item => (
           <span key={item} className={badgeCls} style={
             color === "warm"
-              ? { background: "var(--hl-yellow)", color: "var(--ink-2)", borderColor: "var(--hairline-2)" }
+              ? { background: "var(--hl-yellow)", color: "var(--ink-2)", borderColor: "var(--hl-yellow-border)" }
               : undefined
           }>{item}</span>
         ))}
@@ -446,13 +454,13 @@ export default function ContextPage() {
                   {book.culturalNotes.map((note, i) => (
                     <div key={i} style={{
                       borderRadius: 10,
-                      border: "1px solid var(--hairline)",
+                      border: `1px solid ${CULTURAL_BORDER[note.category]}`,
                       background: CULTURAL_BG[note.category],
                       padding: "14px 16px",
                     }}>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
                         <p style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink-1)", margin: 0 }}>{note.title}</p>
-                        <span className="badge" style={{ textTransform: "capitalize", fontSize: 11 }}>{note.category}</span>
+                        <span className="badge" style={{ textTransform: "capitalize", fontSize: 11, background: "var(--paper)", borderColor: CULTURAL_BORDER[note.category] }}>{note.category}</span>
                       </div>
                       <p style={{ fontSize: 13, color: "var(--ink-2)", margin: 0, lineHeight: 1.6 }}>{note.content}</p>
                     </div>
