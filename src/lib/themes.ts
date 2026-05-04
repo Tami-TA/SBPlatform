@@ -1,6 +1,7 @@
 export type ThemeId =
   | "light" | "warm" | "sepia" | "stone"
-  | "dark" | "midnight" | "navy" | "slate" | "forest" | "dusk" | "ocean" | "amethyst";
+  | "dark" | "midnight" | "navy" | "slate" | "forest" | "dusk" | "ocean" | "amethyst"
+  | "highcontrast";
 
 export interface ThemeConfig {
   id: ThemeId;
@@ -88,5 +89,11 @@ export const THEMES: ThemeConfig[] = [
     name: "Amethyst",
     isDark: true,
     preview: ["oklch(16% 0.020 290)", "oklch(12% 0.016 290)", "oklch(72% 0.080 295)", "oklch(95% 0.005 285)"],
+  },
+  {
+    id: "highcontrast",
+    name: "High Contrast",
+    isDark: false,
+    preview: ["oklch(100% 0 0)", "oklch(92% 0 0)", "oklch(22% 0.20 264)", "oklch(0% 0 0)"],
   },
 ];

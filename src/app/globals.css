@@ -1127,3 +1127,39 @@ input, textarea, select { font-family: inherit; }
   --sidebar-border:             var(--hairline);
   --sidebar-ring:               var(--accent-btn);
 }
+
+/* ── High Contrast — accessibility-focused, WCAG AAA ─────────────────────── */
+.theme-highcontrast {
+  --paper:         oklch(100%  0     0);
+  --paper-2:       oklch(93%   0     0);
+  --paper-3:       oklch(86%   0     0);
+  --hairline:      oklch(60%   0     0);
+  --hairline-2:    oklch(45%   0     0);
+  --ink-1:         oklch(0%    0     0);
+  --ink-2:         oklch(14%   0     0);
+  --ink-3:         oklch(30%   0     0);
+  --ink-4:         oklch(46%   0     0);
+  --accent-btn:    oklch(22%   0.20  264);
+  --accent-ink:    oklch(18%   0.20  264);
+  --accent-soft:   oklch(88%   0.06  264);
+  --accent-soft-2: oklch(80%   0.09  264);
+  --accent-border: oklch(55%   0.15  264);
+  --shadow-soft:   0 1px 2px oklch(0% 0 0 / 0.12), 0 8px 24px oklch(0% 0 0 / 0.16);
+  --shadow-modal:  0 1px 2px oklch(0% 0 0 / 0.18), 0 24px 64px oklch(0% 0 0 / 0.30);
+  --background: var(--paper);   --foreground: var(--ink-1);
+  --card: var(--paper);         --card-foreground: var(--ink-1);
+  --popover: var(--paper);      --popover-foreground: var(--ink-1);
+  --primary: var(--accent-btn); --primary-foreground: oklch(100% 0 0);
+  --secondary: var(--paper-2);  --secondary-foreground: var(--ink-2);
+  --muted: var(--paper-3);      --muted-foreground: var(--ink-3);
+  --accent: var(--accent-soft); --accent-foreground: var(--accent-ink);
+  --border: var(--hairline);    --input: var(--hairline-2);  --ring: var(--accent-btn);
+  --sidebar:                    oklch(93%   0     0);
+  --sidebar-foreground:         var(--ink-2);
+  --sidebar-primary:            var(--accent-btn);
+  --sidebar-primary-foreground: oklch(100% 0 0);
+  --sidebar-accent:             var(--accent-soft);
+  --sidebar-accent-foreground:  var(--accent-ink);
+  --sidebar-border:             var(--hairline);
+  --sidebar-ring:               var(--accent-btn);
+}

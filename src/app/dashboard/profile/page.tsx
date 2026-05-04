@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAuthStore } from "@/store/auth-store";
 import { useThemeStore } from "@/store/theme-store";
 import { updateUserProfile } from "@/lib/firestore";
@@ -11,26 +11,17 @@ import type { ThemeId } from "@/lib/themes";
 import {
   Edit2, Save, X, Flame, Star, Trophy, BookOpen,
   Bell, BellOff, ChevronRight, Shield, Check, Camera,
-  Users, BookMarked, Zap, Award, ListChecks, Palette,
+  Users, BookMarked, Zap, Award, ListChecks, Palette, Loader2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
 const STAT_ICONS: Record<string, React.ElementType> = {
-  "Days Read": BookOpen,
-  "Current Streak": Flame,
-  "Longest Streak": Star,
-  "Friends": Users,
-  "Groups": Users,
-  "Badges": Trophy,
+  "Days Read": BookOpen, "Current Streak": Flame, "Longest Streak": Star,
+  "Friends": Users, "Groups": Users, "Badges": Trophy,
 };
-
 const MILESTONE_ICONS: Record<number, React.ElementType> = {
-  7: Flame,
-  30: Star,
-  100: Zap,
-  365: Award,
+  7: Flame, 30: Star, 100: Zap, 365: Award,
 };
-
 const BADGE_ICONS: Record<string, React.ElementType> = {
   streak_1: BookOpen, streak_7: Flame, streak_30: Star,
   streak_100: Zap, streak_365: Award,
@@ -42,14 +33,17 @@ const BADGE_ICONS: Record<string, React.ElementType> = {
 export default function ProfilePage() {
   const { user, setUser } = useAuthStore();
   const { theme: activeTheme, setTheme } = useThemeStore();
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing]   = useState(false);
+  const [saving, setSaving]     = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [form, setForm] = useState({
-    displayName: user?.displayName || "",
-    bio: user?.bio || "",
+    displayName:          user?.displayName || "",
+    bio:                  user?.bio || "",
     preferredTranslation: user?.preferredTranslation || "KJV",
     notificationsEnabled: user?.notificationsEnabled ?? true,
   });
-  const [saving, setSaving] = useState(false);
 
   if (!user) return null;
 
@@ -60,8 +54,8 @@ export default function ProfilePage() {
     setSaving(true);
     try {
       await updateUserProfile(user.uid, {
-        displayName: form.displayName,
-        bio: form.bio,
+        displayName:          form.displayName,
+        bio:                  form.bio,
         preferredTranslation: form.preferredTranslation as BibleTranslation,
         notificationsEnabled: form.notificationsEnabled,
       });
@@ -82,157 +76,245 @@ export default function ProfilePage() {
       await updateUserProfile(user.uid, { theme: themeId });
       setUser({ ...user, theme: themeId });
     } catch {
-      // Theme is already applied locally; Firestore sync failure is non-critical
+      // non-critical — theme already applied locally
+    }
+  }
+
+  async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    // Validate type
+    if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type)) {
+      toast.error("Please upload a JPG, PNG, WebP, or GIF image");
+      return;
+    }
+    // Validate size (5 MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be under 5 MB");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const { storage } = await import("@/lib/firebase");
+      const { ref, uploadBytes, getDownloadURL } = await import("firebase/storage");
+
+      const storageRef = ref(storage, `profilePictures/${user.uid}`);
+      await uploadBytes(storageRef, file, { contentType: file.type });
+      const photoURL = await getDownloadURL(storageRef);
+
+      await updateUserProfile(user.uid, { photoURL });
+
+      // Also update Firebase Auth profile so firebaseUser.photoURL stays in sync
+      const { auth } = await import("@/lib/firebase");
+      const { updateProfile } = await import("firebase/auth");
+      if (auth.currentUser) await updateProfile(auth.currentUser, { photoURL });
+
+      setUser({ ...user, photoURL });
+      toast.success("Photo updated!");
+    } catch (err) {
+      console.error("Photo upload error:", err);
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes("storage/unauthorized") || msg.includes("permission")) {
+        toast.error("Upload blocked — set Firebase Storage rules to allow authenticated writes");
+      } else {
+        toast.error(`Upload failed: ${msg.slice(0, 80)}`);
+      }
+    } finally {
+      setUploading(false);
+      // Reset input so the same file can be re-selected if needed
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }
 
   const STATS = [
-    { label: "Days Read", value: user.totalDaysRead },
-    { label: "Current Streak", value: `${user.currentStreak}d` },
-    { label: "Longest Streak", value: `${user.longestStreak}d` },
-    { label: "Friends", value: user.friendIds?.length || 0 },
-    { label: "Groups", value: user.groupIds?.length || 0 },
-    { label: "Badges", value: user.badges.length },
+    { label: "Days Read",       value: user.totalDaysRead },
+    { label: "Current Streak",  value: `${user.currentStreak}d` },
+    { label: "Longest Streak",  value: `${user.longestStreak}d` },
+    { label: "Friends",         value: user.friendIds?.length || 0 },
+    { label: "Groups",          value: user.groupIds?.length || 0 },
+    { label: "Badges",          value: user.badges.length },
   ];
 
   const MILESTONES = [
-    { streak: 7, name: "Week Warrior", desc: "Read for 7 consecutive days" },
-    { streak: 30, name: "Monthly Devotee", desc: "Read for 30 consecutive days" },
+    { streak: 7,   name: "Week Warrior",    desc: "Read for 7 consecutive days" },
+    { streak: 30,  name: "Monthly Devotee", desc: "Read for 30 consecutive days" },
     { streak: 100, name: "Century Scholar", desc: "Read for 100 consecutive days" },
-    { streak: 365, name: "Year of Faith", desc: "Read for 365 consecutive days" },
+    { streak: 365, name: "Year of Faith",   desc: "Read for 365 consecutive days" },
   ];
 
-  const lightThemes = THEMES.filter((t) => !t.isDark);
-  const darkThemes  = THEMES.filter((t) =>  t.isDark);
+  const lightThemes = THEMES.filter(t => !t.isDark);
+  const darkThemes  = THEMES.filter(t =>  t.isDark);
 
   return (
-    <div className="max-w-3xl mx-auto px-4 md:px-6 py-6 space-y-6">
+    <div style={{ maxWidth: 720, margin: "0 auto", padding: "28px 24px 56px" }}>
 
-      {/* Profile header */}
-      <div className="card p-6 relative overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 h-20 bg-primary/10" />
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        style={{ display: "none" }}
+        onChange={handlePhotoUpload}
+      />
 
-        <div className="relative flex flex-col md:flex-row items-start md:items-end gap-5 pt-4">
+      {/* ── Profile header ─────────────────────────────────────────────────── */}
+      <div className="card" style={{ padding: "28px 24px 20px", marginBottom: 16, position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 64, background: "var(--accent-soft)" }} />
+
+        <div style={{ position: "relative", display: "flex", alignItems: "flex-end", gap: 18, flexWrap: "wrap", paddingTop: 8 }}>
           {/* Avatar */}
-          <div className="relative flex-shrink-0">
-            <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-bold text-gray-900 overflow-hidden bg-primary">
+          <div style={{ position: "relative", flexShrink: 0 }}>
+            <div style={{
+              width: 76, height: 76, borderRadius: 16,
+              background: "var(--accent-soft-2)",
+              border: "3px solid var(--paper)",
+              overflow: "hidden",
+              display: "grid", placeItems: "center",
+              fontSize: 22, fontWeight: 600, color: "var(--accent-ink)",
+            }}>
               {user.photoURL
-                ? <img src={user.photoURL} alt={user.displayName} className="w-20 h-20 object-cover" />
+                ? <img src={user.photoURL} alt={user.displayName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 : getInitials(user.displayName)}
             </div>
-            <button className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center text-gray-900 border-2 border-card bg-primary"
-              title="Change photo">
-              <Camera size={12} />
+            <button
+              onClick={() => !uploading && fileInputRef.current?.click()}
+              disabled={uploading}
+              title="Change photo"
+              style={{
+                position: "absolute", bottom: -4, right: -4,
+                width: 26, height: 26, borderRadius: "50%",
+                background: "var(--accent-btn)",
+                border: "2px solid var(--paper)",
+                display: "grid", placeItems: "center",
+                cursor: uploading ? "not-allowed" : "pointer",
+                opacity: uploading ? 0.6 : 1,
+                color: "white",
+              }}
+            >
+              {uploading ? <Loader2 size={11} style={{ animation: "spin 1s linear infinite" }} /> : <Camera size={11} />}
             </button>
           </div>
 
-          <div className="flex-1 min-w-0">
+          {/* Name + username */}
+          <div style={{ flex: 1, minWidth: 0 }}>
             {editing ? (
-              <input type="text" value={form.displayName}
-                onChange={(e) => setForm((f) => ({ ...f, displayName: e.target.value }))}
-                className="input-field text-xl font-display font-bold mb-1 py-1.5 w-full max-w-xs" />
+              <input
+                type="text"
+                value={form.displayName}
+                onChange={e => setForm(f => ({ ...f, displayName: e.target.value }))}
+                className="input-field"
+                style={{ fontSize: 18, fontWeight: 600, marginBottom: 4, maxWidth: 260 }}
+              />
             ) : (
-              <h1 className="text-2xl font-display font-bold text-foreground">{user.displayName}</h1>
+              <h1 style={{ fontSize: 20, fontWeight: 700, color: "var(--ink-1)", margin: "0 0 2px", letterSpacing: "-0.01em" }}>
+                {user.displayName}
+              </h1>
             )}
-            <p className="text-sm text-muted-foreground">@{user.username}</p>
-            <div className="flex items-center gap-3 mt-2">
-              <span className={`text-sm font-semibold ${streakLevel.color}`}>{streakLevel.label}</span>
+            <p style={{ fontSize: 12.5, color: "var(--ink-3)", margin: "0 0 6px" }}>@{user.username}</p>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "var(--accent-ink)" }}>{streakLevel.label}</span>
               {user.currentStreak > 0 && (
-                <div className="flex items-center gap-1 text-sm text-orange-400 font-semibold">
-                  <Flame size={14} /> {user.currentStreak} day streak
-                </div>
+                <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "oklch(65% 0.18 42)", fontWeight: 600 }}>
+                  <Flame size={13} /> {user.currentStreak} day streak
+                </span>
               )}
             </div>
           </div>
 
-          <div className="flex gap-2 flex-shrink-0">
+          {/* Actions */}
+          <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
             {editing ? (
               <>
-                <button onClick={() => setEditing(false)} className="btn-ghost text-sm py-2 px-4">
-                  <X size={15} /> Cancel
-                </button>
-                <button onClick={handleSave} disabled={saving} className="btn-primary text-sm py-2 px-4">
-                  {saving ? "Saving..." : <><Save size={15} /> Save</>}
+                <button onClick={() => setEditing(false)} className="btn btn-sm"><X size={13} /> Cancel</button>
+                <button onClick={handleSave} disabled={saving} className="btn-primary btn-sm">
+                  {saving ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : <Save size={13} />}
+                  {saving ? "Saving…" : "Save"}
                 </button>
               </>
             ) : (
-              <button onClick={() => setEditing(true)} className="btn-ghost text-sm py-2 px-4">
-                <Edit2 size={15} /> Edit
-              </button>
+              <button onClick={() => setEditing(true)} className="btn btn-sm"><Edit2 size={13} /> Edit</button>
             )}
           </div>
         </div>
 
-        <div className="mt-4 pt-4 border-t border-border">
+        {/* Bio */}
+        <div style={{ marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--hairline)" }}>
           {editing ? (
-            <textarea value={form.bio} onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))}
-              placeholder="Write a short bio..." rows={2}
-              className="input-field resize-none text-sm w-full" />
+            <textarea
+              value={form.bio}
+              onChange={e => setForm(f => ({ ...f, bio: e.target.value }))}
+              placeholder="Write a short bio…"
+              rows={2}
+              className="input-field"
+              style={{ resize: "none", fontSize: 13, width: "100%" }}
+            />
           ) : (
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              {user.bio || <span className="italic">No bio yet — add one to let friends know about you.</span>}
+            <p style={{ fontSize: 13, color: "var(--ink-3)", margin: 0, lineHeight: 1.6, fontStyle: user.bio ? "normal" : "italic" }}>
+              {user.bio || "No bio yet — add one to let friends know about you."}
             </p>
           )}
         </div>
       </div>
 
-      {/* Stats grid */}
-      <div>
-        <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wider">Stats</h2>
-        <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-          {STATS.map((stat) => {
-            const IconComp = STAT_ICONS[stat.label] || Star;
+      {/* ── Stats ──────────────────────────────────────────────────────────── */}
+      <div style={{ marginBottom: 16 }}>
+        <div className="card-label" style={{ marginBottom: 10 }}>Stats</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+          {STATS.map(stat => {
+            const Icon = STAT_ICONS[stat.label] || Star;
             return (
-              <div key={stat.label} className="card p-3 text-center">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center mx-auto mb-2 bg-primary/10">
-                  <IconComp size={16} className="text-primary" />
+              <div key={stat.label} className="card" style={{ padding: "14px 12px", textAlign: "center" }}>
+                <div style={{ width: 30, height: 30, borderRadius: 8, background: "var(--accent-soft)", margin: "0 auto 8px", display: "grid", placeItems: "center" }}>
+                  <Icon size={14} style={{ color: "var(--accent-ink)" }} />
                 </div>
-                <p className="text-lg font-display font-bold text-foreground">{stat.value}</p>
-                <p className="text-xs text-muted-foreground mt-0.5 leading-tight">{stat.label}</p>
+                <p style={{ fontSize: 18, fontWeight: 700, color: "var(--ink-1)", margin: "0 0 2px", fontFamily: "var(--font-serif)" }}>
+                  {stat.value}
+                </p>
+                <p style={{ fontSize: 11, color: "var(--ink-4)", margin: 0, lineHeight: 1.3 }}>{stat.label}</p>
               </div>
             );
           })}
         </div>
       </div>
 
-      {/* Streak milestone tracker */}
-      <div className="card p-5">
-        <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-          <Flame size={15} className="text-orange-400" />
-          Streak Milestones
-        </h2>
-        <div className="space-y-3">
-          {MILESTONES.map((milestone) => {
-            const earned = user.currentStreak >= milestone.streak ||
-              user.badges.some((b) => b.id === `streak_${milestone.streak}`);
-            const progress = Math.min(100, (user.currentStreak / milestone.streak) * 100);
-            const IconComp = MILESTONE_ICONS[milestone.streak] || Star;
+      {/* ── Streak milestones ───────────────────────────────────────────────── */}
+      <div className="card" style={{ padding: "18px 20px", marginBottom: 16 }}>
+        <div className="card-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <Flame size={12} style={{ color: "oklch(65% 0.18 42)" }} /> Streak Milestones
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {MILESTONES.map(m => {
+            const earned = user.currentStreak >= m.streak || user.badges.some(b => b.id === `streak_${m.streak}`);
+            const progress = Math.min(100, (user.currentStreak / m.streak) * 100);
+            const Icon = MILESTONE_ICONS[m.streak] || Star;
             return (
-              <div key={milestone.streak}
-                className={`p-4 rounded-xl flex items-center gap-4 transition-all border ${earned ? "bg-primary/8 border-primary/20" : "bg-secondary border-transparent opacity-70"}`}>
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${earned ? "bg-primary/10" : "bg-border"}`}>
-                  <IconComp size={18} className={earned ? "text-primary" : "text-muted-foreground"} />
+              <div key={m.streak} style={{
+                display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 10,
+                background: earned ? "var(--accent-soft)" : "var(--paper-2)",
+                border: `1px solid ${earned ? "var(--accent-border)" : "var(--hairline)"}`,
+              }}>
+                <div style={{ width: 36, height: 36, borderRadius: 9, flexShrink: 0, display: "grid", placeItems: "center", background: earned ? "var(--accent-soft-2)" : "var(--paper-3)" }}>
+                  <Icon size={16} style={{ color: earned ? "var(--accent-ink)" : "var(--ink-4)" }} />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className="font-semibold text-sm text-foreground">{milestone.name}</span>
-                    {earned && <span className="badge-accent text-xs">Earned</span>}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink-1)" }}>{m.name}</span>
+                    {earned && <span className="badge-accent" style={{ fontSize: 10.5 }}>Earned</span>}
                   </div>
-                  <p className="text-xs text-muted-foreground">{milestone.desc}</p>
+                  <p style={{ fontSize: 12, color: "var(--ink-3)", margin: 0 }}>{m.desc}</p>
                   {!earned && (
-                    <div className="progress-gold mt-2">
-                      <div className="progress-gold-fill" style={{ width: `${progress}%` }} />
+                    <div style={{ height: 3, borderRadius: 2, background: "var(--paper-3)", marginTop: 6, overflow: "hidden" }}>
+                      <div style={{ height: "100%", borderRadius: 2, background: "var(--accent-btn)", width: `${progress}%` }} />
                     </div>
                   )}
                 </div>
-                <div className="flex-shrink-0">
-                  {earned ? (
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center bg-primary/10">
-                      <Check size={14} className="text-primary" />
-                    </div>
-                  ) : (
-                    <span className="text-xs text-muted-foreground font-medium">{milestone.streak}d</span>
-                  )}
+                <div style={{ flexShrink: 0 }}>
+                  {earned
+                    ? <div style={{ width: 24, height: 24, borderRadius: "50%", background: "var(--accent-btn)", display: "grid", placeItems: "center" }}><Check size={12} color="white" /></div>
+                    : <span style={{ fontSize: 11.5, color: "var(--ink-4)", fontWeight: 500 }}>{m.streak}d</span>
+                  }
                 </div>
               </div>
             );
@@ -240,24 +322,21 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Earned badges */}
+      {/* ── Badges ─────────────────────────────────────────────────────────── */}
       {user.badges.length > 0 && (
-        <div className="card p-5">
-          <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Trophy size={15} className="text-primary" />
-            My Badges ({user.badges.length})
-          </h2>
-          <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
-            {user.badges.map((badge) => {
-              const IconComp = BADGE_ICONS[badge.id] || Trophy;
+        <div className="card" style={{ padding: "18px 20px", marginBottom: 16 }}>
+          <div className="card-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <Trophy size={12} /> My Badges ({user.badges.length})
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10 }}>
+            {user.badges.map(badge => {
+              const Icon = BADGE_ICONS[badge.id] || Trophy;
               return (
-                <div key={badge.id}
-                  className="flex flex-col items-center gap-2 p-3 rounded-xl text-center bg-secondary hover:opacity-80 transition-all"
-                  title={badge.description}>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-primary/10">
-                    <IconComp size={18} className="text-primary" />
+                <div key={badge.id} title={badge.description} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: "12px 8px", borderRadius: 10, background: "var(--paper-2)", textAlign: "center" }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 9, background: "var(--accent-soft)", display: "grid", placeItems: "center" }}>
+                    <Icon size={16} style={{ color: "var(--accent-ink)" }} />
                   </div>
-                  <span className="text-xs font-medium text-muted-foreground leading-tight">{badge.name}</span>
+                  <span style={{ fontSize: 11, color: "var(--ink-3)", lineHeight: 1.3 }}>{badge.name}</span>
                 </div>
               );
             })}
@@ -265,83 +344,81 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* ── Appearance ──────────────────────────────────────────────────────── */}
-      <div className="card p-5">
-        <h2 className="text-sm font-semibold text-foreground mb-1 flex items-center gap-2">
-          <Palette size={15} className="text-primary" />
-          Appearance
-        </h2>
-        <p className="text-xs text-muted-foreground mb-5">Choose a theme for the app. Changes apply instantly.</p>
+      {/* ── Appearance ─────────────────────────────────────────────────────── */}
+      <div className="card" style={{ padding: "18px 20px", marginBottom: 16 }}>
+        <div className="card-label" style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+          <Palette size={12} /> Appearance
+        </div>
+        <p style={{ fontSize: 12.5, color: "var(--ink-4)", margin: "0 0 18px" }}>Choose a theme. Changes apply instantly.</p>
 
-        {/* Light themes */}
-        <p style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--ink-4)", fontWeight: 500, marginBottom: 10 }}>Light</p>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 20 }}>
-          {lightThemes.map((t) => (
-            <ThemeCard key={t.id} theme={t} active={activeTheme === t.id} onSelect={handleThemeChange} />
-          ))}
+        <p style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--ink-4)", fontWeight: 600, margin: "0 0 10px" }}>Light</p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(88px, 1fr))", gap: 10, marginBottom: 20 }}>
+          {lightThemes.map(t => <ThemeCard key={t.id} theme={t} active={activeTheme === t.id} onSelect={handleThemeChange} />)}
         </div>
 
-        {/* Dark themes */}
-        <p style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--ink-4)", fontWeight: 500, marginBottom: 10 }}>Dark</p>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
-          {darkThemes.map((t) => (
-            <ThemeCard key={t.id} theme={t} active={activeTheme === t.id} onSelect={handleThemeChange} />
-          ))}
+        <p style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--ink-4)", fontWeight: 600, margin: "0 0 10px" }}>Dark</p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(88px, 1fr))", gap: 10 }}>
+          {darkThemes.map(t => <ThemeCard key={t.id} theme={t} active={activeTheme === t.id} onSelect={handleThemeChange} />)}
         </div>
       </div>
 
-      {/* Preferences */}
-      <div className="card p-5">
-        <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-          <Shield size={15} className="text-primary" />
-          Preferences
-        </h2>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
+      {/* ── Preferences ────────────────────────────────────────────────────── */}
+      <div className="card" style={{ padding: "18px 20px" }}>
+        <div className="card-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <Shield size={12} /> Preferences
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {/* Translation */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div>
-              <p className="text-sm font-medium text-foreground">Preferred Translation</p>
-              <p className="text-xs text-muted-foreground">Default Bible translation</p>
+              <p style={{ fontSize: 13.5, fontWeight: 500, color: "var(--ink-1)", margin: "0 0 2px" }}>Preferred Translation</p>
+              <p style={{ fontSize: 12, color: "var(--ink-3)", margin: 0 }}>Default Bible translation</p>
             </div>
             {editing ? (
-              <select value={form.preferredTranslation}
-                onChange={(e) => setForm((f) => ({ ...f, preferredTranslation: e.target.value as BibleTranslation }))}
-                className="input-field w-32 py-1.5 text-sm">
-                {TRANSLATIONS.map((t) => (
-                  <option key={t.id} value={t.id}>{t.id}</option>
-                ))}
+              <select
+                value={form.preferredTranslation}
+                onChange={e => setForm(f => ({ ...f, preferredTranslation: e.target.value as BibleTranslation }))}
+                className="input-field"
+                style={{ width: 100, height: 30, fontSize: 12.5, padding: "0 8px" }}
+              >
+                {TRANSLATIONS.map(t => <option key={t.id} value={t.id}>{t.id}</option>)}
               </select>
             ) : (
               <span className="badge-accent">{user.preferredTranslation}</span>
             )}
           </div>
 
-          <div className="h-px bg-border" />
+          <hr style={{ border: "none", borderTop: "1px solid var(--hairline)", margin: 0 }} />
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          {/* Notifications */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               {user.notificationsEnabled
-                ? <Bell size={16} className="text-primary" />
-                : <BellOff size={16} className="text-muted-foreground" />}
+                ? <Bell size={15} style={{ color: "var(--accent-ink)" }} />
+                : <BellOff size={15} style={{ color: "var(--ink-4)" }} />}
               <div>
-                <p className="text-sm font-medium text-foreground">Reading Reminders</p>
-                <p className="text-xs text-muted-foreground">Daily notifications to read</p>
+                <p style={{ fontSize: 13.5, fontWeight: 500, color: "var(--ink-1)", margin: "0 0 2px" }}>Reading Reminders</p>
+                <p style={{ fontSize: 12, color: "var(--ink-3)", margin: 0 }}>Daily notifications to read</p>
               </div>
             </div>
             <button
-              onClick={() => { if (editing) setForm((f) => ({ ...f, notificationsEnabled: !f.notificationsEnabled })); }}
-              className={`relative w-11 h-6 rounded-full transition-all ${(editing ? form.notificationsEnabled : user.notificationsEnabled) ? "bg-primary" : "bg-muted-foreground/30"}`}>
-              <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${(editing ? form.notificationsEnabled : user.notificationsEnabled) ? "translate-x-5" : "translate-x-0.5"}`} />
+              onClick={() => { if (editing) setForm(f => ({ ...f, notificationsEnabled: !f.notificationsEnabled })); }}
+              className="toggle-track"
+              style={{ opacity: editing ? 1 : 0.5 }}
+            >
+              <span className={`toggle-thumb${(editing ? form.notificationsEnabled : user.notificationsEnabled) ? " on" : ""}`} />
             </button>
           </div>
 
-          <div className="h-px bg-border" />
+          <hr style={{ border: "none", borderTop: "1px solid var(--hairline)", margin: 0 }} />
 
-          <div className="flex items-center justify-between py-1">
+          {/* Email (read-only) */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div>
-              <p className="text-sm font-medium text-foreground">Account Email</p>
-              <p className="text-xs text-muted-foreground">{user.email}</p>
+              <p style={{ fontSize: 13.5, fontWeight: 500, color: "var(--ink-1)", margin: "0 0 2px" }}>Account Email</p>
+              <p style={{ fontSize: 12, color: "var(--ink-3)", margin: 0 }}>{user.email}</p>
             </div>
-            <ChevronRight size={15} className="text-muted-foreground" />
+            <ChevronRight size={15} style={{ color: "var(--ink-4)" }} />
           </div>
         </div>
       </div>
@@ -349,83 +426,39 @@ export default function ProfilePage() {
   );
 }
 
-// ── Theme card swatch ─────────────────────────────────────────────────────────
+// ── Theme swatch card ─────────────────────────────────────────────────────────
 
-interface ThemeCardProps {
+function ThemeCard({ theme, active, onSelect }: {
   theme: (typeof THEMES)[number];
   active: boolean;
   onSelect: (id: ThemeId) => void;
-}
-
-function ThemeCard({ theme, active, onSelect }: ThemeCardProps) {
+}) {
   const [bg, sidebar, accent] = theme.preview;
-
   return (
     <button
       onClick={() => onSelect(theme.id)}
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 6,
-        padding: 0,
-        background: "none",
-        border: "none",
-        cursor: "pointer",
-        outline: "none",
-        textAlign: "left",
-      }}
+      style={{ display: "flex", flexDirection: "column", gap: 5, padding: 0, background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
     >
-      {/* Color preview */}
       <div style={{
-        borderRadius: 8,
-        overflow: "hidden",
-        height: 52,
+        borderRadius: 8, overflow: "hidden", height: 50,
         display: "flex",
-        border: active
-          ? "2px solid var(--accent-btn)"
-          : "2px solid var(--hairline)",
-        transition: "border-color 120ms",
+        border: active ? "2px solid var(--accent-btn)" : "2px solid var(--hairline)",
         boxShadow: active ? "0 0 0 3px var(--accent-soft)" : "none",
+        transition: "border-color 120ms, box-shadow 120ms",
       }}>
-        {/* Sidebar strip */}
-        <div style={{ width: "28%", background: sidebar, flexShrink: 0 }} />
-        {/* Main content area */}
-        <div style={{
-          flex: 1,
-          background: bg,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "flex-end",
-          padding: "5px 6px",
-          gap: 3,
-        }}>
-          {/* Mock card line */}
-          <div style={{ height: 4, borderRadius: 2, background: accent, width: "70%", opacity: 0.9 }} />
-          <div style={{ height: 3, borderRadius: 2, background: accent, width: "45%", opacity: 0.4 }} />
+        <div style={{ width: "26%", background: sidebar, flexShrink: 0 }} />
+        <div style={{ flex: 1, background: bg, display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "5px 6px", gap: 3 }}>
+          <div style={{ height: 4, borderRadius: 2, background: accent, width: "68%", opacity: 0.95 }} />
+          <div style={{ height: 3, borderRadius: 2, background: accent, width: "42%", opacity: 0.4 }} />
         </div>
       </div>
-
-      {/* Label */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingLeft: 1 }}>
-        <span style={{
-          fontSize: 11.5,
-          fontWeight: active ? 500 : 400,
-          color: active ? "var(--ink-1)" : "var(--ink-3)",
-          fontFamily: "var(--font-ui)",
-          transition: "color 120ms",
-        }}>
+        <span style={{ fontSize: 11, fontWeight: active ? 600 : 400, color: active ? "var(--ink-1)" : "var(--ink-3)", fontFamily: "var(--font-ui)", transition: "color 120ms" }}>
           {theme.name}
         </span>
         {active && (
-          <div style={{
-            width: 14, height: 14,
-            borderRadius: "50%",
-            background: "var(--accent-btn)",
-            display: "grid",
-            placeItems: "center",
-            flexShrink: 0,
-          }}>
-            <Check size={9} color="white" />
+          <div style={{ width: 13, height: 13, borderRadius: "50%", background: "var(--accent-btn)", display: "grid", placeItems: "center", flexShrink: 0 }}>
+            <Check size={8} color="white" />
           </div>
         )}
       </div>
