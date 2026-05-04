@@ -5,6 +5,70 @@ import { useAuthStore } from "@/store/auth-store";
 import { BookOpen, User, AtSign } from "lucide-react";
 import toast from "react-hot-toast";
 
+const PROJECT_ID = "sbplanner-2aa7b";
+
+async function writeProfileRest(
+  uid: string,
+  idToken: string,
+  data: { email: string; username: string; displayName: string; photoURL?: string }
+): Promise<void> {
+  const url = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/users/${uid}`;
+
+  const str = (v: string) => ({ stringValue: v });
+  const int = (v: number) => ({ integerValue: String(v) });
+  const bool = (v: boolean) => ({ booleanValue: v });
+  const arr = () => ({ arrayValue: { values: [] as unknown[] } });
+
+  const fields: Record<string, unknown> = {
+    uid: str(uid),
+    email: str(data.email),
+    username: str(data.username),
+    displayName: str(data.displayName),
+    currentStreak: int(0),
+    longestStreak: int(0),
+    totalDaysRead: int(0),
+    badges: arr(),
+    friendIds: arr(),
+    groupIds: arr(),
+    preferredTranslation: str("KJV"),
+    notificationsEnabled: bool(true),
+    createdAt: { timestampValue: new Date().toISOString() },
+  };
+  if (data.photoURL) fields.photoURL = str(data.photoURL);
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 12000);
+
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ fields }),
+      signal: controller.signal,
+    });
+  } catch (fetchErr) {
+    clearTimeout(timer);
+    const msg = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
+    if (msg.includes("abort") || msg.includes("AbortError")) {
+      throw Object.assign(new Error("Request timed out after 12s"), { code: "deadline-exceeded" });
+    }
+    throw Object.assign(new Error(`Network error: ${msg}`), { code: "unavailable" });
+  }
+  clearTimeout(timer);
+
+  if (!res.ok) {
+    let errBody: { error?: { message?: string; status?: string } } = {};
+    try { errBody = await res.json(); } catch { /* ignore */ }
+    const msg = errBody?.error?.message ?? res.statusText;
+    const status = errBody?.error?.status ?? `HTTP_${res.status}`;
+    throw Object.assign(new Error(msg), { code: status.toLowerCase().replace(/_/g, "-") });
+  }
+}
+
 export default function SetupPage() {
   const { firebaseUser, setUser, loading: authLoading } = useAuthStore();
   const router = useRouter();
@@ -30,42 +94,42 @@ export default function SetupPage() {
 
     setSaving(true);
     try {
-      const { createUserProfile, getUserProfile } = await import("@/lib/firestore");
+      const idToken = await firebaseUser.getIdToken();
 
-      const writePromise = createUserProfile(firebaseUser.uid, {
+      await writeProfileRest(firebaseUser.uid, idToken, {
         email: firebaseUser.email || "",
         username,
         displayName: displayName.trim(),
         photoURL: firebaseUser.photoURL || undefined,
       });
 
-      await Promise.race([
-        writePromise,
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error("timeout")), 12000)
-        ),
-      ]);
-
+      const { getUserProfile } = await import("@/lib/firestore");
       const profile = await getUserProfile(firebaseUser.uid);
       setUser(profile);
       toast.success("Welcome to Scripture!");
       router.replace("/dashboard");
     } catch (err: unknown) {
-      const raw = err instanceof Error ? err : { message: String(err), code: "" };
-      const msg = (raw as { message: string }).message ?? "";
+      const msg = err instanceof Error ? err.message : String(err);
       const code = (err as { code?: string }).code ?? "";
-      console.error("Setup error — code:", code, "msg:", msg, err);
-      if (msg.includes("timeout")) {
+      console.error("Setup error:", code, msg, err);
+
+      if (code === "permission-denied" || code === "permission_denied") {
         toast.error(
-          "Could not reach Firestore. Make sure the database is created in Firebase Console → Firestore Database, and that the security rules allow writes.",
-          { duration: 8000 }
+          "Permission denied — go to Firebase Console → Firestore Database → Rules and publish the security rules.",
+          { duration: 10000 }
         );
-      } else if (code === "permission-denied" || msg.includes("permission") || msg.includes("PERMISSION")) {
-        toast.error("Permission denied — publish the security rules in Firebase Console → Firestore Database → Rules", { duration: 8000 });
-      } else if (msg.includes("username-already-taken")) {
-        toast.error("Username already taken — try another");
+      } else if (code === "deadline-exceeded" || code === "unavailable") {
+        toast.error(
+          `Could not reach Firestore (${code}). Make sure the database exists and is in Native mode in Firebase Console.`,
+          { duration: 10000 }
+        );
+      } else if (code === "not-found") {
+        toast.error(
+          "Firestore database not found — create it in Firebase Console → Build → Firestore Database.",
+          { duration: 10000 }
+        );
       } else {
-        toast.error(`Error (${code || "unknown"}): ${msg.slice(0, 120)}`, { duration: 8000 });
+        toast.error(`Error (${code || "unknown"}): ${msg.slice(0, 150)}`, { duration: 10000 });
       }
     } finally {
       setSaving(false);
