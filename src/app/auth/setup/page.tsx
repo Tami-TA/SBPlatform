@@ -61,11 +61,17 @@ async function writeProfileRest(
   clearTimeout(timer);
 
   if (!res.ok) {
+    let rawText = "";
+    try { rawText = await res.text(); } catch { /* ignore */ }
     let errBody: { error?: { message?: string; status?: string } } = {};
-    try { errBody = await res.json(); } catch { /* ignore */ }
+    try { errBody = JSON.parse(rawText); } catch { /* ignore */ }
     const msg = errBody?.error?.message ?? res.statusText;
     const status = errBody?.error?.status ?? `HTTP_${res.status}`;
-    throw Object.assign(new Error(msg), { code: status.toLowerCase().replace(/_/g, "-") });
+    // Include raw response in error so it surfaces in the toast
+    throw Object.assign(
+      new Error(`[${res.status}] ${msg} | raw: ${rawText.slice(0, 200)}`),
+      { code: status.toLowerCase().replace(/_/g, "-") }
+    );
   }
 }
 
