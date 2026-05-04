@@ -8,8 +8,13 @@ import { getUserNotifications } from "@/lib/firestore";
 import { getInitials } from "@/lib/utils";
 import type { Notification } from "@/types";
 
-// ── Icons (stroke-only, 1.6pt) ──────────────────────────────────────────────
-
+function IcoStar({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" width="12" height="12">
+      <path d="M12 2l2.7 8.3H23l-7 5.1 2.7 8.3-7-5.1-7 5.1 2.7-8.3-7-5.1h8.3z"/>
+    </svg>
+  );
+}
 function IcoDashboard({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
@@ -155,7 +160,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return (
       <div style={{ minHeight: "100vh", background: "var(--paper)", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ textAlign: "center" }}>
-          <div style={{ width: 28, height: 28, borderRadius: 6, background: "var(--ink-1)", margin: "0 auto 12px", fontFamily: "var(--font-serif)", fontStyle: "italic", color: "var(--paper)", display: "grid", placeItems: "center", fontSize: 16, fontWeight: 500 }}>α</div>
+          <div style={{ width: 28, height: 28, borderRadius: 6, background: "var(--accent-btn)", color: "white", margin: "0 auto 12px", display: "grid", placeItems: "center" }}><IcoStar /></div>
           <p style={{ fontSize: 13, color: "var(--ink-3)" }}>Loading…</p>
         </div>
       </div>
@@ -210,11 +215,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 8px 18px 8px" }}>
           <div style={{
             width: 22, height: 22, borderRadius: 5,
-            background: "var(--ink-1)", color: "var(--paper)",
-            fontFamily: "var(--font-serif)", fontStyle: "italic", fontWeight: 500, fontSize: 14,
-            display: "grid", placeItems: "center", letterSpacing: "-0.02em", flexShrink: 0,
-          }}>α</div>
-          <span style={{ fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.01em", color: "var(--ink-1)" }}>Lectio</span>
+            background: "var(--accent-btn)", color: "white",
+            display: "grid", placeItems: "center", flexShrink: 0,
+          }}><IcoStar /></div>
+          <span style={{ fontSize: 12.5, fontWeight: 600, letterSpacing: "-0.01em", color: "var(--ink-1)", lineHeight: 1.2 }}>Bible Study Tracker</span>
           <button onClick={() => setSidebarOpen(false)} className="lg:hidden ml-auto" style={{ color: "var(--ink-3)", background: "none", border: "none", cursor: "pointer", padding: 2 }}>
             <IcoX />
           </button>

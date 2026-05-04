@@ -5,6 +5,7 @@ import {
   searchUsersByUsername,
   sendFriendRequest,
   getFriendRequests,
+  getSentFriendRequests,
   acceptFriendRequest,
   declineFriendRequest,
   getUserProfile,
@@ -12,25 +13,31 @@ import {
 import type { Friend, FriendRequest, User } from "@/types";
 import {
   Search, UserPlus, UserCheck, X, Users, Check, Flame,
-  Loader2, ChevronRight, Trophy,
+  Loader2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { getInitials, getStreakLevel } from "@/lib/utils";
 
 export default function FriendsPage() {
   const { user } = useAuthStore();
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery]   = useState("");
   const [searchResults, setSearchResults] = useState<User[]>([]);
-  const [searching, setSearching] = useState(false);
-  const [requests, setRequests] = useState<FriendRequest[]>([]);
-  const [friends, setFriends] = useState<Friend[]>([]);
+  const [searching, setSearching]       = useState(false);
+  const [requests, setRequests]         = useState<FriendRequest[]>([]);
+  const [friends, setFriends]           = useState<Friend[]>([]);
   const [loadingFriends, setLoadingFriends] = useState(true);
-  const [activeTab, setActiveTab] = useState<"friends" | "requests" | "search">("friends");
-  const [pendingSent, setPendingSent] = useState<Set<string>>(new Set());
+  const [activeTab, setActiveTab]       = useState<"friends" | "requests" | "search">("friends");
+  const [pendingSent, setPendingSent]   = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!user) return;
-    getFriendRequests(user.uid).then(setRequests);
+    Promise.all([
+      getFriendRequests(user.uid),
+      getSentFriendRequests(user.uid),
+    ]).then(([received, sent]) => {
+      setRequests(received);
+      setPendingSent(new Set(sent.map(r => r.toUid)));
+    }).catch(() => {});
     loadFriends();
   }, [user]);
 
@@ -38,20 +45,19 @@ export default function FriendsPage() {
     if (!user) return;
     setLoadingFriends(true);
     try {
-      const friendProfiles = await Promise.all(
-        (user.friendIds || []).slice(0, 30).map((uid) => getUserProfile(uid))
+      const profiles = await Promise.all(
+        (user.friendIds || []).slice(0, 30).map(uid => getUserProfile(uid))
       );
-      const validFriends = friendProfiles
-        .filter(Boolean)
-        .map((p) => ({
+      setFriends(
+        profiles.filter(Boolean).map(p => ({
           uid: p!.uid,
           username: p!.username,
           displayName: p!.displayName,
           photoURL: p!.photoURL,
           currentStreak: p!.currentStreak,
           status: "friend" as const,
-        }));
-      setFriends(validFriends);
+        }))
+      );
     } finally {
       setLoadingFriends(false);
     }
@@ -59,120 +65,147 @@ export default function FriendsPage() {
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
-    if (!searchQuery.trim()) return;
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return;
     setSearching(true);
     setActiveTab("search");
-    const results = await searchUsersByUsername(searchQuery.toLowerCase());
-    setSearchResults(results.filter((u) => u.uid !== user?.uid));
-    setSearching(false);
+    try {
+      const results = await searchUsersByUsername(q);
+      setSearchResults(results.filter(u => u.uid !== user?.uid));
+    } catch {
+      toast.error("Search failed — please try again");
+    } finally {
+      setSearching(false);
+    }
   }
 
-  async function handleSendRequest(targetUser: User) {
+  async function handleSendRequest(target: User) {
     if (!user) return;
-    if (user.friendIds?.includes(targetUser.uid)) { toast.error("Already friends!"); return; }
-    setPendingSent((prev) => new Set([...prev, targetUser.uid]));
+    if (user.friendIds?.includes(target.uid)) { toast.error("Already friends!"); return; }
+    if (pendingSent.has(target.uid)) { toast.error("Request already sent"); return; }
+    setPendingSent(prev => new Set([...prev, target.uid]));
     try {
-      await sendFriendRequest(user.uid, targetUser.uid, user.username, user.displayName, user.photoURL);
-      toast.success(`Friend request sent to @${targetUser.username}`);
-    } catch {
-      toast.error("Failed to send request");
-      setPendingSent((prev) => { const s = new Set(prev); s.delete(targetUser.uid); return s; });
+      await sendFriendRequest(user.uid, target.uid, user.username, user.displayName, user.photoURL);
+      toast.success(`Friend request sent to @${target.username}`);
+    } catch (err) {
+      const code = (err as { code?: string }).code ?? "";
+      const msg  = err instanceof Error ? err.message : "Failed to send request";
+      if (code === "already-exists") {
+        toast.error("Request already sent");
+      } else {
+        toast.error(msg);
+        setPendingSent(prev => { const s = new Set(prev); s.delete(target.uid); return s; });
+      }
     }
   }
 
   async function handleAccept(req: FriendRequest) {
-    await acceptFriendRequest(req.id, req.fromUid, user!.uid);
-    setRequests((prev) => prev.filter((r) => r.id !== req.id));
-    toast.success(`You and @${req.fromUsername} are now friends!`);
-    loadFriends();
+    try {
+      await acceptFriendRequest(req.id, req.fromUid, user!.uid);
+      setRequests(prev => prev.filter(r => r.id !== req.id));
+      toast.success(`You and @${req.fromUsername} are now friends!`);
+      loadFriends();
+    } catch {
+      toast.error("Failed to accept request");
+    }
   }
 
   async function handleDecline(req: FriendRequest) {
-    await declineFriendRequest(req.id);
-    setRequests((prev) => prev.filter((r) => r.id !== req.id));
+    try {
+      await declineFriendRequest(req.id);
+      setRequests(prev => prev.filter(r => r.id !== req.id));
+    } catch {
+      toast.error("Failed to decline request");
+    }
   }
 
   const TABS = [
-    { id: "friends", label: "Friends", badge: friends.length },
-    { id: "requests", label: "Requests", badge: requests.length },
-    { id: "search", label: "Find People", badge: 0 },
+    { id: "friends",  label: "Friends",     count: friends.length },
+    { id: "requests", label: "Requests",    count: requests.length },
+    { id: "search",   label: "Find People", count: 0 },
   ] as const;
 
   return (
-    <div className="max-w-2xl mx-auto px-4 md:px-6 py-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-display font-bold text-foreground">Friends</h1>
-        <p className="text-sm text-muted-foreground mt-1">Find and connect with fellow believers</p>
+    <div style={{ maxWidth: 640, margin: "0 auto", padding: "28px 24px 56px" }}>
+
+      {/* Page header */}
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 600, color: "var(--ink-1)", margin: "0 0 2px", letterSpacing: "-0.01em" }}>Friends</h1>
+        <p style={{ fontSize: 13, color: "var(--ink-3)", margin: 0 }}>Find and connect with fellow believers</p>
       </div>
 
       {/* Search bar */}
-      <form onSubmit={handleSearch} className="flex gap-2 mb-5">
-        <div className="relative flex-1">
-          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by username (e.g. john123)"
-            className="input-field pl-10" />
+      <form onSubmit={handleSearch} style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+        <div style={{ position: "relative", flex: 1 }}>
+          <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--ink-4)", pointerEvents: "none" }} />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="Search by username…"
+            className="input-field"
+            style={{ paddingLeft: 30 }}
+          />
         </div>
-        <button type="submit" disabled={searching} className="btn-primary px-4 py-2.5 text-sm">
-          {searching ? <Loader2 size={16} className="animate-spin" /> : "Search"}
+        <button type="submit" disabled={searching} className="btn-primary btn-sm" style={{ padding: "0 16px", height: 36 }}>
+          {searching ? <Loader2 size={14} className="animate-spin" /> : "Search"}
         </button>
       </form>
 
       {/* Tabs */}
-      <div className="tab-list mb-5">
-        {TABS.map((tab) => (
-          <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-            className={activeTab === tab.id ? "tab-item active" : "tab-item"}>
+      <div className="tab-list" style={{ marginBottom: 20 }}>
+        {TABS.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`tab-item${activeTab === tab.id ? " active" : ""}`}
+          >
             {tab.label}
-            {tab.badge > 0 && (
-              <span className="ml-1.5 w-4 h-4 rounded-full inline-flex items-center justify-center text-[10px] font-bold bg-primary text-primary-foreground">
-                {tab.badge}
-              </span>
+            {tab.count > 0 && (
+              <span style={{
+                marginLeft: 6, padding: "1px 6px", borderRadius: 999,
+                background: "var(--accent-soft-2)", color: "var(--accent-ink)",
+                fontSize: 10.5, fontWeight: 600,
+              }}>{tab.count}</span>
             )}
           </button>
         ))}
       </div>
 
-      {/* Friends list */}
+      {/* ── Friends list ── */}
       {activeTab === "friends" && (
         <div>
           {loadingFriends ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-16 rounded-xl animate-pulse bg-card" />
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {[1, 2, 3].map(i => (
+                <div key={i} style={{ height: 64, borderRadius: 10, background: "var(--paper-2)", border: "1px solid var(--hairline)" }} />
               ))}
             </div>
           ) : friends.length === 0 ? (
-            <div className="text-center py-16 card">
-              <Users size={40} className="mx-auto mb-3 text-muted-foreground" />
-              <h3 className="font-semibold text-foreground mb-2">No friends yet</h3>
-              <p className="text-muted-foreground text-sm mb-4">Search by username to find people to study with</p>
-              <button onClick={() => setActiveTab("search")} className="btn-primary text-sm px-5 py-2">
+            <div className="card" style={{ padding: "48px 24px", textAlign: "center" }}>
+              <Users size={36} style={{ margin: "0 auto 12px", color: "var(--ink-4)" }} />
+              <p style={{ fontSize: 14, fontWeight: 500, color: "var(--ink-1)", margin: "0 0 4px" }}>No friends yet</p>
+              <p style={{ fontSize: 13, color: "var(--ink-3)", margin: "0 0 16px" }}>Search by username to find people to study with</p>
+              <button onClick={() => setActiveTab("search")} className="btn-primary btn-sm" style={{ padding: "0 20px" }}>
                 Find Friends
               </button>
             </div>
           ) : (
-            <div className="space-y-2">
-              {friends.map((friend) => {
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {friends.map(friend => {
                 const level = getStreakLevel(friend.currentStreak);
                 return (
-                  <div key={friend.uid} className="flex items-center gap-3 p-4 rounded-xl card">
-                    <div className="w-11 h-11 rounded-full flex items-center justify-center font-bold text-gray-900 flex-shrink-0"
-                      style={{ background: "var(--primary)" }}>
-                      {friend.photoURL
-                        ? <img src={friend.photoURL} alt={friend.displayName} className="w-11 h-11 rounded-full object-cover" />
-                        : getInitials(friend.displayName)}
+                  <div key={friend.uid} className="card" style={{ padding: "12px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+                    <Avatar name={friend.displayName} photoURL={friend.photoURL} size={44} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 14, fontWeight: 500, color: "var(--ink-1)", margin: "0 0 1px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{friend.displayName}</p>
+                      <p style={{ fontSize: 12, color: "var(--ink-3)", margin: 0 }}>@{friend.username}</p>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-foreground">{friend.displayName}</p>
-                      <p className="text-xs text-muted-foreground">@{friend.username}</p>
-                    </div>
-                    <div className="flex flex-col items-end gap-1">
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3, flexShrink: 0 }}>
                       {friend.currentStreak > 0 && (
-                        <div className="flex items-center gap-1 text-xs">
-                          <Flame size={12} className="text-orange-400" />
-                          <span className="font-semibold text-orange-400">{friend.currentStreak}</span>
-                        </div>
+                        <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "oklch(62% 0.18 50)", fontWeight: 500 }}>
+                          <Flame size={11} /> {friend.currentStreak}
+                        </span>
                       )}
                       <span className={`text-xs font-medium ${level.color}`}>{level.label}</span>
                     </div>
@@ -184,38 +217,48 @@ export default function FriendsPage() {
         </div>
       )}
 
-      {/* Friend requests */}
+      {/* ── Incoming requests ── */}
       {activeTab === "requests" && (
         <div>
           {requests.length === 0 ? (
-            <div className="text-center py-16 card">
-              <UserPlus size={40} className="mx-auto mb-3 text-muted-foreground" />
-              <p className="text-muted-foreground">No pending friend requests</p>
+            <div className="card" style={{ padding: "48px 24px", textAlign: "center" }}>
+              <UserPlus size={36} style={{ margin: "0 auto 12px", color: "var(--ink-4)" }} />
+              <p style={{ fontSize: 13, color: "var(--ink-3)", margin: 0 }}>No pending friend requests</p>
             </div>
           ) : (
-            <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">{requests.length} pending request{requests.length !== 1 ? "s" : ""}</p>
-              {requests.map((req) => (
-                <div key={req.id} className="card p-4 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-gray-900 flex-shrink-0"
-                    style={{ background: "var(--primary)" }}>
-                    {req.fromPhotoURL
-                      ? <img src={req.fromPhotoURL} alt={req.fromDisplayName} className="w-10 h-10 rounded-full object-cover" />
-                      : getInitials(req.fromDisplayName)}
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <p style={{ fontSize: 12.5, color: "var(--ink-3)", margin: "0 0 4px" }}>
+                {requests.length} pending request{requests.length !== 1 ? "s" : ""}
+              </p>
+              {requests.map(req => (
+                <div key={req.id} className="card" style={{ padding: "12px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+                  <Avatar name={req.fromDisplayName} photoURL={req.fromPhotoURL} size={40} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 13.5, fontWeight: 500, color: "var(--ink-1)", margin: "0 0 1px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{req.fromDisplayName}</p>
+                    <p style={{ fontSize: 12, color: "var(--ink-3)", margin: 0 }}>@{req.fromUsername}</p>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-foreground text-sm">{req.fromDisplayName}</p>
-                    <p className="text-xs text-muted-foreground">@{req.fromUsername}</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => handleDecline(req)}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-red-400 transition-colors bg-secondary">
-                      <X size={16} />
+                  <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                    <button
+                      onClick={() => handleDecline(req)}
+                      title="Decline"
+                      style={{
+                        width: 32, height: 32, borderRadius: 8, border: "1px solid var(--hairline)",
+                        background: "var(--paper-2)", color: "var(--ink-3)",
+                        display: "grid", placeItems: "center", cursor: "pointer",
+                      }}
+                    >
+                      <X size={14} />
                     </button>
-                    <button onClick={() => handleAccept(req)}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-900 transition-all"
-                      style={{ background: "var(--primary)" }}>
-                      <Check size={16} />
+                    <button
+                      onClick={() => handleAccept(req)}
+                      title="Accept"
+                      style={{
+                        width: 32, height: 32, borderRadius: 8,
+                        background: "var(--accent-btn)", color: "white",
+                        display: "grid", placeItems: "center", cursor: "pointer", border: "none",
+                      }}
+                    >
+                      <Check size={14} />
                     </button>
                   </div>
                 </div>
@@ -225,59 +268,63 @@ export default function FriendsPage() {
         </div>
       )}
 
-      {/* Search results */}
+      {/* ── Search results ── */}
       {activeTab === "search" && (
         <div>
           {searching ? (
-            <div className="flex justify-center py-12">
-              <Loader2 size={24} className="animate-spin text-muted-foreground" />
+            <div style={{ display: "flex", justifyContent: "center", padding: "48px 0" }}>
+              <Loader2 size={22} className="animate-spin" style={{ color: "var(--ink-4)" }} />
             </div>
           ) : searchResults.length === 0 ? (
-            <div className="text-center py-16 card">
-              <Search size={40} className="mx-auto mb-3 text-muted-foreground" />
-              <p className="text-muted-foreground">Search for users by their username above</p>
+            <div className="card" style={{ padding: "48px 24px", textAlign: "center" }}>
+              <Search size={36} style={{ margin: "0 auto 12px", color: "var(--ink-4)" }} />
+              <p style={{ fontSize: 13, color: "var(--ink-3)", margin: 0 }}>
+                {searchQuery ? `No users found for "${searchQuery}"` : "Search for users by their username above"}
+              </p>
             </div>
           ) : (
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">{searchResults.length} user{searchResults.length !== 1 ? "s" : ""} found</p>
-              {searchResults.map((result) => {
-                const isFriend = user?.friendIds?.includes(result.uid);
-                const hasSentRequest = pendingSent.has(result.uid);
-                const level = getStreakLevel(result.currentStreak);
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <p style={{ fontSize: 12.5, color: "var(--ink-3)", margin: "0 0 4px" }}>
+                {searchResults.length} user{searchResults.length !== 1 ? "s" : ""} found
+              </p>
+              {searchResults.map(result => {
+                const isFriend      = user?.friendIds?.includes(result.uid);
+                const hasSentReq    = pendingSent.has(result.uid);
+                const level         = getStreakLevel(result.currentStreak);
                 return (
-                  <div key={result.uid} className="card p-4 flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-full flex items-center justify-center font-bold text-gray-900 flex-shrink-0"
-                      style={{ background: "var(--primary)" }}>
-                      {result.photoURL
-                        ? <img src={result.photoURL} alt={result.displayName} className="w-11 h-11 rounded-full object-cover" />
-                        : getInitials(result.displayName)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-foreground">{result.displayName}</p>
-                      <p className="text-xs text-muted-foreground">@{result.username}</p>
-                      <div className="flex items-center gap-2 mt-1">
+                  <div key={result.uid} className="card" style={{ padding: "12px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+                    <Avatar name={result.displayName} photoURL={result.photoURL} size={44} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 14, fontWeight: 500, color: "var(--ink-1)", margin: "0 0 1px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{result.displayName}</p>
+                      <p style={{ fontSize: 12, color: "var(--ink-3)", margin: "0 0 3px" }}>@{result.username}</p>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         {result.currentStreak > 0 && (
-                          <span className="text-xs text-orange-400 flex items-center gap-1">
-                            <Flame size={11} /> {result.currentStreak} day streak
+                          <span style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 11.5, color: "oklch(62% 0.18 50)", fontWeight: 500 }}>
+                            <Flame size={10} /> {result.currentStreak} day streak
                           </span>
                         )}
-                        <span className={`text-xs font-medium ${level.color}`}>{level.label}</span>
+                        <span className={`text-xs ${level.color}`}>{level.label}</span>
                       </div>
                     </div>
                     <button
                       onClick={() => handleSendRequest(result)}
-                      disabled={isFriend || hasSentRequest}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${isFriend || hasSentRequest ? "opacity-60 cursor-default" : "hover:opacity-80"}`}
-                      style={isFriend || hasSentRequest
-                        ? { background: "var(--bg-secondary)", color: "var(--text-muted)" }
-                        : { background: "var(--primary)", color: "#1a0a0a" }}>
-                      {isFriend ? (
-                        <><UserCheck size={13} /> Friends</>
-                      ) : hasSentRequest ? (
-                        <><Check size={13} /> Sent</>
-                      ) : (
-                        <><UserPlus size={13} /> Add</>
-                      )}
+                      disabled={isFriend || hasSentReq}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 5,
+                        padding: "5px 12px", borderRadius: 7, fontSize: 12.5, fontWeight: 500,
+                        border: "1px solid",
+                        flexShrink: 0,
+                        cursor: isFriend || hasSentReq ? "default" : "pointer",
+                        opacity: isFriend || hasSentReq ? 0.65 : 1,
+                        background: isFriend || hasSentReq ? "var(--paper-2)" : "var(--accent-btn)",
+                        color:      isFriend || hasSentReq ? "var(--ink-2)"   : "white",
+                        borderColor: isFriend || hasSentReq ? "var(--hairline)" : "transparent",
+                        fontFamily: "var(--font-ui)",
+                      }}
+                    >
+                      {isFriend  ? <><UserCheck size={12} /> Friends</>
+                       : hasSentReq ? <><Check size={12} /> Sent</>
+                       : <><UserPlus size={12} /> Add</>}
                     </button>
                   </div>
                 );
@@ -286,6 +333,22 @@ export default function FriendsPage() {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+function Avatar({ name, photoURL, size }: { name: string; photoURL?: string; size: number }) {
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: "50%", flexShrink: 0,
+      background: "var(--accent-soft-2)", color: "var(--accent-ink)",
+      display: "grid", placeItems: "center",
+      fontSize: size * 0.32, fontWeight: 600, overflow: "hidden",
+      border: "1px solid var(--hairline)",
+    }}>
+      {photoURL
+        ? <img src={photoURL} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        : getInitials(name)}
     </div>
   );
 }

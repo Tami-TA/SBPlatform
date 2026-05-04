@@ -66,7 +66,17 @@ export async function updateStreak(uid: string): Promise<void> {
 export async function sendFriendRequest(
   fromUid: string, toUid: string, fromUsername: string, fromDisplayName: string, fromPhotoURL?: string
 ): Promise<void> {
+  if (fromUid === toUid) throw Object.assign(new Error("Cannot send a friend request to yourself"), { code: "invalid-argument" });
   const { db, fs } = await fdb();
+  const dupCheck = fs.query(
+    fs.collection(db, "friendRequests"),
+    fs.where("fromUid", "==", fromUid),
+    fs.where("toUid", "==", toUid),
+    fs.where("status", "==", "pending"),
+    fs.limit(1)
+  );
+  const dup = await fs.getDocs(dupCheck);
+  if (!dup.empty) throw Object.assign(new Error("Friend request already sent"), { code: "already-exists" });
   await fs.addDoc(fs.collection(db, "friendRequests"), {
     fromUid, toUid, fromUsername, fromDisplayName, fromPhotoURL: fromPhotoURL || null,
     status: "pending", createdAt: fs.serverTimestamp(),
@@ -78,6 +88,17 @@ export async function getFriendRequests(uid: string): Promise<FriendRequest[]> {
   const q = fs.query(
     fs.collection(db, "friendRequests"),
     fs.where("toUid", "==", uid),
+    fs.where("status", "==", "pending")
+  );
+  const snap = await fs.getDocs(q);
+  return snap.docs.map((d) => ({ ...d.data(), id: d.id } as FriendRequest));
+}
+
+export async function getSentFriendRequests(uid: string): Promise<FriendRequest[]> {
+  const { db, fs } = await fdb();
+  const q = fs.query(
+    fs.collection(db, "friendRequests"),
+    fs.where("fromUid", "==", uid),
     fs.where("status", "==", "pending")
   );
   const snap = await fs.getDocs(q);

@@ -12,7 +12,7 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   LIGHT THEME — Lectio design system
+   LIGHT THEME — Bible Study Tracker design system
    ═══════════════════════════════════════════════════════════════════════════ */
 :root {
   /* ── Tailwind semantic tokens ── */
@@ -45,7 +45,7 @@
   --sidebar-ring:            oklch(62%   0.045 245);
   --radius:                  0.5rem;
 
-  /* ── Lectio design tokens ── */
+  /* ── App design tokens ── */
   --paper:         oklch(99%   0.003 250);
   --paper-2:       oklch(97.5% 0.004 250);
   --paper-3:       oklch(95.5% 0.005 250);
@@ -761,7 +761,7 @@ input, textarea, select { font-family: inherit; }
 .icon-btn:hover { background: var(--paper-2); border-color: var(--hairline); }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   PRESET THEMES  — each sets Lectio design tokens + Tailwind semantic tokens.
+   PRESET THEMES  — each sets App design tokens + Tailwind semantic tokens.
    ThemeProvider adds .theme-{id} (+ .dark for dark themes) to <html>.
    ═══════════════════════════════════════════════════════════════════════════ */
 
