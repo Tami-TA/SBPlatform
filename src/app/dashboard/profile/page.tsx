@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useAuthStore } from "@/store/auth-store";
 import { useThemeStore } from "@/store/theme-store";
 import { updateUserProfile } from "@/lib/firestore";
@@ -10,8 +10,8 @@ import type { BibleTranslation } from "@/types";
 import type { ThemeId } from "@/lib/themes";
 import {
   Edit2, Save, X, Flame, Star, Trophy, BookOpen,
-  Bell, BellOff, ChevronRight, Shield, Check, Camera,
-  Users, BookMarked, Zap, Award, ListChecks, Palette, Loader2,
+  Bell, BellOff, ChevronRight, Shield, Check, Loader2,
+  Users, BookMarked, Zap, Award, ListChecks, Palette,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -33,10 +33,8 @@ const BADGE_ICONS: Record<string, React.ElementType> = {
 export default function ProfilePage() {
   const { user, setUser } = useAuthStore();
   const { theme: activeTheme, setTheme } = useThemeStore();
-  const [editing, setEditing]   = useState(false);
-  const [saving, setSaving]     = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving]   = useState(false);
 
   const [form, setForm] = useState({
     displayName:          user?.displayName || "",
@@ -80,53 +78,6 @@ export default function ProfilePage() {
     }
   }
 
-  async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
-
-    // Validate type
-    if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type)) {
-      toast.error("Please upload a JPG, PNG, WebP, or GIF image");
-      return;
-    }
-    // Validate size (5 MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image must be under 5 MB");
-      return;
-    }
-
-    setUploading(true);
-    try {
-      const { storage } = await import("@/lib/firebase");
-      const { ref, uploadBytes, getDownloadURL } = await import("firebase/storage");
-
-      const storageRef = ref(storage, `profilePictures/${user.uid}`);
-      await uploadBytes(storageRef, file, { contentType: file.type });
-      const photoURL = await getDownloadURL(storageRef);
-
-      await updateUserProfile(user.uid, { photoURL });
-
-      // Also update Firebase Auth profile so firebaseUser.photoURL stays in sync
-      const { auth } = await import("@/lib/firebase");
-      const { updateProfile } = await import("firebase/auth");
-      if (auth.currentUser) await updateProfile(auth.currentUser, { photoURL });
-
-      setUser({ ...user, photoURL });
-      toast.success("Photo updated!");
-    } catch (err) {
-      console.error("Photo upload error:", err);
-      const msg = err instanceof Error ? err.message : String(err);
-      if (msg.includes("storage/unauthorized") || msg.includes("permission")) {
-        toast.error("Upload blocked — set Firebase Storage rules to allow authenticated writes");
-      } else {
-        toast.error(`Upload failed: ${msg.slice(0, 80)}`);
-      }
-    } finally {
-      setUploading(false);
-      // Reset input so the same file can be re-selected if needed
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
-  }
 
   const STATS = [
     { label: "Days Read",       value: user.totalDaysRead },
@@ -150,14 +101,6 @@ export default function ProfilePage() {
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", padding: "28px 24px 56px" }}>
 
-      {/* Hidden file input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif"
-        style={{ display: "none" }}
-        onChange={handlePhotoUpload}
-      />
 
       {/* ── Profile header ─────────────────────────────────────────────────── */}
       <div className="card" style={{ padding: "28px 24px 20px", marginBottom: 16, position: "relative", overflow: "hidden" }}>
@@ -178,23 +121,6 @@ export default function ProfilePage() {
                 ? <img src={user.photoURL} alt={user.displayName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 : getInitials(user.displayName)}
             </div>
-            <button
-              onClick={() => !uploading && fileInputRef.current?.click()}
-              disabled={uploading}
-              title="Change photo"
-              style={{
-                position: "absolute", bottom: -4, right: -4,
-                width: 26, height: 26, borderRadius: "50%",
-                background: "var(--accent-btn)",
-                border: "2px solid var(--paper)",
-                display: "grid", placeItems: "center",
-                cursor: uploading ? "not-allowed" : "pointer",
-                opacity: uploading ? 0.6 : 1,
-                color: "white",
-              }}
-            >
-              {uploading ? <Loader2 size={11} style={{ animation: "spin 1s linear infinite" }} /> : <Camera size={11} />}
-            </button>
           </div>
 
           {/* Name + username */}
