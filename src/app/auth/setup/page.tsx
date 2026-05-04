@@ -32,15 +32,17 @@ export default function SetupPage() {
     try {
       const { createUserProfile, getUserProfile } = await import("@/lib/firestore");
 
+      const writePromise = createUserProfile(firebaseUser.uid, {
+        email: firebaseUser.email || "",
+        username,
+        displayName: displayName.trim(),
+        photoURL: firebaseUser.photoURL || undefined,
+      });
+
       await Promise.race([
-        createUserProfile(firebaseUser.uid, {
-          email: firebaseUser.email || "",
-          username,
-          displayName: displayName.trim(),
-          photoURL: firebaseUser.photoURL || undefined,
-        }),
+        writePromise,
         new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error("timeout")), 10000)
+          setTimeout(() => reject(new Error("timeout")), 12000)
         ),
       ]);
 
@@ -49,16 +51,21 @@ export default function SetupPage() {
       toast.success("Welcome to Scripture!");
       router.replace("/dashboard");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.error("Setup error:", err);
+      const raw = err instanceof Error ? err : { message: String(err), code: "" };
+      const msg = (raw as { message: string }).message ?? "";
+      const code = (err as { code?: string }).code ?? "";
+      console.error("Setup error — code:", code, "msg:", msg, err);
       if (msg.includes("timeout")) {
-        toast.error("Request timed out — check Firestore security rules in Firebase console");
-      } else if (msg.includes("permission") || msg.includes("PERMISSION")) {
-        toast.error("Permission denied — check Firestore security rules in Firebase console");
+        toast.error(
+          "Could not reach Firestore. Make sure the database is created in Firebase Console → Firestore Database, and that the security rules allow writes.",
+          { duration: 8000 }
+        );
+      } else if (code === "permission-denied" || msg.includes("permission") || msg.includes("PERMISSION")) {
+        toast.error("Permission denied — publish the security rules in Firebase Console → Firestore Database → Rules", { duration: 8000 });
       } else if (msg.includes("username-already-taken")) {
         toast.error("Username already taken — try another");
       } else {
-        toast.error(`Error: ${msg.slice(0, 100)}`);
+        toast.error(`Error (${code || "unknown"}): ${msg.slice(0, 120)}`, { duration: 8000 });
       }
     } finally {
       setSaving(false);
