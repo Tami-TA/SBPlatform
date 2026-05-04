@@ -60,7 +60,27 @@ export interface Group {
   adminIds: string[];
   currentPlanId?: string;
   isPublic: boolean;
+  joinCode?: string;
   tags?: string[];
+}
+
+export interface GroupInvite {
+  id: string;
+  groupId: string;
+  groupName: string;
+  fromUid: string;
+  fromUsername: string;
+  toUid: string;
+  status: "pending" | "accepted" | "declined";
+  createdAt: Date;
+}
+
+export interface GroupReadingLog {
+  id: string;
+  groupId: string;
+  userId: string;
+  date: string;       // YYYY-MM-DD
+  completed: boolean;
 }
 
 export interface GroupMember {

@@ -1,7 +1,13 @@
 import type {
   User, Group, GroupMessage, ReadingPlan, UserPlanProgress,
   Annotation, Highlight, Bookmark, FriendRequest, Notification,
+  GroupInvite, GroupReadingLog,
 } from "@/types";
+
+function generateJoinCode(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+}
 
 async function fdb() {
   const { db } = await import("./firebase");
@@ -131,11 +137,15 @@ export async function removeFriend(uid: string, friendUid: string): Promise<void
 
 export async function createGroup(data: Omit<Group, "id" | "createdAt">): Promise<string> {
   const { db, fs } = await fdb();
-  const ref = await fs.addDoc(fs.collection(db, "groups"), { ...data, createdAt: fs.serverTimestamp() });
-  const creator = await getUserProfile(data.createdBy);
-  if (creator) {
-    await updateUserProfile(data.createdBy, { groupIds: [...(creator.groupIds || []), ref.id] });
-  }
+  const groupData = {
+    ...data,
+    joinCode: data.isPublic ? null : generateJoinCode(),
+    createdAt: fs.serverTimestamp(),
+  };
+  const ref = await fs.addDoc(fs.collection(db, "groups"), groupData);
+  const batch = fs.writeBatch(db);
+  batch.update(fs.doc(db, "users", data.createdBy), { groupIds: fs.arrayUnion(ref.id) });
+  await batch.commit();
   return ref.id;
 }
 
@@ -153,12 +163,112 @@ export async function getUserGroups(uid: string): Promise<Group[]> {
   return snap.docs.map((d) => ({ ...d.data(), id: d.id } as Group));
 }
 
+export async function getPublicGroups(excludeIds: string[] = []): Promise<Group[]> {
+  const { db, fs } = await fdb();
+  const q = fs.query(
+    fs.collection(db, "groups"),
+    fs.where("isPublic", "==", true),
+    fs.limit(20)
+  );
+  const snap = await fs.getDocs(q);
+  return snap.docs
+    .map(d => ({ ...d.data(), id: d.id } as Group))
+    .filter(g => !excludeIds.includes(g.id));
+}
+
 export async function joinGroup(groupId: string, uid: string): Promise<void> {
   const { db, fs } = await fdb();
+  const groupSnap = await fs.getDoc(fs.doc(db, "groups", groupId));
+  if (!groupSnap.exists()) throw Object.assign(new Error("Group not found"), { code: "not-found" });
+  const groupData = groupSnap.data() as Group;
+  if (groupData.memberIds.includes(uid)) throw Object.assign(new Error("Already a member"), { code: "already-exists" });
   const batch = fs.writeBatch(db);
   batch.update(fs.doc(db, "groups", groupId), { memberIds: fs.arrayUnion(uid) });
   batch.update(fs.doc(db, "users", uid), { groupIds: fs.arrayUnion(groupId) });
   await batch.commit();
+}
+
+export async function joinGroupByCode(code: string, uid: string): Promise<Group> {
+  const { db, fs } = await fdb();
+  const q = fs.query(
+    fs.collection(db, "groups"),
+    fs.where("joinCode", "==", code.toUpperCase().trim()),
+    fs.limit(1)
+  );
+  const snap = await fs.getDocs(q);
+  if (snap.empty) throw Object.assign(new Error("Invalid join code — double-check and try again"), { code: "not-found" });
+  const groupDoc = snap.docs[0];
+  const group = { ...groupDoc.data(), id: groupDoc.id } as Group;
+  await joinGroup(group.id, uid);
+  return group;
+}
+
+export async function getGroupMemberProfiles(memberIds: string[]): Promise<User[]> {
+  if (memberIds.length === 0) return [];
+  const profiles = await Promise.all(memberIds.map(uid => getUserProfile(uid)));
+  return profiles.filter(Boolean) as User[];
+}
+
+export async function logGroupReading(groupId: string, userId: string, date: string): Promise<void> {
+  const { db, fs } = await fdb();
+  const q = fs.query(
+    fs.collection(db, "groupReadingLogs"),
+    fs.where("groupId", "==", groupId),
+    fs.where("userId", "==", userId),
+    fs.where("date", "==", date),
+    fs.limit(1)
+  );
+  const snap = await fs.getDocs(q);
+  if (!snap.empty) return;
+  await fs.addDoc(fs.collection(db, "groupReadingLogs"), {
+    groupId, userId, date, completed: true,
+  });
+}
+
+export async function getGroupReadingLogs(groupId: string, date: string): Promise<GroupReadingLog[]> {
+  const { db, fs } = await fdb();
+  const q = fs.query(
+    fs.collection(db, "groupReadingLogs"),
+    fs.where("groupId", "==", groupId),
+    fs.where("date", "==", date)
+  );
+  const snap = await fs.getDocs(q);
+  return snap.docs.map(d => ({ ...d.data(), id: d.id } as GroupReadingLog));
+}
+
+export async function inviteFriendToGroup(groupId: string, groupName: string, fromUid: string, fromUsername: string, toUid: string): Promise<void> {
+  const { db, fs } = await fdb();
+  const dupCheck = fs.query(
+    fs.collection(db, "groupInvites"),
+    fs.where("groupId", "==", groupId),
+    fs.where("toUid", "==", toUid),
+    fs.where("status", "==", "pending"),
+    fs.limit(1)
+  );
+  const dup = await fs.getDocs(dupCheck);
+  if (!dup.empty) throw Object.assign(new Error("Invite already sent"), { code: "already-exists" });
+  await fs.addDoc(fs.collection(db, "groupInvites"), {
+    groupId, groupName, fromUid, fromUsername, toUid,
+    status: "pending", createdAt: fs.serverTimestamp(),
+  });
+}
+
+export async function getGroupInvites(uid: string): Promise<GroupInvite[]> {
+  const { db, fs } = await fdb();
+  const q = fs.query(
+    fs.collection(db, "groupInvites"),
+    fs.where("toUid", "==", uid),
+    fs.where("status", "==", "pending")
+  );
+  const snap = await fs.getDocs(q);
+  return snap.docs.map(d => ({ ...d.data(), id: d.id } as GroupInvite));
+}
+
+export async function respondGroupInvite(inviteId: string, groupId: string, uid: string, accept: boolean): Promise<void> {
+  const { db, fs } = await fdb();
+  const status = accept ? "accepted" : "declined";
+  await fs.updateDoc(fs.doc(db, "groupInvites", inviteId), { status });
+  if (accept) await joinGroup(groupId, uid);
 }
 
 export async function sendGroupMessage(message: Omit<GroupMessage, "id" | "createdAt" | "likes">): Promise<void> {
