@@ -4,12 +4,12 @@ import { useState, useMemo } from "react";
 import {
   BookOpen, GitBranch, Calendar, Scroll, Lightbulb,
   Search, Bookmark, ChevronRight, Info, Users, Clock,
-  Globe, Zap
+  Globe, Zap,
 } from "lucide-react";
 import { OT_BOOKS_CONTEXT, NT_BOOKS_CONTEXT, ALL_BOOKS_CONTEXT } from "@/lib/context-data";
-import type { OTBookContext, GenealogyNode, KeyEvent, CulturalNote } from "@/lib/context-types";
+import type { GenealogyNode, KeyEvent, CulturalNote } from "@/lib/context-types";
 
-// ─── helpers ────────────────────────────────────────────────────────────────
+// ─── section config ───────────────────────────────────────────────────────────
 
 const SECTION_IDS = [
   "overview", "author", "timePeriod", "historicalSetting",
@@ -18,421 +18,452 @@ const SECTION_IDS = [
 type SectionId = typeof SECTION_IDS[number];
 
 const SECTION_LABELS: Record<SectionId, string> = {
-  overview: "Overview",
-  author: "Author Info",
-  timePeriod: "Time Period",
+  overview:          "Overview",
+  author:            "Author",
+  timePeriod:        "Time Period",
   historicalSetting: "Historical Setting",
-  genealogy: "Family Trees",
-  keyEvents: "Key Events",
-  culturalNotes: "Cultural Notes",
+  genealogy:         "Family Trees",
+  keyEvents:         "Key Events",
+  culturalNotes:     "Cultural Notes",
 };
 
-const SECTION_ICONS: Record<SectionId, React.FC<{ className?: string }>> = {
-  overview: BookOpen,
-  author: Users,
-  timePeriod: Clock,
+const SECTION_ICONS: Record<SectionId, React.FC<{ size?: number }>> = {
+  overview:          BookOpen,
+  author:            Users,
+  timePeriod:        Clock,
   historicalSetting: Globe,
-  genealogy: GitBranch,
-  keyEvents: Calendar,
-  culturalNotes: Scroll,
+  genealogy:         GitBranch,
+  keyEvents:         Calendar,
+  culturalNotes:     Scroll,
 };
 
-// ─── sub-components ─────────────────────────────────────────────────────────
+// ─── cultural note category → app highlight token ────────────────────────────
+
+const CULTURAL_BG: Record<CulturalNote["category"], string> = {
+  customs:   "var(--hl-yellow)",
+  law:       "var(--hl-blue)",
+  worship:   "var(--hl-pink)",
+  social:    "var(--hl-green)",
+  geography: "var(--hl-orange)",
+};
+
+// ─── sub-components ───────────────────────────────────────────────────────────
 
 function GenealogyTree({ nodes }: { nodes: GenealogyNode[] }) {
   const roots = nodes.filter(n => !n.parentId);
   const childrenOf = (id: string) => nodes.filter(n => n.parentId === id);
 
   function renderNode(node: GenealogyNode, depth = 0): React.ReactNode {
-    const children = childrenOf(node.id);
+    const kids = childrenOf(node.id);
     return (
-      <div key={node.id} className="flex flex-col items-start">
-        <div className="flex items-center gap-2">
-          {depth > 0 && <span className="text-slate-600 ml-2 select-none">└─</span>}
-          <div
-            className="px-3 py-1.5 rounded-md text-sm font-medium border"
-            style={{ marginLeft: depth * 16 }}
-          >
-            <span className="text-slate-200">{node.name}</span>
-            {node.notes && <span className="text-slate-500 text-xs ml-2">({node.notes})</span>}
+      <div key={node.id} style={{ display: "flex", flexDirection: "column" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          {depth > 0 && (
+            <span style={{ color: "var(--ink-4)", marginLeft: 8, fontFamily: "monospace", fontSize: 12 }}>└─</span>
+          )}
+          <div style={{
+            marginLeft: depth * 16,
+            padding: "4px 10px",
+            borderRadius: 6,
+            border: "1px solid var(--hairline)",
+            background: "var(--paper-2)",
+            display: "inline-flex", alignItems: "center", gap: 6,
+          }}>
+            <span style={{ fontSize: 13, color: "var(--ink-1)", fontWeight: 450 }}>{node.name}</span>
+            {node.notes && (
+              <span style={{ fontSize: 11.5, color: "var(--ink-4)" }}>({node.notes})</span>
+            )}
           </div>
         </div>
-        {children.length > 0 && (
-          <div className="ml-4 mt-1 border-l border-slate-700 pl-2">
-            {children.map(c => renderNode(c, depth + 1))}
+        {kids.length > 0 && (
+          <div style={{ marginLeft: 16, marginTop: 4, paddingLeft: 8, borderLeft: "1px solid var(--hairline)" }}>
+            {kids.map(c => renderNode(c, depth + 1))}
           </div>
         )}
       </div>
     );
   }
 
-  return (
-    <div className="space-y-2">
-      {roots.map(r => renderNode(r))}
-    </div>
-  );
+  return <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>{roots.map(r => renderNode(r))}</div>;
 }
 
 function Timeline({ events }: { events: KeyEvent[] }) {
   return (
-    <ol className="relative border-l border-slate-700 ml-3 space-y-6">
-      {events.map((ev) => (
-        <li key={ev.order} className="ml-6">
-          <span className="absolute -left-3 flex items-center justify-center w-6 h-6 rounded-full bg-blue-900 border border-blue-500 text-blue-300 text-xs font-bold">
+    <ol style={{ position: "relative", borderLeft: "1px solid var(--hairline)", marginLeft: 10, display: "flex", flexDirection: "column", gap: 20, listStyle: "none", padding: 0 }}>
+      {events.map(ev => (
+        <li key={ev.order} style={{ marginLeft: 20, position: "relative" }}>
+          <span style={{
+            position: "absolute", left: -30, top: 1,
+            width: 20, height: 20, borderRadius: "50%",
+            background: "var(--accent-soft)",
+            border: "1px solid var(--accent-border)",
+            color: "var(--accent-ink)",
+            display: "grid", placeItems: "center",
+            fontSize: 10.5, fontWeight: 600,
+          }}>
             {ev.order}
           </span>
-          <div>
-            <p className="font-semibold text-slate-200 text-sm">{ev.title}</p>
-            <p className="text-slate-400 text-xs mt-0.5">{ev.description}</p>
-            <p className="text-blue-400 text-xs mt-0.5 italic">{ev.reference}</p>
-          </div>
+          <p style={{ fontSize: 13.5, fontWeight: 500, color: "var(--ink-1)", margin: "0 0 2px" }}>{ev.title}</p>
+          <p style={{ fontSize: 12.5, color: "var(--ink-3)", margin: "0 0 2px", lineHeight: 1.5 }}>{ev.description}</p>
+          <p style={{ fontSize: 12, color: "var(--accent-ink)", margin: 0, fontStyle: "italic" }}>{ev.reference}</p>
         </li>
       ))}
     </ol>
   );
 }
 
-const CULTURAL_COLORS: Record<CulturalNote["category"], string> = {
-  customs: "bg-amber-900/40 border-amber-700 text-amber-300",
-  law: "bg-blue-900/40 border-blue-700 text-blue-300",
-  worship: "bg-purple-900/40 border-purple-700 text-purple-300",
-  social: "bg-green-900/40 border-green-700 text-green-300",
-  geography: "bg-teal-900/40 border-teal-700 text-teal-300",
-};
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="card" style={{ padding: "14px 16px" }}>
+      <div className="card-label" style={{ marginBottom: 4 }}>{label}</div>
+      <p style={{ fontSize: 13.5, color: "var(--ink-1)", margin: 0, lineHeight: 1.55 }}>{value}</p>
+    </div>
+  );
+}
 
-// ─── main page ───────────────────────────────────────────────────────────────
+function TagGroup({ title, items, color = "default" }: { title: string; items: string[]; color?: "default" | "accent" | "warm" }) {
+  const badgeCls = color === "accent" ? "badge-accent" : "badge";
+  return (
+    <div className="card" style={{ padding: "14px 16px" }}>
+      <div className="card-label">{title}</div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+        {items.map(item => (
+          <span key={item} className={badgeCls} style={
+            color === "warm"
+              ? { background: "var(--hl-yellow)", color: "var(--ink-2)", borderColor: "var(--hairline-2)" }
+              : undefined
+          }>{item}</span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function EmptyState({ message }: { message: string }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 24px", color: "var(--ink-4)" }}>
+      <Info size={28} style={{ marginBottom: 10 }} />
+      <p style={{ fontSize: 13, color: "var(--ink-3)", margin: 0 }}>{message}</p>
+    </div>
+  );
+}
+
+// ─── main page ────────────────────────────────────────────────────────────────
 
 export default function ContextPage() {
-  const [selectedId, setSelectedId] = useState<string>(OT_BOOKS_CONTEXT[0]?.id ?? "GEN");
+  const [selectedId, setSelectedId]     = useState<string>(OT_BOOKS_CONTEXT[0]?.id ?? "GEN");
   const [activeSection, setActiveSection] = useState<SectionId>("overview");
-  const [search, setSearch] = useState("");
-  const [deepStudy, setDeepStudy] = useState(false);
-  const [bookmarks, setBookmarks] = useState<Set<string>>(new Set());
-  const [expandedSections, setExpandedSections] = useState<Set<SectionId>>(new Set(["overview"]));
+  const [search, setSearch]             = useState("");
+  const [deepStudy, setDeepStudy]       = useState(false);
+  const [bookmarks, setBookmarks]       = useState<Set<string>>(new Set());
 
   const book = useMemo(() => ALL_BOOKS_CONTEXT.find(b => b.id === selectedId), [selectedId]);
 
   const filteredOT = useMemo(() => {
     const q = search.toLowerCase();
-    if (!q) return OT_BOOKS_CONTEXT;
-    return OT_BOOKS_CONTEXT.filter(b =>
-      b.name.toLowerCase().includes(q) ||
-      b.overview.shortSummary.toLowerCase().includes(q)
+    return !q ? OT_BOOKS_CONTEXT : OT_BOOKS_CONTEXT.filter(b =>
+      b.name.toLowerCase().includes(q) || b.overview.shortSummary.toLowerCase().includes(q)
     );
   }, [search]);
 
   const filteredNT = useMemo(() => {
     const q = search.toLowerCase();
-    if (!q) return NT_BOOKS_CONTEXT;
-    return NT_BOOKS_CONTEXT.filter(b =>
-      b.name.toLowerCase().includes(q) ||
-      b.overview.shortSummary.toLowerCase().includes(q)
+    return !q ? NT_BOOKS_CONTEXT : NT_BOOKS_CONTEXT.filter(b =>
+      b.name.toLowerCase().includes(q) || b.overview.shortSummary.toLowerCase().includes(q)
     );
   }, [search]);
 
-  const toggleBookmark = (id: string) => {
+  function toggleBookmark(id: string) {
     setBookmarks(prev => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
-  };
+  }
 
-  const toggleSection = (s: SectionId) => {
-    setExpandedSections(prev => {
-      const next = new Set(prev);
-      next.has(s) ? next.delete(s) : next.add(s);
-      return next;
-    });
-  };
+  function selectBook(id: string) {
+    setSelectedId(id);
+    setActiveSection("overview");
+  }
 
-  if (!book) return <div className="p-8 text-slate-400">No books found.</div>;
+  if (!book) return (
+    <div style={{ padding: 32, color: "var(--ink-3)", fontSize: 13 }}>No books found.</div>
+  );
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] overflow-hidden bg-slate-950">
-      {/* ── sidebar ── */}
-      <aside className="w-56 flex-shrink-0 border-r border-white/10 flex flex-col bg-slate-900 overflow-hidden">
-        <div className="p-3 border-b border-white/10">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-500" />
+    <div style={{ display: "flex", height: "calc(100vh - 56px)", overflow: "hidden", background: "var(--paper)" }}>
+
+      {/* ── Book sidebar ── */}
+      <aside style={{
+        width: 210, flexShrink: 0,
+        borderRight: "1px solid var(--hairline)",
+        background: "var(--paper-2)",
+        display: "flex", flexDirection: "column",
+        overflow: "hidden",
+      }}>
+        {/* Search */}
+        <div style={{ padding: "12px 12px 8px", borderBottom: "1px solid var(--hairline)" }}>
+          <div style={{ position: "relative" }}>
+            <Search size={13} style={{ position: "absolute", left: 9, top: "50%", transform: "translateY(-50%)", color: "var(--ink-4)", pointerEvents: "none" }} />
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search books…"
-              className="w-full bg-slate-800 rounded-md py-1.5 pl-8 pr-3 text-xs text-slate-200 placeholder:text-slate-500 outline-none focus:ring-1 focus:ring-blue-500"
+              className="input-field"
+              style={{ paddingLeft: 28, height: 30, fontSize: 12.5 }}
             />
           </div>
         </div>
-        <ul className="flex-1 overflow-y-auto py-1">
-          {(filteredOT.length > 0 || filteredNT.length > 0) && (
+
+        {/* Book list */}
+        <ul style={{ flex: 1, overflowY: "auto", padding: "6px 8px", margin: 0, listStyle: "none" }}>
+          {filteredOT.length > 0 && (
             <>
-              {filteredOT.length > 0 && (
-                <>
-                  <li className="px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-slate-500 mt-1">
-                    Old Testament
-                  </li>
-                  {filteredOT.map(b => (
-                    <li key={b.id}>
-                      <button
-                        onClick={() => { setSelectedId(b.id); setActiveSection("overview"); }}
-                        className={`w-full flex items-center justify-between px-3 py-2 text-left text-sm transition-colors
-                          ${b.id === selectedId ? "bg-blue-600/20 text-blue-300" : "text-slate-400 hover:bg-white/5 hover:text-slate-200"}`}
-                      >
-                        <span className="truncate">{b.name}</span>
-                        {bookmarks.has(b.id) && <Bookmark className="h-3 w-3 text-amber-400 flex-shrink-0" />}
-                      </button>
-                    </li>
-                  ))}
-                </>
-              )}
-              {filteredNT.length > 0 && (
-                <>
-                  <li className="px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-slate-500 mt-2">
-                    New Testament
-                  </li>
-                  {filteredNT.map(b => (
-                    <li key={b.id}>
-                      <button
-                        onClick={() => { setSelectedId(b.id); setActiveSection("overview"); }}
-                        className={`w-full flex items-center justify-between px-3 py-2 text-left text-sm transition-colors
-                          ${b.id === selectedId ? "bg-blue-600/20 text-blue-300" : "text-slate-400 hover:bg-white/5 hover:text-slate-200"}`}
-                      >
-                        <span className="truncate">{b.name}</span>
-                        {bookmarks.has(b.id) && <Bookmark className="h-3 w-3 text-amber-400 flex-shrink-0" />}
-                      </button>
-                    </li>
-                  ))}
-                </>
-              )}
+              <li style={{ padding: "10px 6px 4px", fontSize: 10.5, fontWeight: 600, letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--ink-4)" }}>
+                Old Testament
+              </li>
+              {filteredOT.map(b => (
+                <li key={b.id}>
+                  <button
+                    onClick={() => selectBook(b.id)}
+                    className={`nav-item w-full${b.id === selectedId ? " active" : ""}`}
+                    style={{ width: "100%", justifyContent: "space-between", padding: "6px 8px" }}
+                  >
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.name}</span>
+                    {bookmarks.has(b.id) && <Bookmark size={11} style={{ flexShrink: 0, color: "var(--accent-ink)" }} />}
+                  </button>
+                </li>
+              ))}
             </>
+          )}
+          {filteredNT.length > 0 && (
+            <>
+              <li style={{ padding: "10px 6px 4px", fontSize: 10.5, fontWeight: 600, letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--ink-4)", marginTop: 4 }}>
+                New Testament
+              </li>
+              {filteredNT.map(b => (
+                <li key={b.id}>
+                  <button
+                    onClick={() => selectBook(b.id)}
+                    className={`nav-item${b.id === selectedId ? " active" : ""}`}
+                    style={{ width: "100%", justifyContent: "space-between", padding: "6px 8px" }}
+                  >
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.name}</span>
+                    {bookmarks.has(b.id) && <Bookmark size={11} style={{ flexShrink: 0, color: "var(--accent-ink)" }} />}
+                  </button>
+                </li>
+              ))}
+            </>
+          )}
+          {filteredOT.length === 0 && filteredNT.length === 0 && (
+            <li style={{ padding: "24px 8px", textAlign: "center", fontSize: 12.5, color: "var(--ink-4)" }}>
+              No books match &ldquo;{search}&rdquo;
+            </li>
           )}
         </ul>
       </aside>
 
-      {/* ── main content ── */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* header */}
-        <div className="flex items-center justify-between px-6 py-3 border-b border-white/10 bg-slate-900">
-          <div>
-            <h1 className="text-xl font-bold text-slate-100">{book.name}</h1>
-            <p className="text-xs text-slate-400 mt-0.5">{book.overview.shortSummary}</p>
+      {/* ── Main panel ── */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+
+        {/* Header */}
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "0 24px", height: 56, flexShrink: 0,
+          borderBottom: "1px solid var(--hairline)",
+          background: "var(--paper)",
+        }}>
+          <div style={{ minWidth: 0 }}>
+            <h1 style={{ fontSize: 16, fontWeight: 600, color: "var(--ink-1)", margin: 0, letterSpacing: "-0.01em" }}>
+              {book.name}
+            </h1>
+            <p style={{ fontSize: 12, color: "var(--ink-3)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 480 }}>
+              {book.overview.shortSummary}
+            </p>
           </div>
-          <div className="flex items-center gap-3">
-            {/* quick/deep toggle */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
             <button
               onClick={() => setDeepStudy(d => !d)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors
-                ${deepStudy
-                  ? "border-purple-500 bg-purple-900/40 text-purple-300"
-                  : "border-slate-600 bg-slate-800 text-slate-400 hover:text-slate-200"}`}
+              className={deepStudy ? "btn-primary btn-sm" : "btn btn-sm"}
             >
-              <Zap className="h-3 w-3" />
+              <Zap size={12} />
               {deepStudy ? "Deep Study" : "Quick Facts"}
             </button>
-            {/* bookmark */}
             <button
               onClick={() => toggleBookmark(book.id)}
-              className={`p-1.5 rounded-md transition-colors ${bookmarks.has(book.id) ? "text-amber-400" : "text-slate-500 hover:text-slate-300"}`}
+              className="btn-ghost btn-sm"
+              title={bookmarks.has(book.id) ? "Remove bookmark" : "Bookmark"}
+              style={{ color: bookmarks.has(book.id) ? "var(--accent-ink)" : undefined }}
             >
-              <Bookmark className="h-4 w-4" />
+              <Bookmark size={14} />
             </button>
           </div>
         </div>
 
-        <div className="flex flex-1 overflow-hidden">
-          {/* section nav */}
-          <nav className="w-40 flex-shrink-0 border-r border-white/10 bg-slate-900/60 overflow-y-auto py-2">
+        {/* Content split */}
+        <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+
+          {/* Section nav */}
+          <nav style={{
+            width: 156, flexShrink: 0,
+            borderRight: "1px solid var(--hairline)",
+            background: "var(--paper-2)",
+            overflowY: "auto",
+            padding: "8px 8px",
+          }}>
             {SECTION_IDS.map(s => {
               const Icon = SECTION_ICONS[s];
               return (
                 <button
                   key={s}
                   onClick={() => setActiveSection(s)}
-                  className={`w-full flex items-center gap-2 px-3 py-2 text-left text-xs transition-colors
-                    ${activeSection === s
-                      ? "bg-blue-600/20 text-blue-300 border-l-2 border-blue-500"
-                      : "text-slate-500 hover:bg-white/5 hover:text-slate-300"}`}
+                  className={`nav-item${activeSection === s ? " active" : ""}`}
+                  style={{ width: "100%", fontSize: 12.5, gap: 7, padding: "6px 8px" }}
                 >
-                  <Icon className="h-3.5 w-3.5 flex-shrink-0" />
+                  <Icon size={13} />
                   {SECTION_LABELS[s]}
                 </button>
               );
             })}
           </nav>
 
-          {/* section content */}
-          <div className="flex-1 overflow-y-auto p-6">
-            {activeSection === "overview" && (
-              <div className="space-y-6 max-w-3xl">
-                <p className="text-slate-300 leading-relaxed">
-                  {deepStudy ? book.overview.fullSummary : book.overview.shortSummary}
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="rounded-lg border border-white/10 bg-slate-900 p-4">
-                    <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Themes</h3>
-                    <ul className="space-y-1">
-                      {book.overview.themes.map(t => (
-                        <li key={t} className="flex items-start gap-2 text-sm text-slate-300">
-                          <ChevronRight className="h-3.5 w-3.5 text-blue-400 mt-0.5 flex-shrink-0" />
-                          {t}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div className="rounded-lg border border-white/10 bg-slate-900 p-4">
-                    <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Key Messages</h3>
-                    <ul className="space-y-1">
-                      {book.overview.keyMessages.map(m => (
-                        <li key={m} className="flex items-start gap-2 text-sm text-slate-300">
-                          <ChevronRight className="h-3.5 w-3.5 text-green-400 mt-0.5 flex-shrink-0" />
-                          {m}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-                {/* Did You Know */}
-                <div className="rounded-lg border border-amber-700/40 bg-amber-900/10 p-4">
-                  <h3 className="flex items-center gap-2 text-xs font-semibold text-amber-400 uppercase tracking-wide mb-3">
-                    <Lightbulb className="h-3.5 w-3.5" /> Did You Know?
-                  </h3>
-                  <ul className="space-y-2">
-                    {book.didYouKnow.map((fact, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-amber-100/80">
-                        <span className="text-amber-500 font-bold">{i + 1}.</span>
-                        {fact}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            )}
+          {/* Section content */}
+          <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px" }}>
+            <div style={{ maxWidth: 680 }}>
 
-            {activeSection === "author" && (
-              <div className="max-w-2xl space-y-4">
-                <div className="rounded-lg border border-white/10 bg-slate-900 p-5">
-                  <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Traditional Author</h3>
-                  <p className="text-lg font-bold text-slate-200">{book.author.traditional}</p>
-                  {deepStudy && (
-                    <p className="text-slate-400 text-sm mt-2 leading-relaxed">{book.author.notes}</p>
-                  )}
-                  {!deepStudy && (
-                    <p className="text-slate-500 text-xs mt-1">{book.author.notes}</p>
-                  )}
-                </div>
-              </div>
-            )}
+              {/* ── Overview ── */}
+              {activeSection === "overview" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                  <p style={{ fontSize: 14, color: "var(--ink-2)", lineHeight: 1.7, margin: 0 }}>
+                    {deepStudy ? book.overview.fullSummary : book.overview.shortSummary}
+                  </p>
 
-            {activeSection === "timePeriod" && (
-              <div className="max-w-2xl space-y-4">
-                {(([
-                  ["Events Date", book.timePeriod.eventsDate],
-                  ["Writing Date", book.timePeriod.writingDate],
-                  ["Biblical Placement", book.timePeriod.biblicalPlacement],
-                  ...(deepStudy ? [["Relation to Events", book.timePeriod.relationToEvents]] : []),
-                ] as [string, string][])).map(([label, value]) => (
-                  <div key={label} className="rounded-lg border border-white/10 bg-slate-900 p-4">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{label}</p>
-                    <p className="text-slate-200 text-sm mt-1">{value}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {activeSection === "historicalSetting" && (
-              <div className="max-w-2xl space-y-4">
-                {book.historicalSetting.rulers.length > 0 && (
-                  <Section title="Key Rulers">
-                    {book.historicalSetting.rulers.map(r => <Chip key={r} label={r} />)}
-                  </Section>
-                )}
-                {book.historicalSetting.israelKings.length > 0 && (
-                  <Section title="Israel / Judah Kings">
-                    {book.historicalSetting.israelKings.map(k => <Chip key={k} label={k} color="purple" />)}
-                  </Section>
-                )}
-                {book.historicalSetting.neighboringPowers.length > 0 && (
-                  <Section title="Neighboring Powers">
-                    {book.historicalSetting.neighboringPowers.map(p => <Chip key={p} label={p} color="red" />)}
-                  </Section>
-                )}
-                {deepStudy && (
-                  <div className="rounded-lg border border-white/10 bg-slate-900 p-4">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Political Background</p>
-                    <p className="text-slate-300 text-sm leading-relaxed">{book.historicalSetting.politicalBackground}</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-
-            {activeSection === "genealogy" && (
-              <div className="max-w-2xl space-y-4">
-                {book.genealogy.description && (
-                  <p className="text-slate-400 text-sm italic">{book.genealogy.description}</p>
-                )}
-                {book.genealogy.nodes.length > 0 ? (
-                  <GenealogyTree nodes={book.genealogy.nodes} />
-                ) : (
-                  <EmptyState message="No genealogy data recorded for this book." />
-                )}
-              </div>
-            )}
-
-            {activeSection === "keyEvents" && (
-              <div className="max-w-2xl">
-                <Timeline events={book.keyEvents} />
-              </div>
-            )}
-
-            {activeSection === "culturalNotes" && (
-              <div className="max-w-2xl space-y-3">
-                {book.culturalNotes.map((note, i) => (
-                  <div
-                    key={i}
-                    className={`rounded-lg border p-4 ${CULTURAL_COLORS[note.category]}`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="font-semibold text-sm">{note.title}</p>
-                      <span className="text-xs capitalize opacity-70 px-2 py-0.5 rounded-full bg-white/10">{note.category}</span>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                    <div className="card" style={{ padding: "14px 16px" }}>
+                      <div className="card-label">Themes</div>
+                      <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 5 }}>
+                        {book.overview.themes.map(t => (
+                          <li key={t} style={{ display: "flex", alignItems: "flex-start", gap: 7, fontSize: 13, color: "var(--ink-2)" }}>
+                            <ChevronRight size={13} style={{ flexShrink: 0, marginTop: 2, color: "var(--accent-btn)" }} />
+                            {t}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                    <p className="text-sm opacity-80 leading-relaxed">{note.content}</p>
+                    <div className="card" style={{ padding: "14px 16px" }}>
+                      <div className="card-label">Key Messages</div>
+                      <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 5 }}>
+                        {book.overview.keyMessages.map(m => (
+                          <li key={m} style={{ display: "flex", alignItems: "flex-start", gap: 7, fontSize: 13, color: "var(--ink-2)" }}>
+                            <ChevronRight size={13} style={{ flexShrink: 0, marginTop: 2, color: "var(--accent-btn)" }} />
+                            {m}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
-                ))}
-              </div>
-            )}
+
+                  <div className="card" style={{ padding: "14px 16px", background: "var(--accent-soft)", borderColor: "var(--accent-border)" }}>
+                    <div className="card-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <Lightbulb size={12} /> Did You Know?
+                    </div>
+                    <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
+                      {book.didYouKnow.map((fact, i) => (
+                        <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 13, color: "var(--ink-2)", lineHeight: 1.55 }}>
+                          <span style={{ color: "var(--accent-ink)", fontWeight: 600, flexShrink: 0, minWidth: 14 }}>{i + 1}.</span>
+                          {fact}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {/* ── Author ── */}
+              {activeSection === "author" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <div className="card" style={{ padding: "16px 18px" }}>
+                    <div className="card-label">Traditional Author</div>
+                    <p style={{ fontSize: 17, fontWeight: 600, color: "var(--ink-1)", margin: "0 0 8px", fontFamily: "var(--font-serif)" }}>
+                      {book.author.traditional}
+                    </p>
+                    <p style={{ fontSize: 13, color: "var(--ink-3)", margin: 0, lineHeight: 1.6 }}>{book.author.notes}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* ── Time Period ── */}
+              {activeSection === "timePeriod" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <InfoRow label="Events Date"       value={book.timePeriod.eventsDate} />
+                  <InfoRow label="Writing Date"      value={book.timePeriod.writingDate} />
+                  <InfoRow label="Biblical Placement" value={book.timePeriod.biblicalPlacement} />
+                  {deepStudy && <InfoRow label="Relation to Events" value={book.timePeriod.relationToEvents} />}
+                </div>
+              )}
+
+              {/* ── Historical Setting ── */}
+              {activeSection === "historicalSetting" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {book.historicalSetting.rulers.length > 0 && (
+                    <TagGroup title="Key Rulers" items={book.historicalSetting.rulers} />
+                  )}
+                  {book.historicalSetting.israelKings.length > 0 && (
+                    <TagGroup title="Israel / Judah Kings" items={book.historicalSetting.israelKings} color="accent" />
+                  )}
+                  {book.historicalSetting.neighboringPowers.length > 0 && (
+                    <TagGroup title="Neighboring Powers" items={book.historicalSetting.neighboringPowers} color="warm" />
+                  )}
+                  {deepStudy && (
+                    <InfoRow label="Political Background" value={book.historicalSetting.politicalBackground} />
+                  )}
+                </div>
+              )}
+
+              {/* ── Genealogy ── */}
+              {activeSection === "genealogy" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {book.genealogy.description && (
+                    <p style={{ fontSize: 13, color: "var(--ink-3)", fontStyle: "italic", margin: 0 }}>
+                      {book.genealogy.description}
+                    </p>
+                  )}
+                  {book.genealogy.nodes.length > 0
+                    ? <GenealogyTree nodes={book.genealogy.nodes} />
+                    : <EmptyState message="No genealogy data recorded for this book." />
+                  }
+                </div>
+              )}
+
+              {/* ── Key Events ── */}
+              {activeSection === "keyEvents" && (
+                <Timeline events={book.keyEvents} />
+              )}
+
+              {/* ── Cultural Notes ── */}
+              {activeSection === "culturalNotes" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {book.culturalNotes.map((note, i) => (
+                    <div key={i} style={{
+                      borderRadius: 10,
+                      border: "1px solid var(--hairline)",
+                      background: CULTURAL_BG[note.category],
+                      padding: "14px 16px",
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                        <p style={{ fontSize: 13.5, fontWeight: 600, color: "var(--ink-1)", margin: 0 }}>{note.title}</p>
+                        <span className="badge" style={{ textTransform: "capitalize", fontSize: 11 }}>{note.category}</span>
+                      </div>
+                      <p style={{ fontSize: 13, color: "var(--ink-2)", margin: 0, lineHeight: 1.6 }}>{note.content}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-// ─── small helpers ───────────────────────────────────────────────────────────
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-lg border border-white/10 bg-slate-900 p-4">
-      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">{title}</p>
-      <div className="flex flex-wrap gap-2">{children}</div>
-    </div>
-  );
-}
-
-function Chip({ label, color = "blue" }: { label: string; color?: "blue" | "purple" | "red" }) {
-  const cls = {
-    blue: "bg-blue-900/40 border-blue-700 text-blue-300",
-    purple: "bg-purple-900/40 border-purple-700 text-purple-300",
-    red: "bg-red-900/40 border-red-700 text-red-300",
-  }[color];
-  return <span className={`px-2 py-0.5 rounded-full text-xs border ${cls}`}>{label}</span>;
-}
-
-function EmptyState({ message }: { message: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-12 text-slate-600">
-      <Info className="h-8 w-8 mb-2" />
-      <p className="text-sm">{message}</p>
     </div>
   );
 }
