@@ -8,8 +8,9 @@ import {
   getGroupMemberProfiles,
   logGroupReading, getGroupReadingLogs,
   inviteFriendToGroup, getUserProfile,
+  getGroupReadingPlans, startGroupPlanProgress, getGroupPlanProgress, markGroupPlanDayComplete,
 } from "@/lib/firestore";
-import type { Group, GroupMessage, User, GroupReadingLog } from "@/types";
+import type { Group, GroupMessage, User, GroupReadingLog, ReadingPlan, GroupPlanProgress } from "@/types";
 import {
   ArrowLeft, Send, BookOpen, Users, MessageCircle, Heart, Loader2,
   BookMarked, Copy, Check, Lock, Globe, UserPlus, X,
@@ -49,6 +50,9 @@ export default function GroupDetailPage() {
   const [messages,    setMessages]    = useState<GroupMessage[]>([]);
   const [members,     setMembers]     = useState<User[]>([]);
   const [readLogs,    setReadLogs]    = useState<GroupReadingLog[]>([]);
+  const [groupPlans,  setGroupPlans]  = useState<ReadingPlan[]>([]);
+  const [groupPlanProgs, setGroupPlanProgs] = useState<GroupPlanProgress[]>([]);
+  const [joiningPlan, setJoiningPlan] = useState<string | null>(null);
   const [newMessage,  setNewMessage]  = useState("");
   const [activeTab,   setActiveTab]   = useState<"chat" | "bible" | "members" | "plan">("chat");
   const [sending,     setSending]     = useState(false);
@@ -72,6 +76,13 @@ export default function GroupDetailPage() {
       if (g) {
         getGroupMemberProfiles(g.memberIds).then(setMembers);
         getGroupReadingLogs(id, TODAY).then(setReadLogs);
+      }
+    });
+    getGroupReadingPlans(id).then(async plans => {
+      setGroupPlans(plans);
+      if (plans.length > 0 && user) {
+        const progArrays = await Promise.all(plans.map(p => getGroupPlanProgress(id, p.id)));
+        setGroupPlanProgs(progArrays.flat());
       }
     });
     const unsub = subscribeToGroupMessages(id, setMessages);
@@ -397,13 +408,112 @@ export default function GroupDetailPage() {
         {/* ── READING PLAN ── */}
         {activeTab === "plan" && (
           <div style={{ flex: 1, overflowY: "auto", padding: "20px" }}>
-            <div style={{ maxWidth: 560, margin: "0 auto" }}>
+            <div style={{ maxWidth: 560, margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
+
+              {/* Group reading plans */}
+              {groupPlans.length > 0 && (
+                <div>
+                  <div className="card-label" style={{ marginBottom: 10 }}>Group Reading Plans</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {groupPlans.map(plan => {
+                      const myProg = groupPlanProgs.find(p => p.planId === plan.id && p.userId === user?.uid);
+                      const pct = myProg ? Math.min(100, Math.round((myProg.completedDays.length / plan.duration) * 100)) : 0;
+                      const todayNum = myProg?.currentDay ?? 1;
+                      const todayDone = myProg?.completedDays.includes(todayNum) ?? false;
+                      return (
+                        <div key={plan.id} className="card" style={{ padding: "14px 16px" }}>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                            <div>
+                              <p style={{ fontSize: 14, fontWeight: 500, color: "var(--ink-1)", margin: "0 0 2px" }}>{plan.name}</p>
+                              <p style={{ fontSize: 12, color: "var(--ink-3)", margin: 0 }}>{plan.duration} days</p>
+                            </div>
+                            {!myProg ? (
+                              <button
+                                onClick={async () => {
+                                  if (!user || !id) return;
+                                  setJoiningPlan(plan.id);
+                                  try {
+                                    await startGroupPlanProgress(id, plan.id, plan.name, user.uid);
+                                    const progs = await Promise.all(groupPlans.map(p => getGroupPlanProgress(id, p.id)));
+                                    setGroupPlanProgs(progs.flat());
+                                  } catch { toast.error("Failed to join plan"); }
+                                  finally { setJoiningPlan(null); }
+                                }}
+                                disabled={joiningPlan === plan.id}
+                                className="btn btn-sm"
+                                style={{ display: "flex", alignItems: "center", gap: 5 }}
+                              >
+                                {joiningPlan === plan.id ? <Loader2 size={12} className="animate-spin" /> : "Join"}
+                              </button>
+                            ) : (
+                              <span style={{ fontFamily: "var(--font-serif)", fontSize: 20, fontWeight: 400, color: "var(--accent-ink)" }}>{pct}%</span>
+                            )}
+                          </div>
+                          {myProg && (
+                            <>
+                              <div style={{ height: 4, background: "var(--paper-3)", borderRadius: 2, overflow: "hidden", marginBottom: 10 }}>
+                                <div style={{ width: `${pct}%`, height: "100%", background: "var(--accent-btn)", borderRadius: 2, transition: "width 300ms" }} />
+                              </div>
+                              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                <span style={{ fontSize: 12.5, color: "var(--ink-3)" }}>
+                                  {todayDone ? "Day complete!" : `Day ${todayNum} of ${plan.duration}`}
+                                </span>
+                                {!todayDone && (
+                                  <button
+                                    onClick={async () => {
+                                      if (!user) return;
+                                      try {
+                                        await markGroupPlanDayComplete(myProg.id, todayNum);
+                                        const progs = await Promise.all(groupPlans.map(p => getGroupPlanProgress(id!, p.id)));
+                                        setGroupPlanProgs(progs.flat());
+                                        toast.success("Day marked complete!");
+                                      } catch { toast.error("Failed to mark day"); }
+                                    }}
+                                    className="btn btn-sm"
+                                    style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12 }}
+                                  >
+                                    <CheckCircle2 size={13} /> Mark Done
+                                  </button>
+                                )}
+                                {todayDone && <CheckCircle2 size={16} style={{ color: "var(--accent-ink)" }} />}
+                              </div>
+
+                              {/* Group progress */}
+                              {members.length > 0 && (() => {
+                                const planProgs = groupPlanProgs.filter(p => p.planId === plan.id);
+                                return planProgs.length > 0 ? (
+                                  <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--hairline)" }}>
+                                    <p style={{ fontSize: 11, color: "var(--ink-4)", margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.06em" }}>Group progress</p>
+                                    <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                                      {members.map(m => {
+                                        const mp = planProgs.find(p => p.userId === m.uid);
+                                        const mpct = mp ? Math.min(100, Math.round((mp.completedDays.length / plan.duration) * 100)) : null;
+                                        return (
+                                          <div key={m.uid} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                            <Avatar name={m.displayName} photoURL={m.photoURL} size={20} />
+                                            <span style={{ fontSize: 12, color: "var(--ink-2)", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.displayName}</span>
+                                            {mpct !== null
+                                              ? <span style={{ fontSize: 11, color: "var(--accent-ink)", fontWeight: 500 }}>{mpct}%</span>
+                                              : <span style={{ fontSize: 11, color: "var(--ink-4)" }}>Not started</span>}
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                ) : null;
+                              })()}
+                            </>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Today's reading tracker */}
-              <div className="card" style={{ padding: "18px 20px", marginBottom: 16 }}>
+              <div className="card" style={{ padding: "18px 20px" }}>
                 <div className="card-label" style={{ marginBottom: 10 }}>Today's Reading — {TODAY}</div>
-
-                {/* Mark read button */}
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
                   <button
                     onClick={handleMarkRead}
@@ -425,52 +535,35 @@ export default function GroupDetailPage() {
                         : <><Circle size={15} /> Mark as read today</>}
                   </button>
                 </div>
-
-                {/* Progress list */}
                 <div className="card-label" style={{ marginBottom: 8 }}>
                   Group progress — {readLogs.length} / {group.memberIds.length} read today
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   {members.length === 0
                     ? group.memberIds.map((uid, i) => {
-                      const done = readLogs.some(l => l.userId === uid);
-                      return (
-                        <div key={uid} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          {done
-                            ? <CheckCircle2 size={15} style={{ color: "var(--accent-ink)", flexShrink: 0 }} />
-                            : <Circle size={15} style={{ color: "var(--hairline-2)", flexShrink: 0 }} />}
-                          <span style={{ fontSize: 13, color: done ? "var(--ink-1)" : "var(--ink-3)" }}>
-                            Member {i + 1}{uid === user?.uid ? " (you)" : ""}
-                          </span>
-                        </div>
-                      );
-                    })
+                        const done = readLogs.some(l => l.userId === uid);
+                        return (
+                          <div key={uid} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            {done ? <CheckCircle2 size={15} style={{ color: "var(--accent-ink)", flexShrink: 0 }} /> : <Circle size={15} style={{ color: "var(--hairline-2)", flexShrink: 0 }} />}
+                            <span style={{ fontSize: 13, color: done ? "var(--ink-1)" : "var(--ink-3)" }}>Member {i + 1}{uid === user?.uid ? " (you)" : ""}</span>
+                          </div>
+                        );
+                      })
                     : members.map(member => {
-                      const done = readLogs.some(l => l.userId === member.uid);
-                      return (
-                        <div key={member.uid} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          {done
-                            ? <CheckCircle2 size={15} style={{ color: "var(--accent-ink)", flexShrink: 0 }} />
-                            : <Circle size={15} style={{ color: "var(--hairline-2)", flexShrink: 0 }} />}
-                          <Avatar name={member.displayName} photoURL={member.photoURL} size={22} />
-                          <span style={{ fontSize: 13, color: done ? "var(--ink-1)" : "var(--ink-3)", flex: 1 }}>
-                            {member.displayName}{member.uid === user?.uid ? " (you)" : ""}
-                          </span>
-                          {done && <span style={{ fontSize: 11, color: "var(--accent-ink)", fontWeight: 500 }}>✓ Read</span>}
-                        </div>
-                      );
-                    })}
+                        const done = readLogs.some(l => l.userId === member.uid);
+                        return (
+                          <div key={member.uid} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            {done ? <CheckCircle2 size={15} style={{ color: "var(--accent-ink)", flexShrink: 0 }} /> : <Circle size={15} style={{ color: "var(--hairline-2)", flexShrink: 0 }} />}
+                            <Avatar name={member.displayName} photoURL={member.photoURL} size={22} />
+                            <span style={{ fontSize: 13, color: done ? "var(--ink-1)" : "var(--ink-3)", flex: 1 }}>{member.displayName}{member.uid === user?.uid ? " (you)" : ""}</span>
+                            {done && <span style={{ fontSize: 11, color: "var(--accent-ink)", fontWeight: 500 }}>✓ Read</span>}
+                          </div>
+                        );
+                      })}
                 </div>
-
-                {/* Progress bar */}
                 <div style={{ marginTop: 14 }}>
                   <div style={{ height: 6, background: "var(--paper-3)", borderRadius: 999, overflow: "hidden" }}>
-                    <div style={{
-                      height: "100%", borderRadius: 999,
-                      background: "var(--accent-btn)",
-                      width: `${group.memberIds.length > 0 ? (readLogs.length / group.memberIds.length) * 100 : 0}%`,
-                      transition: "width 400ms ease",
-                    }} />
+                    <div style={{ height: "100%", borderRadius: 999, background: "var(--accent-btn)", width: `${group.memberIds.length > 0 ? (readLogs.length / group.memberIds.length) * 100 : 0}%`, transition: "width 400ms ease" }} />
                   </div>
                   <p style={{ fontSize: 11.5, color: "var(--ink-3)", margin: "4px 0 0", textAlign: "right" }}>
                     {group.memberIds.length > 0 ? Math.round((readLogs.length / group.memberIds.length) * 100) : 0}% of group read today
@@ -478,14 +571,14 @@ export default function GroupDetailPage() {
                 </div>
               </div>
 
-              {/* Personal plans link */}
+              {/* Create group plan link */}
               <div className="card" style={{ padding: "16px 20px" }}>
-                <div className="card-label" style={{ marginBottom: 6 }}>Group Reading Plans</div>
+                <div className="card-label" style={{ marginBottom: 6 }}>Assign a Plan to this Group</div>
                 <p style={{ fontSize: 13, color: "var(--ink-3)", margin: "0 0 12px", lineHeight: 1.5 }}>
-                  Browse and assign reading plans to follow together as a group.
+                  Create a reading plan and assign it to this group so all members can track progress together.
                 </p>
                 <Link href="/dashboard/plans" className="btn btn-sm" style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-                  <BookMarked size={12} /> Browse Plans
+                  <BookMarked size={12} /> Manage Plans
                 </Link>
               </div>
             </div>
