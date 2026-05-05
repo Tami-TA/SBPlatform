@@ -1,8 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth-store";
 import { useThemeStore } from "@/store/theme-store";
-import { updateUserProfile } from "@/lib/firestore";
+import { updateUserProfile, checkUsernameAvailable, updateUsername, deleteUserAccount } from "@/lib/firestore";
 import { getInitials, getStreakLevel } from "@/lib/utils";
 import { TRANSLATIONS } from "@/lib/bible-data";
 import { THEMES } from "@/lib/themes";
@@ -12,6 +13,7 @@ import {
   Edit2, Save, X, Flame, Star, Trophy, BookOpen,
   Bell, BellOff, ChevronRight, Shield, Check, Loader2,
   Users, BookMarked, Zap, Award, ListChecks, Palette,
+  AtSign, AlertTriangle,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -30,14 +32,23 @@ const BADGE_ICONS: Record<string, React.ElementType> = {
   achievement_plan: ListChecks, achievement_longest_7: Trophy,
 };
 
+type UsernameStatus = "idle" | "checking" | "available" | "taken" | "unchanged" | "short";
+
 export default function ProfilePage() {
   const { user, setUser } = useAuthStore();
   const { theme: activeTheme, setTheme } = useThemeStore();
+  const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving]   = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirm, setDeleteConfirm]     = useState("");
+  const [deleting, setDeleting]               = useState(false);
+  const [usernameStatus, setUsernameStatus]   = useState<UsernameStatus>("idle");
+  const usernameTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const [form, setForm] = useState({
     displayName:          user?.displayName || "",
+    username:             user?.username || "",
     bio:                  user?.bio || "",
     preferredTranslation: user?.preferredTranslation || "KJV",
     notificationsEnabled: user?.notificationsEnabled ?? true,
@@ -47,17 +58,41 @@ export default function ProfilePage() {
 
   const streakLevel = getStreakLevel(user.currentStreak);
 
+  function handleUsernameInput(raw: string) {
+    const val = raw.toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 20);
+    setForm(f => ({ ...f, username: val }));
+    clearTimeout(usernameTimer.current);
+    if (val === (user?.username ?? "")) { setUsernameStatus("unchanged"); return; }
+    if (val.length < 3) { setUsernameStatus("short"); return; }
+    setUsernameStatus("checking");
+    usernameTimer.current = setTimeout(async () => {
+      try {
+        const ok = await checkUsernameAvailable(val);
+        setUsernameStatus(ok ? "available" : "taken");
+      } catch { setUsernameStatus("idle"); }
+    }, 500);
+  }
+
   async function handleSave() {
     if (!user) return;
+    if (form.username !== user.username) {
+      if (usernameStatus === "taken")  { toast.error("That username is already taken"); return; }
+      if (usernameStatus === "short")  { toast.error("Username must be at least 3 characters"); return; }
+      if (usernameStatus === "checking") { toast.error("Still checking username — try again"); return; }
+    }
     setSaving(true);
     try {
-      await updateUserProfile(user.uid, {
+      if (form.username !== user.username) {
+        await updateUsername(user.uid, user.username, form.username);
+      }
+      const updates = {
         displayName:          form.displayName,
         bio:                  form.bio,
         preferredTranslation: form.preferredTranslation as BibleTranslation,
         notificationsEnabled: form.notificationsEnabled,
-      });
-      setUser({ ...user, ...form, preferredTranslation: form.preferredTranslation as BibleTranslation });
+      };
+      await updateUserProfile(user.uid, updates);
+      setUser({ ...user, ...updates, username: form.username });
       setEditing(false);
       toast.success("Profile updated!");
     } catch {
@@ -67,17 +102,48 @@ export default function ProfilePage() {
     }
   }
 
+  function handleCancelEdit() {
+    if (!user) return;
+    setForm({
+      displayName:          user.displayName,
+      username:             user.username,
+      bio:                  user.bio || "",
+      preferredTranslation: user.preferredTranslation,
+      notificationsEnabled: user.notificationsEnabled,
+    });
+    setUsernameStatus("idle");
+    setEditing(false);
+  }
+
   async function handleThemeChange(themeId: ThemeId) {
     setTheme(themeId);
     if (!user) return;
     try {
       await updateUserProfile(user.uid, { theme: themeId });
       setUser({ ...user, theme: themeId });
-    } catch {
-      // non-critical — theme already applied locally
-    }
+    } catch { /* non-critical */ }
   }
 
+  async function handleDeleteAccount() {
+    if (deleteConfirm !== "DELETE" || !user) return;
+    setDeleting(true);
+    try {
+      await deleteUserAccount(user.uid, user.username);
+      const { getAuth, deleteUser } = await import("firebase/auth");
+      const auth = getAuth();
+      if (auth.currentUser) await deleteUser(auth.currentUser);
+      setUser(null);
+      router.replace("/");
+    } catch (err: unknown) {
+      const code = (err as { code?: string }).code ?? "";
+      if (code === "auth/requires-recent-login") {
+        toast.error("Please sign out and sign back in, then try again.");
+      } else {
+        toast.error("Failed to delete account. Please try again.");
+      }
+      setDeleting(false);
+    }
+  }
 
   const STATS = [
     { label: "Days Read",       value: user.totalDaysRead },
@@ -98,9 +164,16 @@ export default function ProfilePage() {
   const lightThemes = THEMES.filter(t => !t.isDark);
   const darkThemes  = THEMES.filter(t =>  t.isDark);
 
+  const uStatus = usernameStatus;
+  const usernameHint =
+    uStatus === "checking"  ? { text: "Checking…",   color: "var(--ink-4)" } :
+    uStatus === "available" ? { text: "Available ✓",  color: "oklch(52% 0.14 145)" } :
+    uStatus === "taken"     ? { text: "Already taken", color: "oklch(57.7% 0.245 27.3)" } :
+    uStatus === "short"     ? { text: "Min 3 characters", color: "var(--ink-4)" } :
+    null;
+
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", padding: "28px 24px 56px" }}>
-
 
       {/* ── Profile header ─────────────────────────────────────────────────── */}
       <div className="card" style={{ padding: "28px 24px 20px", marginBottom: 16, position: "relative", overflow: "hidden" }}>
@@ -126,19 +199,40 @@ export default function ProfilePage() {
           {/* Name + username */}
           <div style={{ flex: 1, minWidth: 0 }}>
             {editing ? (
-              <input
-                type="text"
-                value={form.displayName}
-                onChange={e => setForm(f => ({ ...f, displayName: e.target.value }))}
-                className="input-field"
-                style={{ fontSize: 18, fontWeight: 600, marginBottom: 4, maxWidth: 260 }}
-              />
+              <>
+                <input
+                  type="text"
+                  value={form.displayName}
+                  onChange={e => setForm(f => ({ ...f, displayName: e.target.value }))}
+                  className="input-field"
+                  style={{ fontSize: 18, fontWeight: 600, marginBottom: 6, maxWidth: 260 }}
+                  placeholder="Display name"
+                />
+                <div style={{ position: "relative", maxWidth: 220 }}>
+                  <AtSign size={13} style={{ position: "absolute", left: 9, top: "50%", transform: "translateY(-50%)", color: "var(--ink-4)", pointerEvents: "none" }} />
+                  <input
+                    type="text"
+                    value={form.username}
+                    onChange={e => handleUsernameInput(e.target.value)}
+                    className="input-field"
+                    style={{ paddingLeft: 28, fontSize: 13, height: 30 }}
+                    placeholder="username"
+                  />
+                </div>
+                {usernameHint && (
+                  <p style={{ fontSize: 11.5, color: usernameHint.color, margin: "4px 0 0", fontWeight: 500 }}>
+                    {usernameHint.text}
+                  </p>
+                )}
+              </>
             ) : (
-              <h1 style={{ fontSize: 20, fontWeight: 700, color: "var(--ink-1)", margin: "0 0 2px", letterSpacing: "-0.01em" }}>
-                {user.displayName}
-              </h1>
+              <>
+                <h1 style={{ fontSize: 20, fontWeight: 700, color: "var(--ink-1)", margin: "0 0 2px", letterSpacing: "-0.01em" }}>
+                  {user.displayName}
+                </h1>
+                <p style={{ fontSize: 12.5, color: "var(--ink-3)", margin: "0 0 6px" }}>@{user.username}</p>
+              </>
             )}
-            <p style={{ fontSize: 12.5, color: "var(--ink-3)", margin: "0 0 6px" }}>@{user.username}</p>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ fontSize: 12, fontWeight: 600, color: "var(--accent-ink)" }}>{streakLevel.label}</span>
               {user.currentStreak > 0 && (
@@ -153,7 +247,7 @@ export default function ProfilePage() {
           <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
             {editing ? (
               <>
-                <button onClick={() => setEditing(false)} className="btn btn-sm"><X size={13} /> Cancel</button>
+                <button onClick={handleCancelEdit} className="btn btn-sm"><X size={13} /> Cancel</button>
                 <button onClick={handleSave} disabled={saving} className="btn-primary btn-sm">
                   {saving ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : <Save size={13} />}
                   {saving ? "Saving…" : "Save"}
@@ -254,7 +348,7 @@ export default function ProfilePage() {
           <div className="card-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <Trophy size={12} /> My Badges ({user.badges.length})
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10 }}>
+          <div className="badge-grid-5">
             {user.badges.map(badge => {
               const Icon = BADGE_ICONS[badge.id] || Trophy;
               return (
@@ -289,7 +383,7 @@ export default function ProfilePage() {
       </div>
 
       {/* ── Preferences ────────────────────────────────────────────────────── */}
-      <div className="card" style={{ padding: "18px 20px" }}>
+      <div className="card" style={{ padding: "18px 20px", marginBottom: 16 }}>
         <div className="card-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <Shield size={12} /> Preferences
         </div>
@@ -348,6 +442,90 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* ── Danger Zone ────────────────────────────────────────────────────── */}
+      <div className="card" style={{ padding: "18px 20px", borderColor: "oklch(88% 0.04 27)" }}>
+        <div className="card-label" style={{ display: "flex", alignItems: "center", gap: 6, color: "oklch(57.7% 0.245 27.3)" }}>
+          <AlertTriangle size={12} /> Danger Zone
+        </div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+          <div>
+            <p style={{ fontSize: 13.5, fontWeight: 500, color: "var(--ink-1)", margin: "0 0 2px" }}>Delete Account</p>
+            <p style={{ fontSize: 12, color: "var(--ink-3)", margin: 0 }}>
+              Permanently removes your account and all associated data.
+            </p>
+          </div>
+          <button
+            onClick={() => { setDeleteConfirm(""); setShowDeleteModal(true); }}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              height: 32, padding: "0 12px", borderRadius: 6, fontSize: 13,
+              fontWeight: 500, fontFamily: "var(--font-ui)",
+              background: "oklch(57.7% 0.245 27.3)", color: "white",
+              border: "none", cursor: "pointer", flexShrink: 0,
+            }}
+          >
+            Delete Account
+          </button>
+        </div>
+      </div>
+
+      {/* ── Delete confirmation modal ───────────────────────────────────────── */}
+      {showDeleteModal && (
+        <div className="modal-backdrop" onClick={e => { if (e.target === e.currentTarget) setShowDeleteModal(false); }}>
+          <div className="modal-panel" style={{ maxWidth: 420 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 8, background: "oklch(96% 0.02 27)", display: "grid", placeItems: "center", flexShrink: 0 }}>
+                <AlertTriangle size={18} style={{ color: "oklch(57.7% 0.245 27.3)" }} />
+              </div>
+              <div>
+                <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--ink-1)", margin: 0 }}>Delete your account?</h2>
+                <p style={{ fontSize: 12, color: "var(--ink-3)", margin: 0 }}>This action cannot be undone.</p>
+              </div>
+            </div>
+
+            <div style={{ background: "oklch(97% 0.01 27)", border: "1px solid oklch(88% 0.04 27)", borderRadius: 8, padding: "12px 14px", marginBottom: 18, fontSize: 13, color: "var(--ink-2)", lineHeight: 1.55 }}>
+              All your data will be permanently deleted, including reading progress, annotations, highlights, bookmarks, and group memberships.
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ fontSize: 13, color: "var(--ink-2)", display: "block", marginBottom: 6 }}>
+                Type <strong>DELETE</strong> to confirm:
+              </label>
+              <input
+                type="text"
+                value={deleteConfirm}
+                onChange={e => setDeleteConfirm(e.target.value)}
+                className="input-field"
+                placeholder="DELETE"
+                autoComplete="off"
+              />
+            </div>
+
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button onClick={() => setShowDeleteModal(false)} className="btn btn-sm" disabled={deleting}>
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleteConfirm !== "DELETE" || deleting}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 6,
+                  height: 26, padding: "0 10px", borderRadius: 6, fontSize: 12,
+                  fontWeight: 500, fontFamily: "var(--font-ui)",
+                  background: deleteConfirm === "DELETE" ? "oklch(57.7% 0.245 27.3)" : "var(--paper-3)",
+                  color: deleteConfirm === "DELETE" ? "white" : "var(--ink-4)",
+                  border: "none", cursor: deleteConfirm === "DELETE" ? "pointer" : "not-allowed",
+                  transition: "background 120ms",
+                }}
+              >
+                {deleting ? <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} /> : null}
+                {deleting ? "Deleting…" : "Delete my account"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

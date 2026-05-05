@@ -205,11 +205,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         padding: "18px 14px",
         gap: 2,
         flexShrink: 0,
-        position: "sticky",
-        top: 0,
         height: "100vh",
         overflowY: "auto",
-      }} className={`fixed top-0 left-0 z-50 lg:static lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:flex transition-transform duration-200`}>
+      }} className={`fixed top-0 left-0 z-50 lg:sticky lg:top-0 lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} transition-transform duration-200`}>
 
         {/* Brand */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 8px 18px 8px" }}>
@@ -332,7 +330,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </button>
 
           {/* Search */}
-          <div className="ds-search" style={{ flex: 1, maxWidth: 480 }}>
+          <div className="ds-search topbar-search">
             <IcoSearch />
             <input placeholder="Search verses, books, notes…" />
             <kbd style={{ fontFamily: "var(--font-mono-ds)", fontSize: 10.5, color: "var(--ink-3)", background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 4, padding: "1px 5px" }}>⌘K</kbd>

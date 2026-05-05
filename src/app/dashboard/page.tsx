@@ -113,7 +113,7 @@ export default function DashboardPage() {
   const verseRef = formatVerseRef(todaysVerse.bookName, todaysVerse.chapter, todaysVerse.verse);
 
   return (
-    <div style={{ padding: "28px 32px 48px", maxWidth: 1120, margin: "0 auto" }}>
+    <div className="pg">
 
       {/* Page header */}
       <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 24, gap: 16 }}>
@@ -165,7 +165,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Three columns */}
-      <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr 1fr", gap: 16, marginBottom: 20 }}>
+      <div className="grid-dash-3">
 
         {/* Today's reading */}
         <div className="card">
@@ -265,7 +265,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats row */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+      <div className="grid-dash-eq3">
         <div className="card" style={{ padding: 16 }}>
           <div className="card-label" style={{ marginBottom: 8 }}>Total days read</div>
           <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>

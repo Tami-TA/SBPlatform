@@ -38,6 +38,82 @@ export async function updateUserProfile(uid: string, data: Partial<User>): Promi
   await fs.updateDoc(fs.doc(db, "users", uid), data as Record<string, unknown>);
 }
 
+// ── Username uniqueness ───────────────────────────────────────────────────────
+
+export async function checkUsernameAvailable(username: string): Promise<boolean> {
+  const { db, fs } = await fdb();
+  const snap = await fs.getDoc(fs.doc(db, "usernames", username));
+  return !snap.exists();
+}
+
+export async function reserveUsername(username: string, uid: string): Promise<void> {
+  const { db, fs } = await fdb();
+  await fs.setDoc(fs.doc(db, "usernames", username), { uid });
+}
+
+export async function updateUsername(uid: string, oldUsername: string, newUsername: string): Promise<void> {
+  const { db, fs } = await fdb();
+  const snap = await fs.getDoc(fs.doc(db, "usernames", newUsername));
+  if (snap.exists() && (snap.data() as { uid: string }).uid !== uid) {
+    throw Object.assign(new Error("Username already taken"), { code: "already-exists" });
+  }
+  const batch = fs.writeBatch(db);
+  if (oldUsername) batch.delete(fs.doc(db, "usernames", oldUsername));
+  batch.set(fs.doc(db, "usernames", newUsername), { uid });
+  batch.update(fs.doc(db, "users", uid), { username: newUsername });
+  await batch.commit();
+}
+
+// ── Account deletion ──────────────────────────────────────────────────────────
+
+export async function deleteUserAccount(uid: string, username: string): Promise<void> {
+  const { db, fs } = await fdb();
+
+  // Main user doc + username reservation
+  const mainBatch = fs.writeBatch(db);
+  mainBatch.delete(fs.doc(db, "users", uid));
+  if (username) mainBatch.delete(fs.doc(db, "usernames", username));
+  await mainBatch.commit();
+
+  // Friend requests
+  const [sentSnap, recvSnap] = await Promise.all([
+    fs.getDocs(fs.query(fs.collection(db, "friendRequests"), fs.where("fromUid", "==", uid))),
+    fs.getDocs(fs.query(fs.collection(db, "friendRequests"), fs.where("toUid", "==", uid))),
+  ]);
+  if (sentSnap.size + recvSnap.size > 0) {
+    const reqBatch = fs.writeBatch(db);
+    [...sentSnap.docs, ...recvSnap.docs].forEach(d => reqBatch.delete(d.ref));
+    await reqBatch.commit();
+  }
+
+  // Remove user from all groups
+  const groupsSnap = await fs.getDocs(
+    fs.query(fs.collection(db, "groups"), fs.where("memberIds", "array-contains", uid))
+  );
+  if (!groupsSnap.empty) {
+    const grpBatch = fs.writeBatch(db);
+    groupsSnap.docs.forEach(d => grpBatch.update(d.ref, {
+      memberIds: fs.arrayRemove(uid),
+      adminIds:  fs.arrayRemove(uid),
+    }));
+    await grpBatch.commit();
+  }
+
+  // User-owned content (annotations, highlights, bookmarks, plan progress)
+  await Promise.all([
+    fs.getDocs(fs.query(fs.collection(db, "annotations"),    fs.where("userId", "==", uid))),
+    fs.getDocs(fs.query(fs.collection(db, "highlights"),     fs.where("userId", "==", uid))),
+    fs.getDocs(fs.query(fs.collection(db, "bookmarks"),      fs.where("userId", "==", uid))),
+    fs.getDocs(fs.query(fs.collection(db, "userPlanProgress"), fs.where("userId", "==", uid))),
+  ].map(async (promise) => {
+    const snap = await promise;
+    if (snap.empty) return;
+    const b = fs.writeBatch(db);
+    snap.docs.forEach(d => b.delete(d.ref));
+    await b.commit();
+  }));
+}
+
 export async function searchUsersByUsername(searchTerm: string): Promise<User[]> {
   const { db, fs } = await fdb();
   const q = fs.query(

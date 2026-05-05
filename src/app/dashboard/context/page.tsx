@@ -201,14 +201,8 @@ export default function ContextPage() {
   return (
     <div style={{ display: "flex", height: "calc(100vh - 56px)", overflow: "hidden", background: "var(--paper)" }}>
 
-      {/* ── Book sidebar ── */}
-      <aside style={{
-        width: 210, flexShrink: 0,
-        borderRight: "1px solid var(--hairline)",
-        background: "var(--paper-2)",
-        display: "flex", flexDirection: "column",
-        overflow: "hidden",
-      }}>
+      {/* ── Book sidebar (hidden on mobile) ── */}
+      <aside className="ctx-aside">
         {/* Search */}
         <div style={{ padding: "12px 12px 8px", borderBottom: "1px solid var(--hairline)" }}>
           <div style={{ position: "relative" }}>
@@ -274,6 +268,19 @@ export default function ContextPage() {
       {/* ── Main panel ── */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
+        {/* Mobile book selector */}
+        <div className="ctx-mobile-book-bar">
+          <label>Book:</label>
+          <select value={selectedId} onChange={e => selectBook(e.target.value)}>
+            <optgroup label="Old Testament">
+              {OT_BOOKS_CONTEXT.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+            </optgroup>
+            <optgroup label="New Testament">
+              {NT_BOOKS_CONTEXT.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+            </optgroup>
+          </select>
+        </div>
+
         {/* Header */}
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -309,24 +316,18 @@ export default function ContextPage() {
         </div>
 
         {/* Content split */}
-        <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+        <div className="ctx-content-split">
 
-          {/* Section nav */}
-          <nav style={{
-            width: 156, flexShrink: 0,
-            borderRight: "1px solid var(--hairline)",
-            background: "var(--paper-2)",
-            overflowY: "auto",
-            padding: "8px 8px",
-          }}>
+          {/* Section nav (vertical on desktop, horizontal scroll on mobile) */}
+          <nav className="ctx-secnav">
             {SECTION_IDS.map(s => {
               const Icon = SECTION_ICONS[s];
               return (
                 <button
                   key={s}
                   onClick={() => setActiveSection(s)}
-                  className={`nav-item${activeSection === s ? " active" : ""}`}
-                  style={{ width: "100%", fontSize: 12.5, gap: 7, padding: "6px 8px" }}
+                  className={`nav-item ctx-secnav-btn${activeSection === s ? " active" : ""}`}
+                  style={{ fontSize: 12.5, gap: 7, padding: "6px 8px" }}
                 >
                   <Icon size={13} />
                   {SECTION_LABELS[s]}
