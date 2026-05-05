@@ -151,6 +151,18 @@
   --accent-soft-2: oklch(30%   0.030 245);
   --accent-border: oklch(38%   0.048 245);
 
+  /* dark highlight tokens — deep tints so light ink stays readable */
+  --hl-yellow:     oklch(26%   0.060 90);
+  --hl-blue:       oklch(24%   0.048 245);
+  --hl-green:      oklch(24%   0.052 152);
+  --hl-pink:       oklch(24%   0.048 350);
+  --hl-orange:     oklch(26%   0.058 55);
+  --hl-yellow-border: oklch(40%   0.078 90);
+  --hl-blue-border:   oklch(38%   0.068 245);
+  --hl-green-border:  oklch(38%   0.070 152);
+  --hl-pink-border:   oklch(38%   0.068 350);
+  --hl-orange-border: oklch(40%   0.075 55);
+
   --shadow-soft:  0 1px 2px oklch(0% 0 0 / 0.20), 0 8px 24px oklch(0% 0 0 / 0.30);
   --shadow-modal: 0 1px 2px oklch(0% 0 0 / 0.30), 0 24px 64px oklch(0% 0 0 / 0.60);
   --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.25);

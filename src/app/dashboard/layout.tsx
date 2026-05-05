@@ -333,7 +333,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="ds-search topbar-search">
             <IcoSearch />
             <input placeholder="Search verses, books, notes…" />
-            <kbd style={{ fontFamily: "var(--font-mono-ds)", fontSize: 10.5, color: "var(--ink-3)", background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 4, padding: "1px 5px" }}>⌘K</kbd>
           </div>
 
           <div style={{ flex: 1 }} />
