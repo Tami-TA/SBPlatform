@@ -184,7 +184,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const initials = getInitials(user.displayName);
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "var(--paper)" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: "var(--paper)", overflowX: "hidden" }}>
 
       {/* Mobile overlay */}
       {sidebarOpen && (
@@ -196,18 +196,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       )}
 
       {/* ── Sidebar ── */}
-      <aside style={{
-        width: 220,
-        borderRight: "1px solid var(--hairline)",
-        background: "var(--paper-2)",
-        display: "flex",
-        flexDirection: "column",
-        padding: "18px 14px",
-        gap: 2,
-        flexShrink: 0,
-        height: "100vh",
-        overflowY: "auto",
-      }} className={`fixed top-0 left-0 z-50 lg:sticky lg:top-0 lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} transition-transform duration-200`}>
+      <aside className={`sidebar${sidebarOpen ? " open" : ""}`}>
 
         {/* Brand */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 8px 18px 8px" }}>
