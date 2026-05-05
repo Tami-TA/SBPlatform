@@ -9,12 +9,13 @@ import {
   logGroupReading, getGroupReadingLogs,
   inviteFriendToGroup, getUserProfile,
   getGroupReadingPlans, startGroupPlanProgress, getGroupPlanProgress, markGroupPlanDayComplete,
+  promoteToAdmin, demoteAdmin, removeGroupMember,
 } from "@/lib/firestore";
 import type { Group, GroupMessage, User, GroupReadingLog, ReadingPlan, GroupPlanProgress } from "@/types";
 import {
   ArrowLeft, Send, BookOpen, Users, MessageCircle, Heart, Loader2,
   BookMarked, Copy, Check, Lock, Globe, UserPlus, X,
-  CheckCircle2, Circle,
+  CheckCircle2, Circle, Shield, ShieldOff, UserMinus,
 } from "lucide-react";
 import { timeAgo, getInitials } from "@/lib/utils";
 import toast from "react-hot-toast";
@@ -65,6 +66,11 @@ export default function GroupDetailPage() {
   const [friends,     setFriends]     = useState<User[]>([]);
   const [invitingId,  setInvitingId]  = useState<string | null>(null);
   const [invitedIds,  setInvitedIds]  = useState<Set<string>>(new Set());
+
+  // Admin member management
+  const [promotingId, setPromotingId] = useState<string | null>(null);
+  const [demotingId,  setDemotingId]  = useState<string | null>(null);
+  const [removingId,  setRemovingId]  = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -163,6 +169,62 @@ export default function GroupDetailPage() {
     await navigator.clipboard.writeText(group.joinCode);
     setCodeCopied(true);
     setTimeout(() => setCodeCopied(false), 2000);
+  }
+
+  async function handlePromote(uid: string, name: string) {
+    if (!id) return;
+    setPromotingId(uid);
+    try {
+      await promoteToAdmin(id, uid);
+      const g = await getGroup(id);
+      if (g) setGroup(g);
+      toast.success(`${name} is now an admin`);
+    } catch {
+      toast.error("Failed to promote member");
+    } finally {
+      setPromotingId(null);
+    }
+  }
+
+  async function handleDemote(uid: string, name: string) {
+    if (!id) return;
+    setDemotingId(uid);
+    try {
+      await demoteAdmin(id, uid);
+      const g = await getGroup(id);
+      if (g) setGroup(g);
+      toast.success(`${name} removed from admins`);
+    } catch (err) {
+      if ((err as { code?: string }).code === "last-admin") {
+        toast.error("Cannot demote the last admin");
+      } else {
+        toast.error("Failed to demote admin");
+      }
+    } finally {
+      setDemotingId(null);
+    }
+  }
+
+  async function handleRemoveMember(uid: string, name: string) {
+    if (!id || !confirm(`Remove ${name} from this group?`)) return;
+    setRemovingId(uid);
+    try {
+      await removeGroupMember(id, uid);
+      const g = await getGroup(id);
+      if (g) {
+        setGroup(g);
+        getGroupMemberProfiles(g.memberIds).then(setMembers);
+      }
+      toast.success(`${name} removed from group`);
+    } catch (err) {
+      if ((err as { code?: string }).code === "last-admin") {
+        toast.error("Cannot remove the last admin");
+      } else {
+        toast.error("Failed to remove member");
+      }
+    } finally {
+      setRemovingId(null);
+    }
   }
 
   // ── Derived ──
@@ -376,19 +438,54 @@ export default function GroupDetailPage() {
                 </div>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {members.map(member => (
-                    <div key={member.uid} className="card" style={{ padding: "12px 14px", display: "flex", alignItems: "center", gap: 10 }}>
-                      <Avatar name={member.displayName} photoURL={member.photoURL} size={36} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontSize: 13.5, fontWeight: 500, color: "var(--ink-1)", margin: "0 0 1px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{member.displayName}</p>
-                        <p style={{ fontSize: 12, color: "var(--ink-3)", margin: 0 }}>@{member.username}</p>
+                  {members.map(member => {
+                    const isSelf      = member.uid === user?.uid;
+                    const memberAdmin = group.adminIds.includes(member.uid);
+                    const actionable  = isAdmin && !isSelf;
+                    return (
+                      <div key={member.uid} className="card" style={{ padding: "12px 14px", display: "flex", alignItems: "center", gap: 10 }}>
+                        <Avatar name={member.displayName} photoURL={member.photoURL} size={36} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontSize: 13.5, fontWeight: 500, color: "var(--ink-1)", margin: "0 0 1px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{member.displayName}</p>
+                          <p style={{ fontSize: 12, color: "var(--ink-3)", margin: 0 }}>@{member.username}</p>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                          {isSelf && <span style={{ fontSize: 11.5, color: "var(--ink-4)" }}>you</span>}
+                          {memberAdmin && <span className="badge-accent" style={{ fontSize: 11 }}>Admin</span>}
+                          {actionable && !memberAdmin && (
+                            <button
+                              onClick={() => handlePromote(member.uid, member.displayName)}
+                              disabled={promotingId === member.uid}
+                              title="Make Admin"
+                              style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ink-3)", padding: 4, display: "flex" }}
+                            >
+                              {promotingId === member.uid ? <Loader2 size={14} className="animate-spin" /> : <Shield size={14} />}
+                            </button>
+                          )}
+                          {actionable && memberAdmin && (
+                            <button
+                              onClick={() => handleDemote(member.uid, member.displayName)}
+                              disabled={demotingId === member.uid}
+                              title="Remove Admin"
+                              style={{ background: "none", border: "none", cursor: "pointer", color: "var(--ink-3)", padding: 4, display: "flex" }}
+                            >
+                              {demotingId === member.uid ? <Loader2 size={14} className="animate-spin" /> : <ShieldOff size={14} />}
+                            </button>
+                          )}
+                          {actionable && (
+                            <button
+                              onClick={() => handleRemoveMember(member.uid, member.displayName)}
+                              disabled={removingId === member.uid}
+                              title="Remove from group"
+                              style={{ background: "none", border: "none", cursor: "pointer", color: "oklch(57.7% 0.245 27.3)", padding: 4, display: "flex" }}
+                            >
+                              {removingId === member.uid ? <Loader2 size={14} className="animate-spin" /> : <UserMinus size={14} />}
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-                        {member.uid === user?.uid && <span style={{ fontSize: 11.5, color: "var(--ink-4)" }}>you</span>}
-                        {group.adminIds.includes(member.uid) && <span className="badge-accent" style={{ fontSize: 11 }}>Admin</span>}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 

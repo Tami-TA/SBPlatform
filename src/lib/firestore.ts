@@ -690,3 +690,58 @@ export async function addGroupAnnotationReply(
     replies: fs.arrayUnion(newReply),
   });
 }
+
+// ── Plan control ──────────────────────────────────────────────────────────────
+
+export async function stopPersonalPlan(progressId: string): Promise<void> {
+  const { db, fs } = await fdb();
+  await fs.deleteDoc(fs.doc(db, "userPlanProgress", progressId));
+}
+
+export async function deleteGroupPlan(planId: string, groupId: string): Promise<void> {
+  const { db, fs } = await fdb();
+  const progressSnap = await fs.getDocs(
+    fs.query(
+      fs.collection(db, "groupPlanProgress"),
+      fs.where("planId", "==", planId),
+      fs.where("groupId", "==", groupId)
+    )
+  );
+  const batch = fs.writeBatch(db);
+  progressSnap.docs.forEach(d => batch.delete(d.ref));
+  batch.delete(fs.doc(db, "readingPlans", planId));
+  await batch.commit();
+}
+
+// ── Group admin actions ───────────────────────────────────────────────────────
+
+export async function promoteToAdmin(groupId: string, uid: string): Promise<void> {
+  const { db, fs } = await fdb();
+  await fs.updateDoc(fs.doc(db, "groups", groupId), { adminIds: fs.arrayUnion(uid) });
+}
+
+export async function demoteAdmin(groupId: string, uid: string): Promise<void> {
+  const { db, fs } = await fdb();
+  const snap = await fs.getDoc(fs.doc(db, "groups", groupId));
+  if (!snap.exists()) throw new Error("Group not found");
+  const adminIds = (snap.data() as Group).adminIds;
+  if (adminIds.length <= 1) throw Object.assign(new Error("Cannot demote the last admin"), { code: "last-admin" });
+  await fs.updateDoc(fs.doc(db, "groups", groupId), { adminIds: fs.arrayRemove(uid) });
+}
+
+export async function removeGroupMember(groupId: string, uid: string): Promise<void> {
+  const { db, fs } = await fdb();
+  const snap = await fs.getDoc(fs.doc(db, "groups", groupId));
+  if (!snap.exists()) throw new Error("Group not found");
+  const g = snap.data() as Group;
+  if (g.adminIds.includes(uid) && g.adminIds.length <= 1) {
+    throw Object.assign(new Error("Cannot remove the last admin"), { code: "last-admin" });
+  }
+  const batch = fs.writeBatch(db);
+  batch.update(fs.doc(db, "groups", groupId), {
+    memberIds: fs.arrayRemove(uid),
+    adminIds: fs.arrayRemove(uid),
+  });
+  batch.update(fs.doc(db, "users", uid), { groupIds: fs.arrayRemove(groupId) });
+  await batch.commit();
+}

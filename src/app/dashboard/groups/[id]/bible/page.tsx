@@ -314,6 +314,8 @@ export default function GroupBiblePage() {
     );
   }
 
+  const isAdmin = group.adminIds.includes(user?.uid ?? "");
+
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
@@ -572,6 +574,7 @@ export default function GroupBiblePage() {
                                 key={ann.id}
                                 annotation={ann}
                                 currentUid={user?.uid ?? ""}
+                                isAdmin={isAdmin}
                                 isLast={i === verseAnnots.filter(a => !!a.content).length - 1}
                                 replyOpen={replyOpen === ann.id}
                                 replyText={replyText}
@@ -625,6 +628,7 @@ export default function GroupBiblePage() {
                   key={ann.id}
                   annotation={ann}
                   currentUid={user?.uid ?? ""}
+                  isAdmin={isAdmin}
                   onLike={() => handleLike(ann.id)}
                   onDelete={() => handleDelete(ann.id)}
                   onSelect={() => { setBookId(ann.verseRef.bookId); setChapter(ann.verseRef.chapter); setSelectedVerse(ann.verseRef.verse ?? null); }}
@@ -641,12 +645,13 @@ export default function GroupBiblePage() {
 // ── Annotation card (inline in verse panel) ───────────────────────────────────
 
 function AnnotationCard({
-  annotation: ann, currentUid, isLast,
+  annotation: ann, currentUid, isAdmin, isLast,
   replyOpen, replyText, replying,
   onLike, onDelete, onToggleReply, onReplyChange, onReplySubmit,
 }: {
   annotation: Annotation;
   currentUid: string;
+  isAdmin: boolean;
   isLast: boolean;
   replyOpen: boolean;
   replyText: string;
@@ -674,7 +679,7 @@ function AnnotationCard({
           </div>
           <p style={{ fontSize: 13, color: "var(--ink-2)", margin: "4px 0 0", lineHeight: 1.55 }}>{ann.content}</p>
         </div>
-        {isOwn && (
+        {(isOwn || isAdmin) && (
           <button onClick={e => { e.stopPropagation(); onDelete(); }} className="btn-ghost btn-sm" style={{ padding: "0 4px", color: "var(--ink-4)" }}>
             <Trash2 size={12} />
           </button>
@@ -741,10 +746,11 @@ function AnnotationCard({
 // ── Sidebar annotation card (desktop right panel) ─────────────────────────────
 
 function SidebarAnnotationCard({
-  annotation: ann, currentUid, onLike, onDelete, onSelect,
+  annotation: ann, currentUid, isAdmin, onLike, onDelete, onSelect,
 }: {
   annotation: Annotation;
   currentUid: string;
+  isAdmin: boolean;
   onLike: () => void;
   onDelete: () => void;
   onSelect: () => void;
@@ -785,7 +791,7 @@ function SidebarAnnotationCard({
             <MessageSquare size={11} /> {ann.replies.length}
           </span>
         )}
-        {isOwn && (
+        {(isOwn || isAdmin) && (
           <button
             onClick={e => { e.stopPropagation(); onDelete(); }}
             style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", color: "var(--ink-4)", padding: 0 }}

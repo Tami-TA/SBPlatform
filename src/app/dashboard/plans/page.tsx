@@ -15,6 +15,8 @@ import {
   startGroupPlanProgress,
   getGroupPlanProgress,
   markGroupPlanDayComplete,
+  stopPersonalPlan,
+  deleteGroupPlan,
 } from "@/lib/firestore";
 import type { ReadingPlan, UserPlanProgress, Group, GroupPlanProgress } from "@/types";
 import {
@@ -71,6 +73,8 @@ export default function PlansPage() {
   const [form,             setForm]              = useState<PlanForm>(DEFAULT_FORM);
   const [saving,           setSaving]            = useState(false);
   const [deleting,         setDeleting]          = useState<string | null>(null);
+  const [stoppingPlan,     setStoppingPlan]      = useState<string | null>(null);
+  const [deletingGrpPlan,  setDeletingGrpPlan]   = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -167,6 +171,35 @@ export default function PlansPage() {
       toast.success("Day marked complete!");
     } catch {
       toast.error("Failed to mark day");
+    }
+  }
+
+  async function handleStopPlan(progressId: string, planName: string) {
+    if (!confirm(`Stop "${planName}"? Your progress will be deleted.`)) return;
+    setStoppingPlan(progressId);
+    try {
+      await stopPersonalPlan(progressId);
+      setMyProgress(prev => prev.filter(p => p.id !== progressId));
+      toast.success("Plan stopped");
+    } catch {
+      toast.error("Failed to stop plan");
+    } finally {
+      setStoppingPlan(null);
+    }
+  }
+
+  async function handleDeleteGroupPlan(planId: string, groupId: string, planName: string) {
+    if (!confirm(`Delete "${planName}" for the entire group? This cannot be undone.`)) return;
+    setDeletingGrpPlan(planId);
+    try {
+      await deleteGroupPlan(planId, groupId);
+      setGroupPlans(prev => prev.filter(p => p.id !== planId));
+      setGroupProgress(prev => prev.filter(p => p.planId !== planId));
+      toast.success("Group plan deleted");
+    } catch {
+      toast.error("Failed to delete plan");
+    } finally {
+      setDeletingGrpPlan(null);
     }
   }
 
@@ -530,6 +563,14 @@ export default function PlansPage() {
                     <div className="flex items-center gap-3 mt-4 pt-3 border-t border-border text-xs text-muted-foreground">
                       <span className="flex items-center gap-1"><Check size={11} className="text-green-500" />{prog.completedDays.length} days done</span>
                       <span className="flex items-center gap-1"><Target size={11} />{Math.max(0, duration - prog.completedDays.length)} remaining</span>
+                      <button
+                        onClick={() => handleStopPlan(prog.id, prog.planName)}
+                        disabled={stoppingPlan === prog.id}
+                        style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 4, color: "oklch(57.7% 0.245 27.3)", background: "none", border: "none", cursor: "pointer", fontFamily: "var(--font-ui)", fontSize: 12, padding: 0 }}
+                      >
+                        {stoppingPlan === prog.id ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />}
+                        Stop Plan
+                      </button>
                     </div>
                   </div>
                 );
@@ -575,20 +616,33 @@ export default function PlansPage() {
                         </div>
                         <p style={{ fontSize: 12, color: "var(--ink-3)", margin: 0 }}>{plan.duration} days · {plan.description || "Group reading plan"}</p>
                       </div>
-                      {myProg ? (
-                        <div style={{ textAlign: "right" }}>
-                          <p style={{ fontFamily: "var(--font-serif)", fontSize: 24, fontWeight: 400, color: "var(--ds-accent-ink)", margin: 0 }}>{pct}%</p>
-                          <p style={{ fontSize: 11, color: "var(--ink-3)", margin: 0 }}>your progress</p>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => handleJoinGroupPlan(plan)}
-                          disabled={starting === plan.id}
-                          className="btn-primary btn-sm"
-                        >
-                          {starting === plan.id ? <Loader2 size={12} className="animate-spin" /> : "Join Plan"}
-                        </button>
-                      )}
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        {myProg ? (
+                          <div style={{ textAlign: "right" }}>
+                            <p style={{ fontFamily: "var(--font-serif)", fontSize: 24, fontWeight: 400, color: "var(--ds-accent-ink)", margin: 0 }}>{pct}%</p>
+                            <p style={{ fontSize: 11, color: "var(--ink-3)", margin: 0 }}>your progress</p>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => handleJoinGroupPlan(plan)}
+                            disabled={starting === plan.id}
+                            className="btn-primary btn-sm"
+                          >
+                            {starting === plan.id ? <Loader2 size={12} className="animate-spin" /> : "Join Plan"}
+                          </button>
+                        )}
+                        {/* Admin-only delete */}
+                        {plan.groupId && myGroups.find(g => g.id === plan.groupId)?.adminIds.includes(user?.uid ?? "") && (
+                          <button
+                            onClick={() => handleDeleteGroupPlan(plan.id, plan.groupId!, plan.name)}
+                            disabled={deletingGrpPlan === plan.id}
+                            title="Delete group plan (admin only)"
+                            style={{ color: "oklch(57.7% 0.245 27.3)", background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex" }}
+                          >
+                            {deletingGrpPlan === plan.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     {myProg && (
