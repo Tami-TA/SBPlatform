@@ -384,11 +384,12 @@ export async function getPublicReadingPlans(): Promise<ReadingPlan[]> {
   const q = fs.query(
     fs.collection(db, "readingPlans"),
     fs.where("isPublic", "==", true),
-    fs.orderBy("completionCount", "desc"),
     fs.limit(20)
   );
   const snap = await fs.getDocs(q);
-  return snap.docs.map((d) => ({ ...d.data(), id: d.id } as ReadingPlan));
+  return snap.docs
+    .map((d) => ({ ...d.data(), id: d.id } as ReadingPlan))
+    .sort((a, b) => (b.completionCount ?? 0) - (a.completionCount ?? 0));
 }
 
 export async function getUserReadingPlans(userId: string): Promise<ReadingPlan[]> {

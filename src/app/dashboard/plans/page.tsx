@@ -78,12 +78,23 @@ export default function PlansPage() {
 
   useEffect(() => {
     if (!user) return;
-    Promise.all([
-      getUserPlanProgress(user.uid),
+    const uid = user.uid;
+    Promise.allSettled([
+      getUserPlanProgress(uid),
       getPublicReadingPlans(),
-      getUserReadingPlans(user.uid),
-      getUserGroups(user.uid),
-    ]).then(async ([prog, plans, created, groups]) => {
+      getUserReadingPlans(uid),
+      getUserGroups(uid),
+    ]).then(async ([progRes, plansRes, createdRes, groupsRes]) => {
+      const prog    = progRes.status    === "fulfilled" ? progRes.value    : [];
+      const plans   = plansRes.status   === "fulfilled" ? plansRes.value   : [];
+      const created = createdRes.status === "fulfilled" ? createdRes.value : [];
+      const groups  = groupsRes.status  === "fulfilled" ? groupsRes.value  : [];
+
+      if (progRes.status    === "rejected") console.error("getUserPlanProgress failed:", progRes.reason);
+      if (plansRes.status   === "rejected") console.error("getPublicReadingPlans failed:", plansRes.reason);
+      if (createdRes.status === "rejected") console.error("getUserReadingPlans failed:", createdRes.reason);
+      if (groupsRes.status  === "rejected") console.error("getUserGroups failed:", groupsRes.reason);
+
       setMyProgress(prog);
       setPublicPlans(plans);
       setMyCreatedPlans(created);
@@ -99,16 +110,23 @@ export default function PlansPage() {
 
       // Load group plans for all user's groups
       if (groups.length > 0) {
-        const gPlansArrays = await Promise.all(groups.map(g => getGroupReadingPlans(g.id)));
-        const allGroupPlans = gPlansArrays.flat();
+        const gPlansResults = await Promise.allSettled(groups.map(g => getGroupReadingPlans(g.id)));
+        const allGroupPlans = gPlansResults
+          .filter((r): r is PromiseFulfilledResult<ReadingPlan[]> => r.status === "fulfilled")
+          .flatMap(r => r.value);
         setGroupPlans(allGroupPlans);
 
         // Load user's group plan progress
-        const allProgress = await Promise.all(
-          allGroupPlans.map(p => getGroupPlanProgress(p.groupId!, p.id))
-        );
-        const myGProgress = allProgress.flat().filter(p => p.userId === user.uid);
-        setGroupProgress(myGProgress);
+        if (allGroupPlans.length > 0) {
+          const progressResults = await Promise.allSettled(
+            allGroupPlans.map(p => getGroupPlanProgress(p.groupId!, p.id))
+          );
+          const myGProgress = progressResults
+            .filter((r): r is PromiseFulfilledResult<GroupPlanProgress[]> => r.status === "fulfilled")
+            .flatMap(r => r.value)
+            .filter(p => p.userId === uid);
+          setGroupProgress(myGProgress);
+        }
 
         // Register sequences
         allGroupPlans.forEach(p => {
