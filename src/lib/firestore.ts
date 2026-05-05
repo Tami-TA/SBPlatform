@@ -1,6 +1,6 @@
 import type {
   User, Group, GroupMessage, ReadingPlan, UserPlanProgress,
-  Annotation, Highlight, Bookmark, FriendRequest, Notification,
+  Annotation, AnnotationReply, Highlight, Bookmark, FriendRequest, Notification,
   GroupInvite, GroupReadingLog,
 } from "@/types";
 
@@ -535,4 +535,81 @@ export async function getUserNotifications(userId: string): Promise<Notification
 export async function markNotificationRead(userId: string, notificationId: string): Promise<void> {
   const { db, fs } = await fdb();
   await fs.updateDoc(fs.doc(db, `users/${userId}/notifications`, notificationId), { isRead: true });
+}
+
+// ── Group Bible — collaborative annotations ────────────────────────────────────
+
+/**
+ * Real-time subscription to all annotations for a group + chapter.
+ * Queries by groupId only (Firestore index-safe) then filters client-side.
+ */
+export function subscribeToGroupBibleAnnotations(
+  groupId: string,
+  bookId: string,
+  chapter: number,
+  callback: (annotations: Annotation[]) => void
+): () => void {
+  let unsub: () => void = () => {};
+  Promise.all([import("./firebase"), import("firebase/firestore")]).then(([{ db }, fs]) => {
+    const q = fs.query(
+      fs.collection(db, "annotations"),
+      fs.where("groupId", "==", groupId),
+      fs.orderBy("createdAt", "asc")
+    );
+    unsub = fs.onSnapshot(q, (snap) => {
+      const all = snap.docs.map((d) => ({ ...d.data(), id: d.id } as Annotation));
+      callback(
+        all.filter(
+          (a) => a.verseRef.bookId === bookId && a.verseRef.chapter === chapter
+        )
+      );
+    });
+  });
+  return () => unsub();
+}
+
+export async function saveGroupBibleAnnotation(
+  annotation: Omit<Annotation, "id" | "createdAt" | "updatedAt" | "likes" | "replies">
+): Promise<string> {
+  const { db, fs } = await fdb();
+  const ref = await fs.addDoc(fs.collection(db, "annotations"), {
+    ...annotation,
+    likes: [],
+    replies: [],
+    createdAt: fs.serverTimestamp(),
+    updatedAt: fs.serverTimestamp(),
+  });
+  return ref.id;
+}
+
+export async function deleteGroupBibleAnnotation(annotationId: string): Promise<void> {
+  const { db, fs } = await fdb();
+  await fs.deleteDoc(fs.doc(db, "annotations", annotationId));
+}
+
+export async function toggleGroupAnnotationLike(annotationId: string, uid: string): Promise<void> {
+  const { db, fs } = await fdb();
+  const ref = fs.doc(db, "annotations", annotationId);
+  const snap = await fs.getDoc(ref);
+  if (!snap.exists()) return;
+  const likes = (snap.data().likes ?? []) as string[];
+  await fs.updateDoc(ref, {
+    likes: likes.includes(uid) ? fs.arrayRemove(uid) : fs.arrayUnion(uid),
+  });
+}
+
+export async function addGroupAnnotationReply(
+  annotationId: string,
+  reply: Omit<AnnotationReply, "id" | "createdAt" | "likes">
+): Promise<void> {
+  const { db, fs } = await fdb();
+  const newReply: Record<string, unknown> = {
+    ...reply,
+    id: fs.doc(fs.collection(db, "_")).id,
+    likes: [],
+    createdAt: fs.serverTimestamp(),
+  };
+  await fs.updateDoc(fs.doc(db, "annotations", annotationId), {
+    replies: fs.arrayUnion(newReply),
+  });
 }

@@ -1,18 +1,18 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore } from "@/store/auth-store";
 import {
   getGroup, subscribeToGroupMessages, sendGroupMessage,
-  getGroupAnnotations, getGroupMemberProfiles,
+  getGroupMemberProfiles,
   logGroupReading, getGroupReadingLogs,
   inviteFriendToGroup, getUserProfile,
 } from "@/lib/firestore";
-import type { Group, GroupMessage, Annotation, User, GroupReadingLog } from "@/types";
+import type { Group, GroupMessage, User, GroupReadingLog } from "@/types";
 import {
   ArrowLeft, Send, BookOpen, Users, MessageCircle, Heart, Loader2,
-  BookMarked, StickyNote, Copy, Check, Lock, Globe, UserPlus, X,
+  BookMarked, Copy, Check, Lock, Globe, UserPlus, X,
   CheckCircle2, Circle,
 } from "lucide-react";
 import { timeAgo, getInitials } from "@/lib/utils";
@@ -43,14 +43,14 @@ function Avatar({ name, photoURL, size = 32 }: { name: string; photoURL?: string
 export default function GroupDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuthStore();
+  const router = useRouter();
 
   const [group,       setGroup]       = useState<Group | null>(null);
   const [messages,    setMessages]    = useState<GroupMessage[]>([]);
-  const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [members,     setMembers]     = useState<User[]>([]);
   const [readLogs,    setReadLogs]    = useState<GroupReadingLog[]>([]);
   const [newMessage,  setNewMessage]  = useState("");
-  const [activeTab,   setActiveTab]   = useState<"chat" | "notes" | "members" | "plan">("chat");
+  const [activeTab,   setActiveTab]   = useState<"chat" | "bible" | "members" | "plan">("chat");
   const [sending,     setSending]     = useState(false);
   const [loadingMembers, setLoadingMembers] = useState(false);
   const [markingRead, setMarkingRead] = useState(false);
@@ -74,7 +74,6 @@ export default function GroupDetailPage() {
         getGroupReadingLogs(id, TODAY).then(setReadLogs);
       }
     });
-    getGroupAnnotations(id).then(setAnnotations);
     const unsub = subscribeToGroupMessages(id, setMessages);
     return unsub;
   }, [id]);
@@ -171,7 +170,7 @@ export default function GroupDetailPage() {
 
   const TABS = [
     { id: "chat",    label: "Discussion",   Icon: MessageCircle },
-    { id: "notes",   label: "Shared Notes", Icon: StickyNote    },
+    { id: "bible",   label: "Shared Bible", Icon: BookOpen      },
     { id: "members", label: "Members",      Icon: Users         },
     { id: "plan",    label: "Reading Plan", Icon: BookMarked    },
   ] as const;
@@ -239,15 +238,27 @@ export default function GroupDetailPage() {
       {/* ── Tabs ── */}
       <div className="tab-list" style={{ paddingLeft: 20, paddingRight: 20, flexShrink: 0 }}>
         {TABS.map(t => (
-          <button
-            key={t.id}
-            onClick={() => setActiveTab(t.id)}
-            className={`tab-item${activeTab === t.id ? " active" : ""}`}
-            style={{ display: "flex", alignItems: "center", gap: 5 }}
-          >
-            <t.Icon size={12} />
-            {t.label}
-          </button>
+          t.id === "bible" ? (
+            <button
+              key={t.id}
+              onClick={() => router.push(`/dashboard/groups/${id}/bible`)}
+              className="tab-item"
+              style={{ display: "flex", alignItems: "center", gap: 5 }}
+            >
+              <t.Icon size={12} />
+              {t.label}
+            </button>
+          ) : (
+            <button
+              key={t.id}
+              onClick={() => setActiveTab(t.id as "chat" | "members" | "plan")}
+              className={`tab-item${activeTab === t.id ? " active" : ""}`}
+              style={{ display: "flex", alignItems: "center", gap: 5 }}
+            >
+              <t.Icon size={12} />
+              {t.label}
+            </button>
+          )
         ))}
       </div>
 
@@ -326,64 +337,6 @@ export default function GroupDetailPage() {
               </button>
             </form>
           </>
-        )}
-
-        {/* ── SHARED NOTES ── */}
-        {activeTab === "notes" && (
-          <div style={{ flex: 1, overflowY: "auto", padding: "20px" }}>
-            <div style={{ maxWidth: 640, margin: "0 auto" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                <p style={{ fontSize: 13, color: "var(--ink-3)", margin: 0 }}>
-                  {annotations.length} shared annotation{annotations.length !== 1 ? "s" : ""}
-                </p>
-                <Link href={`/dashboard/bible`} className="btn btn-sm" style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                  <BookOpen size={12} /> Open Bible
-                </Link>
-              </div>
-
-              {annotations.length === 0 ? (
-                <div className="card" style={{ padding: "48px 24px", textAlign: "center" }}>
-                  <StickyNote size={32} style={{ margin: "0 auto 12px", color: "var(--ink-4)" }} />
-                  <p style={{ fontSize: 14, fontWeight: 500, color: "var(--ink-1)", margin: "0 0 4px" }}>No shared notes yet</p>
-                  <p style={{ fontSize: 13, color: "var(--ink-3)", margin: "0 0 16px" }}>Open the Bible, select a verse, and add an annotation to share it with the group</p>
-                  <Link href="/dashboard/bible" className="btn-primary btn-sm" style={{ padding: "0 16px", display: "inline-flex" }}>
-                    Open Bible
-                  </Link>
-                </div>
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {annotations.map(ann => (
-                    <div key={ann.id} className="card" style={{ padding: "14px 16px" }}>
-                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <Avatar name={ann.username} photoURL={ann.photoURL} size={28} />
-                          <div>
-                            <span style={{ fontSize: 13, fontWeight: 500, color: "var(--ink-1)" }}>@{ann.username}</span>
-                            <span style={{ fontSize: 11.5, color: "var(--ink-4)", marginLeft: 6 }}>
-                              {timeAgo(ann.createdAt instanceof Date ? ann.createdAt : new Date())}
-                            </span>
-                          </div>
-                        </div>
-                        <span className="badge" style={{ textTransform: "capitalize", fontSize: 11, flexShrink: 0 }}>{ann.type}</span>
-                      </div>
-
-                      <p style={{ fontSize: 11.5, fontWeight: 600, color: "var(--accent-ink)", margin: "0 0 6px" }}>
-                        {ann.verseRef.bookName} {ann.verseRef.chapter}:{ann.verseRef.verse}
-                      </p>
-                      <p style={{ fontSize: 13, color: "var(--ink-2)", margin: 0, lineHeight: 1.55 }}>{ann.content}</p>
-
-                      {ann.likes.length > 0 && (
-                        <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 8 }}>
-                          <Heart size={12} style={{ color: "oklch(62% 0.20 15)" }} />
-                          <span style={{ fontSize: 11.5, color: "var(--ink-3)" }}>{ann.likes.length}</span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
         )}
 
         {/* ── MEMBERS ── */}
