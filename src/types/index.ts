@@ -271,3 +271,15 @@ export interface AIsuggestion {
   content: string;
   verseRefs?: VerseReference[];
 }
+
+export interface GroupPlanProgress {
+  id: string;
+  groupId: string;
+  planId: string;
+  planName: string;
+  userId: string;
+  startDate: string;
+  completedDays: number[];
+  currentDay: number;
+  isCompleted: boolean;
+}

@@ -1,7 +1,7 @@
 import type {
   User, Group, GroupMessage, ReadingPlan, UserPlanProgress,
   Annotation, AnnotationReply, Highlight, Bookmark, FriendRequest, Notification,
-  GroupInvite, GroupReadingLog,
+  GroupInvite, GroupReadingLog, GroupPlanProgress,
 } from "@/types";
 
 function generateJoinCode(): string {
@@ -458,11 +458,16 @@ export async function getGroupAnnotations(groupId: string): Promise<Annotation[]
   const q = fs.query(
     fs.collection(db, "annotations"),
     fs.where("groupId", "==", groupId),
-    fs.orderBy("createdAt", "desc"),
-    fs.limit(50)
+    fs.limit(100)
   );
   const snap = await fs.getDocs(q);
-  return snap.docs.map((d) => ({ ...d.data(), id: d.id } as Annotation));
+  return snap.docs
+    .map(d => ({ ...d.data(), id: d.id } as Annotation))
+    .sort((a, b) => {
+      const ta = (a.createdAt as { seconds?: number })?.seconds ?? 0;
+      const tb = (b.createdAt as { seconds?: number })?.seconds ?? 0;
+      return tb - ta;
+    });
 }
 
 export async function getVerseAnnotations(bookId: string, chapter: number, verse: number): Promise<Annotation[]> {
@@ -509,6 +514,73 @@ export async function getUserBookmarks(userId: string): Promise<Bookmark[]> {
   return snap.docs.map((d) => ({ ...d.data(), id: d.id } as Bookmark));
 }
 
+export async function getUserAnnotations(userId: string): Promise<Annotation[]> {
+  const { db, fs } = await fdb();
+  const q = fs.query(
+    fs.collection(db, "annotations"),
+    fs.where("userId", "==", userId),
+    fs.limit(500)
+  );
+  const snap = await fs.getDocs(q);
+  return snap.docs
+    .map(d => ({ ...d.data(), id: d.id } as Annotation))
+    .filter(a => !a.groupId);
+}
+
+export async function upsertHighlight(highlight: Omit<Highlight, "id" | "createdAt">): Promise<void> {
+  const { db, fs } = await fdb();
+  const docId = `${highlight.userId}_${highlight.verseRef.bookId}_${highlight.verseRef.chapter}_${highlight.verseRef.verse}`;
+  await fs.setDoc(fs.doc(db, "highlights", docId), {
+    ...highlight, createdAt: fs.serverTimestamp(),
+  });
+}
+
+export async function getGroupReadingPlans(groupId: string): Promise<ReadingPlan[]> {
+  const { db, fs } = await fdb();
+  const q = fs.query(
+    fs.collection(db, "readingPlans"),
+    fs.where("groupId", "==", groupId)
+  );
+  const snap = await fs.getDocs(q);
+  return snap.docs.map(d => ({ ...d.data(), id: d.id } as ReadingPlan));
+}
+
+export async function startGroupPlanProgress(
+  groupId: string, planId: string, planName: string, userId: string
+): Promise<string> {
+  const { db, fs } = await fdb();
+  const docId = `${groupId}_${planId}_${userId}`;
+  const ref = fs.doc(db, "groupPlanProgress", docId);
+  const snap = await fs.getDoc(ref);
+  if (snap.exists()) return docId;
+  await fs.setDoc(ref, {
+    groupId, planId, planName, userId,
+    startDate: new Date().toISOString().slice(0, 10),
+    completedDays: [], currentDay: 1, isCompleted: false,
+    createdAt: fs.serverTimestamp(),
+  });
+  return docId;
+}
+
+export async function getGroupPlanProgress(groupId: string, planId: string): Promise<GroupPlanProgress[]> {
+  const { db, fs } = await fdb();
+  const q = fs.query(
+    fs.collection(db, "groupPlanProgress"),
+    fs.where("groupId", "==", groupId),
+    fs.where("planId", "==", planId)
+  );
+  const snap = await fs.getDocs(q);
+  return snap.docs.map(d => ({ ...d.data(), id: d.id } as GroupPlanProgress));
+}
+
+export async function markGroupPlanDayComplete(progressId: string, dayNumber: number): Promise<void> {
+  const { db, fs } = await fdb();
+  await fs.updateDoc(fs.doc(db, "groupPlanProgress", progressId), {
+    completedDays: fs.arrayUnion(dayNumber),
+    currentDay: dayNumber + 1,
+  });
+}
+
 // ── Notifications ─────────────────────────────────────────────────────────────
 
 export async function addNotification(
@@ -553,16 +625,21 @@ export function subscribeToGroupBibleAnnotations(
   Promise.all([import("./firebase"), import("firebase/firestore")]).then(([{ db }, fs]) => {
     const q = fs.query(
       fs.collection(db, "annotations"),
-      fs.where("groupId", "==", groupId),
-      fs.orderBy("createdAt", "asc")
+      fs.where("groupId", "==", groupId)
     );
     unsub = fs.onSnapshot(q, (snap) => {
       const all = snap.docs.map((d) => ({ ...d.data(), id: d.id } as Annotation));
       callback(
-        all.filter(
-          (a) => a.verseRef.bookId === bookId && a.verseRef.chapter === chapter
-        )
+        all
+          .filter(a => a.verseRef.bookId === bookId && a.verseRef.chapter === chapter)
+          .sort((a, b) => {
+            const ta = (a.createdAt as { seconds?: number })?.seconds ?? 0;
+            const tb = (b.createdAt as { seconds?: number })?.seconds ?? 0;
+            return ta - tb;
+          })
       );
+    }, (err) => {
+      console.error("subscribeToGroupBibleAnnotations error:", err);
     });
   });
   return () => unsub();

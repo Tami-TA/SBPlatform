@@ -4,9 +4,9 @@ import { useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/store/auth-store";
 import { fetchChapter, searchBible } from "@/lib/bible-api";
 import { BIBLE_BOOKS } from "@/lib/bible-data";
-import { saveHighlight, getUserHighlights, saveBookmark, saveAnnotation, updateStreak } from "@/lib/firestore";
+import { upsertHighlight, getUserHighlights, getUserAnnotations, saveBookmark, saveAnnotation, updateStreak } from "@/lib/firestore";
 import { formatVerseRef, shareVerse } from "@/lib/utils";
-import type { BibleChapter, BibleTranslation, HighlightColor, Highlight, BibleVerse } from "@/types";
+import type { BibleChapter, BibleTranslation, HighlightColor, Highlight, BibleVerse, Annotation } from "@/types";
 import {
   ChevronLeft, ChevronRight, Search, Bookmark, Highlighter,
   MessageSquarePlus, Share2, BookOpen, X, Loader2, Sparkles,
@@ -64,6 +64,7 @@ export default function BiblePage() {
   const [annotationType, setAnnotationType] = useState<"note" | "question" | "insight" | "prayer">("note");
 
   const [highlights, setHighlights] = useState<Map<string, HighlightColor>>(new Map());
+  const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [activeHighlightColor, setActiveHighlightColor] = useState<HighlightColor>("yellow");
 
   const [fontSize, setFontSize] = useState(17);
@@ -109,6 +110,7 @@ export default function BiblePage() {
       });
       setHighlights(map);
     });
+    getUserAnnotations(user.uid).then(setAnnotations);
   }, [user]);
 
   function handleVerseClick(verseNum: number, e: React.MouseEvent) {
@@ -135,7 +137,7 @@ export default function BiblePage() {
     const newMap = new Map(highlights);
     newMap.set(key, color);
     setHighlights(newMap);
-    await saveHighlight({
+    await upsertHighlight({
       userId: user.uid,
       color,
       verseRef: { bookId: selectedBook, bookName: book.name, chapter: selectedChapter, verse: selectedVerse, translation },
@@ -172,6 +174,7 @@ export default function BiblePage() {
     setShowAnnotationForm(false);
     setSelectedVerse(null);
     setToolbarPos(null);
+    if (user) getUserAnnotations(user.uid).then(setAnnotations);
   }
 
   function handleShareVerse() {
@@ -210,6 +213,14 @@ export default function BiblePage() {
 
   const OT = BIBLE_BOOKS.filter((b) => b.testament === "OT");
   const NT = BIBLE_BOOKS.filter((b) => b.testament === "NT");
+
+  const verseAnnotationCount = new Map<string, number>();
+  annotations.forEach(ann => {
+    if (ann.verseRef.bookId === selectedBook && ann.verseRef.chapter === selectedChapter) {
+      const k = `${ann.verseRef.bookId}.${ann.verseRef.chapter}.${ann.verseRef.verse}`;
+      verseAnnotationCount.set(k, (verseAnnotationCount.get(k) ?? 0) + 1);
+    }
+  });
 
   return (
     <div className="h-full flex flex-col" onClick={() => { if (selectedVerse) { setSelectedVerse(null); setToolbarPos(null); } }}>
@@ -434,6 +445,7 @@ export default function BiblePage() {
                     : highlightColor === "pink" ? "oklch(93% 0.025 350)"
                     : highlightColor === "orange" ? "oklch(93% 0.04 60)"
                     : "transparent";
+                  const noteCount = verseAnnotationCount.get(key) ?? 0;
                   return (
                     <div
                       key={verse.verse}
@@ -441,6 +453,7 @@ export default function BiblePage() {
                         display: "flex", gap: 16, padding: "6px 8px",
                         borderRadius: 6, cursor: "text", position: "relative",
                         background: selectedVerse === verse.verse ? "var(--ds-accent-soft)" : "transparent",
+                        alignItems: "flex-start",
                       }}
                       onClick={(e) => handleVerseClick(verse.verse, e)}
                     >
@@ -462,6 +475,13 @@ export default function BiblePage() {
                           borderRadius: 2,
                         }}>{verse.text}</span>
                       </div>
+                      {noteCount > 0 && (
+                        <span style={{
+                          fontSize: 10, fontWeight: 600, color: "var(--accent-ink)",
+                          background: "var(--accent-soft)", border: "1px solid var(--accent-border)",
+                          borderRadius: 999, padding: "2px 6px", flexShrink: 0, marginTop: 6,
+                        }}>{noteCount}</span>
+                      )}
                     </div>
                   );
                 })}
