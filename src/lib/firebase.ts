@@ -22,7 +22,7 @@ const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 // memoryLocalCache disables offline queuing so writes fail fast with a real
 // error code instead of hanging silently when the server is unreachable.
-export const db = initializeFirestore(app, { localCache: memoryLocalCache() });
+export const db = initializeFirestore(app, { localCache: memoryLocalCache(), ignoreUndefinedProperties: true });
 export const storage = getStorage(app);
 
 export const googleProvider = new GoogleAuthProvider();

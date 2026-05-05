@@ -106,7 +106,8 @@ export default function GroupDetailPage() {
         type: "text",
       });
       setNewMessage("");
-    } catch {
+    } catch (err) {
+      console.error("sendGroupMessage error:", err);
       toast.error("Failed to send message");
     } finally {
       setSending(false);
