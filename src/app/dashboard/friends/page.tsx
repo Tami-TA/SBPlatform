@@ -19,7 +19,7 @@ import toast from "react-hot-toast";
 import { getInitials, getStreakLevel } from "@/lib/utils";
 
 export default function FriendsPage() {
-  const { user } = useAuthStore();
+  const { user, setUser } = useAuthStore();
   const [searchQuery, setSearchQuery]   = useState("");
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [searching, setSearching]       = useState(false);
@@ -45,9 +45,11 @@ export default function FriendsPage() {
     if (!user) return;
     setLoadingFriends(true);
     try {
-      const profiles = await Promise.all(
-        (user.friendIds || []).slice(0, 30).map(uid => getUserProfile(uid))
-      );
+      // Always fetch the current user's doc fresh from Firestore so we don't
+      // rely on the auth-store snapshot (which is only set at login/refresh).
+      const freshProfile = await getUserProfile(user.uid);
+      const ids = freshProfile?.friendIds ?? [];
+      const profiles = await Promise.all(ids.slice(0, 30).map(uid => getUserProfile(uid)));
       setFriends(
         profiles.filter(Boolean).map(p => ({
           uid: p!.uid,
@@ -58,6 +60,8 @@ export default function FriendsPage() {
           status: "friend" as const,
         }))
       );
+    } catch {
+      // silent — friends list stays empty on error
     } finally {
       setLoadingFriends(false);
     }
@@ -103,8 +107,11 @@ export default function FriendsPage() {
     try {
       await acceptFriendRequest(req.id, req.fromUid, user!.uid);
       setRequests(prev => prev.filter(r => r.id !== req.id));
+      // Refresh auth store so "Already friends" status in search is current.
+      getUserProfile(user!.uid).then(p => { if (p) setUser(p); });
       toast.success(`You and @${req.fromUsername} are now friends!`);
-      loadFriends();
+      setActiveTab("friends");
+      await loadFriends();
     } catch {
       toast.error("Failed to accept request");
     }
