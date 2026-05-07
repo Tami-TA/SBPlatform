@@ -184,7 +184,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const initials = getInitials(user.displayName);
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "var(--paper)", overflowX: "hidden" }}>
+    <div style={{ display: "flex", height: "100vh", background: "var(--paper)", overflow: "hidden" }}>
 
       {/* Mobile overlay */}
       {sidebarOpen && (

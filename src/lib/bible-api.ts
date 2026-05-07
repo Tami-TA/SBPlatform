@@ -1,6 +1,7 @@
 import type { BibleChapter, BibleVerse, BibleTranslation } from "@/types";
 
 const LOCAL_API = "/api/bible/local";
+const SEARCH_API = "/api/bible/search";
 const TRANSLATIONS_API = "/api/bible/translations";
 
 export async function fetchChapter(
@@ -42,12 +43,12 @@ export async function searchBible(
   limit = 20
 ): Promise<BibleVerse[]> {
   try {
-    const url = `${LOCAL_API}?translation=${translation}&q=${encodeURIComponent(query)}&limit=${limit}`;
+    const url = `${SEARCH_API}?translation=${translation}&q=${encodeURIComponent(query)}&limit=${limit}`;
     const res = await fetch(url);
     if (!res.ok) return [];
 
     const data = await res.json();
-    const results = data.searchResults ?? data.results ?? [];
+    const results = data.searchResults ?? [];
     if (!data.available || !results.length) return [];
 
     return results.map((r: { bookId: string; chapter: number; verse: number; text: string }) => ({
