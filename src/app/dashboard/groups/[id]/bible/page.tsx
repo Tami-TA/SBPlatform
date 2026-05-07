@@ -264,10 +264,13 @@ export default function GroupBiblePage() {
   }
 
   async function handleDelete(annotationId: string) {
+    // Optimistic: remove immediately so all counts update without waiting for onSnapshot
+    setAnnotations(prev => prev.filter(a => a.id !== annotationId));
     try {
       await deleteGroupBibleAnnotation(annotationId);
     } catch {
       toast.error("Failed to delete");
+      // onSnapshot will resync correct state from Firestore on its next fire
     }
   }
 
