@@ -94,43 +94,12 @@ const CHAR_INFO: Record<string, CharInfo> = {
   joseph_nt:{ bio: "Carpenter from Nazareth, betrothed to Mary. Received angelic instructions in dreams to take Mary as his wife and flee to Egypt.", role: "Earthly Father of Jesus", tags: ["Patriarch"], knownFor: "Raised Jesus in Nazareth; protected the family by fleeing to Egypt (Matt 1–2)" },
 };
 
-const TAG_COLORS: Record<string, { bg: string; border: string; color: string }> = {
-  Patriarch: { bg: "var(--hl-orange)",  border: "var(--hl-orange-border)",  color: "var(--ink-2)" },
-  Prophet:   { bg: "var(--hl-blue)",    border: "var(--hl-blue-border)",    color: "var(--ink-2)" },
-  King:      { bg: "var(--hl-yellow)",  border: "var(--hl-yellow-border)",  color: "var(--ink-2)" },
-  Priest:    { bg: "var(--hl-green)",   border: "var(--hl-green-border)",   color: "var(--ink-2)" },
-  Levite:    { bg: "var(--hl-green)",   border: "var(--hl-green-border)",   color: "var(--ink-2)" },
-  Messiah:   { bg: "var(--hl-pink)",    border: "var(--hl-pink-border)",    color: "var(--ink-2)" },
-  Savior:    { bg: "var(--hl-pink)",    border: "var(--hl-pink-border)",    color: "var(--ink-2)" },
-  Apostle:   { bg: "var(--hl-blue)",    border: "var(--hl-blue-border)",    color: "var(--ink-2)" },
-  Disciple:  { bg: "var(--hl-pink)",    border: "var(--hl-pink-border)",    color: "var(--ink-2)" },
-  Leader:    { bg: "var(--hl-orange)",  border: "var(--hl-orange-border)",  color: "var(--ink-2)" },
-  Ancestor:  { bg: "var(--hl-yellow)",  border: "var(--hl-yellow-border)",  color: "var(--ink-2)" },
-  Judge:     { bg: "var(--hl-blue)",    border: "var(--hl-blue-border)",    color: "var(--ink-2)" },
-  Matriarch: { bg: "var(--hl-pink)",    border: "var(--hl-pink-border)",    color: "var(--ink-2)" },
-};
-
-const DEFAULT_TAG_STYLE = { bg: "var(--paper-3)", border: "var(--hairline)", color: "var(--ink-3)" };
-
-function TagPill({ tag }: { tag: string }) {
-  const s = TAG_COLORS[tag] ?? DEFAULT_TAG_STYLE;
-  return (
-    <span style={{
-      fontSize: 10, padding: "1px 6px", borderRadius: 999,
-      background: s.bg, border: `1px solid ${s.border}`, color: s.color,
-      fontWeight: 500, letterSpacing: "0.01em", whiteSpace: "nowrap",
-    }}>
-      {tag}
-    </span>
-  );
-}
-
 // ─── genealogy tree ───────────────────────────────────────────────────────────
 
 function GenealogyTree({ nodes }: { nodes: GenealogyNode[] }) {
-  const [selectedId, setSelectedId]   = useState<string | null>(null);
-  const [collapsed,  setCollapsed]    = useState<Set<string>>(new Set());
-  const [treeSearch, setTreeSearch]   = useState("");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [collapsed,  setCollapsed]  = useState<Set<string>>(new Set());
+  const [treeSearch, setTreeSearch] = useState("");
 
   const childrenMap = useMemo(() => {
     const map = new Map<string, GenealogyNode[]>();
@@ -146,24 +115,20 @@ function GenealogyTree({ nodes }: { nodes: GenealogyNode[] }) {
 
   const roots = useMemo(() => nodes.filter(n => !n.parentId), [nodes]);
 
-  // Ancestor IDs of the selected node (for lineage highlight)
   const ancestors = useMemo(() => {
     if (!selectedId) return new Set<string>();
-    const result = new Set<string>();
+    const s = new Set<string>();
     let cur = nodes.find(n => n.id === selectedId);
-    while (cur?.parentId) { result.add(cur.parentId); cur = nodes.find(n => n.id === cur!.parentId); }
-    return result;
+    while (cur?.parentId) { s.add(cur.parentId); cur = nodes.find(n => n.id === cur!.parentId); }
+    return s;
   }, [selectedId, nodes]);
 
-  // Descendant IDs of the selected node
   const descendants = useMemo(() => {
     if (!selectedId) return new Set<string>();
-    const result = new Set<string>();
-    function addKids(id: string) {
-      (childrenMap.get(id) ?? []).forEach(k => { result.add(k.id); addKids(k.id); });
-    }
-    addKids(selectedId);
-    return result;
+    const s = new Set<string>();
+    function walk(id: string) { (childrenMap.get(id) ?? []).forEach(k => { s.add(k.id); walk(k.id); }); }
+    walk(selectedId);
+    return s;
   }, [selectedId, childrenMap]);
 
   const matchNode = useCallback((n: GenealogyNode) => {
@@ -172,7 +137,6 @@ function GenealogyTree({ nodes }: { nodes: GenealogyNode[] }) {
     return n.name.toLowerCase().includes(q) || (n.notes ?? "").toLowerCase().includes(q);
   }, [treeSearch]);
 
-  // Returns true if node or any descendant matches the search
   const subtreeMatch = useCallback((id: string): boolean => {
     const node = nodes.find(n => n.id === id);
     if (!node) return false;
@@ -187,84 +151,69 @@ function GenealogyTree({ nodes }: { nodes: GenealogyNode[] }) {
   const selectedNode = selectedId ? nodes.find(n => n.id === selectedId) ?? null : null;
   const charInfo     = selectedId ? (CHAR_INFO[selectedId] ?? null) : null;
 
-  function renderNode(node: GenealogyNode, depth: number, showArrow: boolean): React.ReactNode {
+  // Thin hairline connector between nodes
+  function Stem() {
+    return <div style={{ width: 1, height: 12, margin: "0 auto", background: "var(--hairline)" }} />;
+  }
+
+  function renderNode(node: GenealogyNode, showStem: boolean): React.ReactNode {
     if (treeSearch && !subtreeMatch(node.id)) return null;
 
     const kids        = childrenMap.get(node.id) ?? [];
     const isCollapsed = collapsed.has(node.id);
     const isSelected  = node.id === selectedId;
     const inLineage   = ancestors.has(node.id) || descendants.has(node.id);
-    const dimmed      = !!(selectedId && !isSelected && !inLineage);
     const info        = CHAR_INFO[node.id];
 
     return (
-      <div key={node.id} style={{ display: "flex", flexDirection: "column", alignItems: "stretch" }}>
+      <div key={node.id}>
+        {showStem && <Stem />}
 
-        {/* Connector arrow from parent */}
-        {showArrow && (
-          <div style={{
-            display: "flex", justifyContent: "center", height: 18,
-            color: (isSelected || inLineage) ? "var(--accent-btn)" : "var(--hairline)",
-            fontSize: 13, lineHeight: "18px", userSelect: "none",
-            transition: "color 0.2s",
-          }}>↓</div>
-        )}
-
-        {/* Node card */}
+        {/* Node row — uses same active-state tokens as nav-item */}
         <div
           role="button"
           tabIndex={0}
           onClick={() => setSelectedId(isSelected ? null : node.id)}
           onKeyDown={e => e.key === "Enter" && setSelectedId(isSelected ? null : node.id)}
           style={{
-            display: "flex", alignItems: "center", gap: 10,
-            padding: "9px 12px",
-            borderRadius: 9,
-            border: `1.5px solid ${isSelected ? "var(--accent-btn)" : inLineage ? "var(--accent-border)" : "var(--hairline)"}`,
-            background: isSelected ? "var(--accent-soft)" : inLineage ? "var(--accent-soft)" : "var(--paper-2)",
-            cursor: "pointer",
-            opacity: dimmed ? 0.42 : 1,
-            transition: "all 0.15s",
-            outline: "none",
+            display: "flex", alignItems: "center", gap: 8,
+            padding: "7px 10px", borderRadius: 7,
+            border: `1px solid ${isSelected || inLineage ? "var(--accent-border)" : "var(--hairline)"}`,
+            background: isSelected || inLineage ? "var(--accent-soft)" : "var(--paper)",
+            cursor: "pointer", outline: "none",
           }}
         >
-          {/* Identity dot */}
-          <div style={{
-            width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
-            background: isSelected ? "var(--accent-btn)" : inLineage ? "var(--accent-border)" : "var(--hairline)",
-            display: "grid", placeItems: "center",
-            fontSize: 10, fontWeight: 700, color: isSelected ? "white" : "var(--ink-3)",
-            transition: "all 0.15s",
+          <span style={{
+            flex: 1, fontSize: 13,
+            color: isSelected ? "var(--accent-ink)" : "var(--ink-1)",
+            fontWeight: isSelected ? 500 : 450,
           }}>
-            {node.name.charAt(0).toUpperCase()}
-          </div>
+            {node.name}
+          </span>
 
-          {/* Text */}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap" }}>
-              <span style={{ fontSize: 13, fontWeight: 500, color: "var(--ink-1)" }}>{node.name}</span>
-              {info && info.tags.slice(0, 2).map(tag => <TagPill key={tag} tag={tag} />)}
-            </div>
-            {node.notes && (
-              <p style={{ fontSize: 11, color: "var(--ink-4)", margin: "1px 0 0", lineHeight: 1.4 }}>{node.notes}</p>
-            )}
-          </div>
+          {/* Show first tag as a standard badge */}
+          {info?.tags[0] && (
+            <span className="badge" style={{ fontSize: 10.5 }}>{info.tags[0]}</span>
+          )}
 
-          {/* Collapse toggle */}
+          {/* Notes (secondary tag / date) — muted text, no extra badge */}
+          {!info?.tags[0] && node.notes && (
+            <span style={{ fontSize: 11, color: "var(--ink-4)", whiteSpace: "nowrap" }}>{node.notes}</span>
+          )}
+
+          {/* Collapse button — matches .icon-btn sizing */}
           {kids.length > 0 && (
             <button
               onClick={e => { e.stopPropagation(); toggleCollapse(node.id); }}
-              title={isCollapsed ? "Expand" : "Collapse"}
               style={{
-                flexShrink: 0, width: 22, height: 22, borderRadius: 5,
-                background: "none", border: "1px solid var(--hairline)",
-                cursor: "pointer", display: "grid", placeItems: "center",
-                color: "var(--ink-3)",
-                transform: isCollapsed ? "rotate(-90deg)" : "rotate(0deg)",
-                transition: "transform 0.15s",
+                flexShrink: 0, width: 18, height: 18, display: "grid", placeItems: "center",
+                borderRadius: 4, border: "none", background: "none",
+                cursor: "pointer", color: "var(--ink-4)",
+                transform: isCollapsed ? "rotate(-90deg)" : "none",
+                transition: "transform 0.12s",
               }}
             >
-              <ChevronDown size={12} />
+              <ChevronDown size={11} />
             </button>
           )}
         </div>
@@ -272,29 +221,16 @@ function GenealogyTree({ nodes }: { nodes: GenealogyNode[] }) {
         {/* Children */}
         {kids.length > 0 && !isCollapsed && (
           kids.length === 1 ? (
-            renderNode(kids[0], depth + 1, true)
+            renderNode(kids[0], true)
           ) : (
             <div>
-              {/* Branching connector */}
-              <div style={{ display: "flex", justifyContent: "center", height: 18, alignItems: "center" }}>
-                <div style={{ height: 18, width: 1, background: "var(--hairline)" }} />
-              </div>
+              <Stem />
               <div style={{
                 display: "grid",
                 gridTemplateColumns: `repeat(${Math.min(kids.length, 3)}, 1fr)`,
-                gap: 8,
+                gap: 6,
               }}>
-                {kids.map((k, i) => (
-                  <div key={k.id} style={{ display: "flex", flexDirection: "column", alignItems: "stretch" }}>
-                    {/* Branch line to each child */}
-                    <div style={{
-                      display: "flex", justifyContent: "center", height: 18,
-                      color: descendants.has(k.id) || k.id === selectedId ? "var(--accent-btn)" : "var(--hairline)",
-                      fontSize: 13, lineHeight: "18px", userSelect: "none",
-                    }}>↓</div>
-                    {renderNode(k, depth + 1, false)}
-                  </div>
-                ))}
+                {kids.map(k => renderNode(k, false))}
               </div>
             </div>
           )
@@ -306,112 +242,79 @@ function GenealogyTree({ nodes }: { nodes: GenealogyNode[] }) {
   return (
     <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
 
-      {/* ── Tree column ── */}
-      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 0 }}>
+      {/* ── Tree ── */}
+      <div style={{ flex: 1, minWidth: 0 }}>
 
-        {/* In-tree search */}
         {nodes.length > 4 && (
-          <div style={{ position: "relative", marginBottom: 12 }}>
+          <div style={{ position: "relative", marginBottom: 10 }}>
             <Search size={13} style={{ position: "absolute", left: 9, top: "50%", transform: "translateY(-50%)", color: "var(--ink-4)", pointerEvents: "none" }} />
             <input
               value={treeSearch}
               onChange={e => setTreeSearch(e.target.value)}
               placeholder="Search this tree…"
               className="input-field"
-              style={{ paddingLeft: 28, height: 32, fontSize: 12.5 }}
+              style={{ paddingLeft: 28, height: 30, fontSize: 12.5 }}
             />
           </div>
         )}
 
-        {/* Hint */}
         {!treeSearch && nodes.length > 1 && (
-          <p style={{ fontSize: 11.5, color: "var(--ink-4)", margin: "0 0 10px" }}>
-            Click a person to see their biography · Use ▾ to collapse branches
+          <p style={{ fontSize: 11.5, color: "var(--ink-4)", margin: "0 0 8px" }}>
+            Click any person to read their biography
           </p>
         )}
 
-        {/* Overflow wrapper for horizontal scroll on small screens */}
-        <div style={{ overflowX: "auto", paddingBottom: 4 }}>
-          <div style={{ minWidth: 240 }}>
-            {roots.length === 0 ? (
-              <p style={{ fontSize: 13, color: "var(--ink-4)" }}>No genealogy nodes.</p>
-            ) : (
-              roots.map(r => renderNode(r, 0, false))
-            )}
+        <div style={{ overflowX: "auto" }}>
+          <div style={{ minWidth: 200 }}>
+            {roots.map(r => renderNode(r, false))}
           </div>
         </div>
       </div>
 
-      {/* ── Character info panel ── */}
+      {/* ── Info panel — plain .card, matching InfoRow / TagGroup style ── */}
       {selectedNode && (
-        <div style={{
-          width: 228, flexShrink: 0,
-          border: "1.5px solid var(--accent-border)",
-          borderRadius: 10,
-          background: "var(--accent-soft)",
-          padding: "14px 15px",
-          position: "sticky", top: 8,
-          animation: "fadeIn 0.15s ease",
-        }}>
-          {/* Header */}
-          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 8, gap: 6 }}>
-            <div style={{ minWidth: 0 }}>
-              <h4 style={{ fontSize: 14.5, fontWeight: 600, color: "var(--ink-1)", margin: "0 0 1px", fontFamily: "var(--font-serif)", lineHeight: 1.3 }}>
+        <div className="card" style={{ width: 220, flexShrink: 0, padding: "14px 16px", position: "sticky", top: 8, animation: "fadeIn 0.15s ease" }}>
+
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10, gap: 4 }}>
+            <div>
+              <p style={{ fontSize: 14, fontWeight: 600, color: "var(--ink-1)", margin: "0 0 1px", fontFamily: "var(--font-serif)" }}>
                 {selectedNode.name}
-              </h4>
+              </p>
               {charInfo && (
-                <p style={{ fontSize: 11.5, color: "var(--accent-ink)", margin: 0, fontWeight: 500 }}>{charInfo.role}</p>
+                <p className="card-label" style={{ margin: 0 }}>{charInfo.role}</p>
               )}
             </div>
             <button
               onClick={() => setSelectedId(null)}
-              style={{ color: "var(--ink-4)", background: "none", border: "none", cursor: "pointer", padding: 2, flexShrink: 0, lineHeight: 1 }}
+              className="btn-ghost btn-sm"
+              style={{ padding: "0 4px", height: 20, flexShrink: 0, color: "var(--ink-4)" }}
             >
-              <X size={14} />
+              <X size={12} />
             </button>
           </div>
 
-          {/* Tags */}
-          {charInfo && charInfo.tags.length > 0 && (
+          {charInfo?.tags && charInfo.tags.length > 0 && (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 10 }}>
-              {charInfo.tags.map(tag => <TagPill key={tag} tag={tag} />)}
+              {charInfo.tags.map(t => <span key={t} className="badge" style={{ fontSize: 10.5 }}>{t}</span>)}
             </div>
           )}
 
-          {/* Bio */}
           <p style={{ fontSize: 12.5, color: "var(--ink-2)", lineHeight: 1.6, margin: "0 0 10px" }}>
             {charInfo?.bio ?? selectedNode.notes ?? "A figure in biblical genealogy."}
           </p>
 
-          {/* Meta rows */}
           {charInfo && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 5, borderTop: "1px solid var(--accent-border)", paddingTop: 8 }}>
+            <div style={{ borderTop: "1px solid var(--hairline)", paddingTop: 8, display: "flex", flexDirection: "column", gap: 5 }}>
               {charInfo.lifespan && (
-                <div style={{ fontSize: 12, color: "var(--ink-3)" }}>
-                  <span style={{ fontWeight: 500, color: "var(--ink-2)" }}>Lifespan: </span>
+                <p style={{ fontSize: 12, color: "var(--ink-3)", margin: 0 }}>
+                  <span style={{ fontWeight: 500, color: "var(--ink-2)" }}>Lifespan </span>
                   {charInfo.lifespan}
-                </div>
+                </p>
               )}
-              <div style={{ fontSize: 12, color: "var(--ink-3)", lineHeight: 1.45 }}>
-                <span style={{ fontWeight: 500, color: "var(--ink-2)" }}>Known for: </span>
+              <p style={{ fontSize: 12, color: "var(--ink-3)", margin: 0, lineHeight: 1.45 }}>
+                <span style={{ fontWeight: 500, color: "var(--ink-2)" }}>Known for </span>
                 {charInfo.knownFor}
-              </div>
-            </div>
-          )}
-
-          {/* Lineage context */}
-          {(ancestors.size > 0 || descendants.size > 0) && (
-            <div style={{ marginTop: 8, borderTop: "1px solid var(--accent-border)", paddingTop: 8 }}>
-              {ancestors.size > 0 && (
-                <p style={{ fontSize: 11, color: "var(--ink-4)", margin: "0 0 2px" }}>
-                  ↑ {ancestors.size} ancestor{ancestors.size !== 1 ? "s" : ""} highlighted
-                </p>
-              )}
-              {descendants.size > 0 && (
-                <p style={{ fontSize: 11, color: "var(--ink-4)", margin: 0 }}>
-                  ↓ {descendants.size} descendant{descendants.size !== 1 ? "s" : ""} highlighted
-                </p>
-              )}
+              </p>
             </div>
           )}
         </div>
