@@ -14,21 +14,47 @@ export function formatDate(date: Date | string): string {
   });
 }
 
-export function timeAgo(date: Date | string): string {
-  const d = typeof date === "string" ? new Date(date) : date;
+type FirestoreTimestamp = { seconds: number; nanoseconds?: number; toDate?: () => Date };
+
+function toDate(value: Date | string | FirestoreTimestamp | null | undefined): Date | null {
+  if (!value) return null;
+  if (value instanceof Date) return value;
+  if (typeof value === "string") return new Date(value);
+  // Firestore Timestamp — has .toDate() or at minimum .seconds
+  if (typeof (value as FirestoreTimestamp).seconds === "number") {
+    return typeof (value as FirestoreTimestamp).toDate === "function"
+      ? (value as FirestoreTimestamp).toDate!()
+      : new Date((value as FirestoreTimestamp).seconds * 1000);
+  }
+  return null;
+}
+
+function formatTime(d: Date): string {
+  return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+}
+
+export function timeAgo(date: Date | string | FirestoreTimestamp | null | undefined): string {
+  if (!date) return "sending…";
+  const d = toDate(date);
+  if (!d || isNaN(d.getTime())) return "sending…";
+
   const now = new Date();
-  const diff = now.getTime() - d.getTime();
-
-  const seconds = Math.floor(diff / 1000);
+  const diffMs = now.getTime() - d.getTime();
+  const seconds = Math.floor(diffMs / 1000);
   const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
+  const hours   = Math.floor(minutes / 60);
 
-  if (seconds < 60) return "just now";
-  if (minutes < 60) return `${minutes}m ago`;
-  if (hours < 24) return `${hours}h ago`;
-  if (days < 7) return `${days}d ago`;
-  return formatDate(d);
+  if (seconds < 60)  return "just now";
+  if (minutes < 60)  return `${minutes} min ago`;
+
+  const todayStart     = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterdayStart = new Date(todayStart.getTime() - 86400000);
+
+  if (d >= todayStart)     return formatTime(d);
+  if (d >= yesterdayStart) return `Yesterday at ${formatTime(d)}`;
+  if (hours < 168)         return `${Math.floor(hours / 24)} days ago`;
+
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" }) + ", " + formatTime(d);
 }
 
 export function truncate(str: string, length: number): string {

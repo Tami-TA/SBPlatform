@@ -21,6 +21,15 @@ import { timeAgo, getInitials } from "@/lib/utils";
 import toast from "react-hot-toast";
 
 const TODAY = new Date().toISOString().slice(0, 10);
+
+// Ticker — increments every 30 s so relative timestamps re-render automatically
+function useTick(ms = 30_000) {
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), ms);
+    return () => clearInterval(id);
+  }, [ms]);
+}
 const HUES = [30, 100, 170, 240, 300];
 
 // ── sub-components ────────────────────────────────────────────────────────────
@@ -43,6 +52,7 @@ function Avatar({ name, photoURL, size = 32 }: { name: string; photoURL?: string
 // ── main page ─────────────────────────────────────────────────────────────────
 
 export default function GroupDetailPage() {
+  useTick();
   const { id } = useParams<{ id: string }>();
   const { user } = useAuthStore();
   const router = useRouter();
@@ -370,7 +380,7 @@ export default function GroupDetailPage() {
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3, flexDirection: isMe ? "row-reverse" : "row" }}>
                         <span style={{ fontSize: 11, color: "var(--ink-4)" }}>
-                          {timeAgo(msg.createdAt instanceof Date ? msg.createdAt : new Date())}
+                          {timeAgo(msg.createdAt)}
                         </span>
                         {msg.likes.length > 0 && (
                           <span style={{ fontSize: 11, color: "var(--ink-3)", display: "flex", alignItems: "center", gap: 2 }}>
