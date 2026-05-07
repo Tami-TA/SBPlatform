@@ -1,8 +1,17 @@
 import type { BibleChapter, BibleVerse, BibleTranslation } from "@/types";
+import { BIBLE_BOOKS } from "@/lib/bible-data";
 
 const LOCAL_API = "/api/bible/local";
 const SEARCH_API = "/api/bible/search";
 const TRANSLATIONS_API = "/api/bible/translations";
+
+const BOOK_NAME: Record<string, string> = Object.fromEntries(
+  BIBLE_BOOKS.map((b) => [b.id, b.name])
+);
+
+function bookName(id: string) {
+  return BOOK_NAME[id] ?? id;
+}
 
 export async function fetchChapter(
   bookId: string,
@@ -24,7 +33,7 @@ export async function fetchChapter(
     const verses: BibleVerse[] = data.verses.map((v: { verse: number; text: string }) => ({
       id: `${bookId}.${chapter}.${v.verse}`,
       bookId,
-      bookName: bookId,
+      bookName: bookName(bookId),
       chapter,
       verse: v.verse,
       text: v.text,
@@ -54,7 +63,7 @@ export async function searchBible(
     return results.map((r: { bookId: string; chapter: number; verse: number; text: string }) => ({
       id: `${r.bookId}.${r.chapter}.${r.verse}`,
       bookId: r.bookId,
-      bookName: r.bookId,
+      bookName: bookName(r.bookId),
       chapter: r.chapter,
       verse: r.verse,
       text: r.text,
@@ -82,7 +91,7 @@ export async function fetchVerse(
     return {
       id: verseId,
       bookId,
-      bookName: bookId,
+      bookName: bookName(bookId),
       chapter: parseInt(chapterStr),
       verse: parseInt(verseStr),
       text: data.verses[0].text,

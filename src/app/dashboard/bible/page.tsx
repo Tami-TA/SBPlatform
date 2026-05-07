@@ -41,6 +41,9 @@ export default function BiblePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<BibleVerse[]>([]);
   const [searching, setSearching] = useState(false);
+  const [searchedQuery, setSearchedQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [availableTranslations, setAvailableTranslations] = useState<Array<{ id: string; name: string }>>([
     { id: "KJV", name: "King James Version" },
@@ -56,6 +59,28 @@ export default function BiblePage() {
       })
       .catch(() => {});
   }, []);
+
+  // Auto-focus search input when panel opens
+  useEffect(() => {
+    if (searchMode) setTimeout(() => searchInputRef.current?.focus(), 50);
+    else { setSearchQuery(""); setSearchResults([]); setSearchedQuery(""); }
+  }, [searchMode]);
+
+  // Debounced live search — fires 400ms after the user stops typing
+  useEffect(() => {
+    if (!searchMode) return;
+    const q = searchQuery.trim();
+    if (!q) { setSearchResults([]); setSearchedQuery(""); return; }
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(async () => {
+      setSearching(true);
+      const results = await searchBible(q, translation);
+      setSearchResults(results);
+      setSearchedQuery(q);
+      setSearching(false);
+    }, 380);
+    return () => { if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current); };
+  }, [searchQuery, searchMode, translation]);
 
   const [selectedVerse, setSelectedVerse] = useState<number | null>(null);
   const [toolbarPos, setToolbarPos] = useState<{ top: number; left: number } | null>(null);
@@ -187,10 +212,13 @@ export default function BiblePage() {
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
-    if (!searchQuery.trim()) return;
+    const q = searchQuery.trim();
+    if (!q) return;
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
     setSearching(true);
-    const results = await searchBible(searchQuery, translation);
+    const results = await searchBible(q, translation);
     setSearchResults(results);
+    setSearchedQuery(q);
     setSearching(false);
   }
 
@@ -328,31 +356,68 @@ export default function BiblePage() {
 
       {/* Search panel */}
       {searchMode && (
-        <div className="border-b border-border p-3 bg-secondary">
-          <form onSubmit={handleSearch} className="flex gap-2">
-            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search the Bible (e.g. 'love one another')"
-              className="input-field flex-1 py-2 text-sm" />
-            <button type="submit" disabled={searching} className="btn-primary px-4 py-2 text-sm">
-              {searching ? <Loader2 size={16} className="animate-spin" /> : "Search"}
+        <div style={{ borderBottom: "1px solid var(--hairline)", padding: "10px 12px", background: "var(--paper-2)" }}>
+          <form onSubmit={handleSearch} style={{ display: "flex", gap: 6 }}>
+            <div style={{ position: "relative", flex: 1 }}>
+              <Search size={13} style={{ position: "absolute", left: 9, top: "50%", transform: "translateY(-50%)", color: "var(--ink-4)", pointerEvents: "none" }} />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search verses — try 'love one another' or 'faith'"
+                className="input-field"
+                style={{ paddingLeft: 28, height: 34, fontSize: 13 }}
+              />
+            </div>
+            <button type="submit" disabled={searching} className="btn-primary btn-sm" style={{ padding: "0 14px" }}>
+              {searching ? <Loader2 size={13} className="animate-spin" /> : "Search"}
             </button>
-            <button type="button" onClick={() => { setSearchMode(false); setSearchResults([]); }}
-              className="btn-ghost px-3 py-2 text-sm">
-              <X size={16} />
+            <button type="button" onClick={() => setSearchMode(false)} className="btn-ghost btn-sm" style={{ padding: "0 8px" }}>
+              <X size={14} />
             </button>
           </form>
-          {searchResults.length > 0 && (
-            <div className="mt-3 max-h-64 overflow-y-auto space-y-2">
-              {searchResults.map((v) => (
-                <button key={v.id}
-                  onClick={() => { setSelectedBook(v.bookId); setSelectedChapter(v.chapter); setSearchMode(false); setSearchResults([]); }}
-                  className="w-full text-left p-3 rounded-xl transition-all hover:opacity-80 bg-card border border-border">
-                  <p className="text-xs font-semibold mb-1 text-primary">
-                    {v.bookName} {v.chapter}:{v.verse} ({translation})
-                  </p>
-                  <p className="text-sm text-muted-foreground verse-text leading-relaxed">{v.text}</p>
-                </button>
-              ))}
+
+          {/* Results */}
+          {searching && (
+            <div style={{ display: "flex", justifyContent: "center", padding: "16px 0" }}>
+              <Loader2 size={18} className="animate-spin" style={{ color: "var(--ink-4)" }} />
+            </div>
+          )}
+
+          {!searching && searchedQuery && searchResults.length === 0 && (
+            <p style={{ fontSize: 12.5, color: "var(--ink-4)", margin: "10px 0 2px", textAlign: "center" }}>
+              No results for &ldquo;{searchedQuery}&rdquo; — try different keywords
+            </p>
+          )}
+
+          {!searching && searchResults.length > 0 && (
+            <div style={{ marginTop: 8 }}>
+              <p style={{ fontSize: 11.5, color: "var(--ink-4)", margin: "0 0 6px" }}>
+                {searchResults.length} result{searchResults.length !== 1 ? "s" : ""} for &ldquo;{searchedQuery}&rdquo;
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, maxHeight: 320, overflowY: "auto" }}>
+                {searchResults.map((v) => (
+                  <button
+                    key={v.id}
+                    onClick={() => { setSelectedBook(v.bookId); setSelectedChapter(v.chapter); setSearchMode(false); }}
+                    style={{
+                      width: "100%", textAlign: "left", padding: "9px 12px", borderRadius: 8,
+                      background: "var(--paper)", border: "1px solid var(--hairline)",
+                      cursor: "pointer", transition: "background 80ms",
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "var(--accent-soft)")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "var(--paper)")}
+                  >
+                    <p style={{ fontSize: 11.5, fontWeight: 600, color: "var(--accent-ink)", margin: "0 0 3px", fontFamily: "var(--font-ui)" }}>
+                      {v.bookName} {v.chapter}:{v.verse}
+                    </p>
+                    <p style={{ fontSize: 13, color: "var(--ink-2)", margin: 0, lineHeight: 1.5, fontFamily: "var(--font-serif)" }}>
+                      {v.text}
+                    </p>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>
