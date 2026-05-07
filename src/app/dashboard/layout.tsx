@@ -68,13 +68,7 @@ function IcoSettings({ className }: { className?: string }) {
     </svg>
   );
 }
-function IcoSearch({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="14" height="14">
-      <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
-    </svg>
-  );
-}
+
 function IcoBell({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
@@ -317,12 +311,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             style={{ color: "var(--ink-3)", background: "none", border: "none", cursor: "pointer", padding: 4 }}>
             <IcoMenu />
           </button>
-
-          {/* Search */}
-          <div className="ds-search topbar-search">
-            <IcoSearch />
-            <input placeholder="Search verses, books, notes…" />
-          </div>
 
           <div style={{ flex: 1 }} />
 
