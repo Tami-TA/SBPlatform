@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { getUserNotifications } from "@/lib/firestore";
 import { getInitials } from "@/lib/utils";
 import type { Notification } from "@/types";
-import { TutorialModal } from "@/components/TutorialModal";
+import { TutorialOverlay } from "@/components/TutorialOverlay";
 
 function IcoStar({ className }: { className?: string }) {
   return (
@@ -208,7 +208,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       )}
 
       {/* ── Sidebar ── */}
-      <aside className={`sidebar${sidebarOpen ? " open" : ""}`}>
+      <aside className={`sidebar${sidebarOpen ? " open" : ""}`} data-tutorial-id="nav-sidebar">
 
         {/* Brand */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 8px 18px 8px" }}>
@@ -412,7 +412,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </main>
       </div>
 
-      <TutorialModal open={tutorialOpen} onClose={() => setTutorialOpen(false)} />
+      <TutorialOverlay open={tutorialOpen} onClose={() => setTutorialOpen(false)} />
     </div>
   );
 }

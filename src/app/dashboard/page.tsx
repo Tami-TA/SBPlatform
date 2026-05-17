@@ -139,7 +139,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Verse of the day — full width */}
-      <div className="card" style={{ padding: "28px 32px", marginBottom: 20, background: "var(--paper-2)" }}>
+      <div className="card" data-tutorial-id="dash-verse" style={{ padding: "28px 32px", marginBottom: 20, background: "var(--paper-2)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
           <div className="card-label">Verse of the day</div>
           <div style={{ display: "flex", gap: 6 }}>
@@ -211,7 +211,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Streak */}
-        <div className="card">
+        <div className="card" data-tutorial-id="dash-streak">
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
             <div className="card-label">Streak</div>
             <span style={{ fontSize: 11, color: "var(--ink-3)" }}>This week</span>

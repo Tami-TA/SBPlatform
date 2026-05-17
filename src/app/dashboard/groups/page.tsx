@@ -143,7 +143,7 @@ export default function GroupsPage() {
     <div style={{ maxWidth: 880, margin: "0 auto", padding: "28px 24px 56px" }}>
 
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 24, gap: 16, flexWrap: "wrap" }}>
+      <div data-tutorial-id="groups-actions" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 24, gap: 16, flexWrap: "wrap" }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 600, color: "var(--ink-1)", margin: "0 0 2px", letterSpacing: "-0.01em" }}>Groups</h1>
           <p style={{ fontSize: 13, color: "var(--ink-3)", margin: 0 }}>Study together, grow together</p>

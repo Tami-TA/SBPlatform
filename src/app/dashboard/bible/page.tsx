@@ -253,7 +253,7 @@ export default function BiblePage() {
   return (
     <div className="h-full flex flex-col" onClick={() => { if (selectedVerse) { setSelectedVerse(null); setToolbarPos(null); } }}>
       {/* Bible toolbar */}
-      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border flex-wrap bg-background">
+      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border flex-wrap bg-background" data-tutorial-id="bible-controls">
 
         {/* Book selector */}
         <button onClick={(e) => { e.stopPropagation(); setShowBookSelector(!showBookSelector); setShowTranslationSelector(false); }}
@@ -424,7 +424,7 @@ export default function BiblePage() {
       )}
 
       {/* Chapter content */}
-      <div className="flex-1 overflow-y-auto" ref={containerRef}>
+      <div className="flex-1 overflow-y-auto" data-tutorial-id="bible-chapter" ref={containerRef}>
         <div className="max-w-3xl mx-auto px-4 md:px-8 py-8 relative">
           {/* Chapter header — design system style */}
           <div style={{ marginBottom: 28, paddingBottom: 20, borderBottom: "1px solid var(--hairline)" }}>

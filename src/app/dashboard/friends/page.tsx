@@ -142,7 +142,7 @@ export default function FriendsPage() {
       </div>
 
       {/* Search bar */}
-      <form onSubmit={handleSearch} style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+      <form data-tutorial-id="friends-add" onSubmit={handleSearch} style={{ display: "flex", gap: 8, marginBottom: 20 }}>
         <div style={{ position: "relative", flex: 1 }}>
           <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--ink-4)", pointerEvents: "none" }} />
           <input

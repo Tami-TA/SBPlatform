@@ -365,7 +365,7 @@ export default function ProfilePage() {
       )}
 
       {/* ── Appearance ─────────────────────────────────────────────────────── */}
-      <div className="card" style={{ padding: "18px 20px", marginBottom: 16 }}>
+      <div className="card" data-tutorial-id="profile-theme" style={{ padding: "18px 20px", marginBottom: 16 }}>
         <div className="card-label" style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
           <Palette size={12} /> Appearance
         </div>

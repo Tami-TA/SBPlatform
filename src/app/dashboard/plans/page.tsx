@@ -324,7 +324,7 @@ export default function PlansPage() {
 
   return (
     <div className="pg">
-      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 24, gap: 16 }}>
+      <div data-tutorial-id="plans-header" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 24, gap: 16 }}>
         <div>
           <h1 style={{ fontFamily: "var(--font-serif)", fontWeight: 400, fontSize: 28, letterSpacing: "-0.015em", margin: "0 0 4px", color: "var(--ink-1)" }}>Study plans</h1>
           <p style={{ fontSize: 13, color: "var(--ink-3)", margin: 0 }}>Structured reading paths — personal or shared with your group.</p>

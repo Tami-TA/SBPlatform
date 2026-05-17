@@ -441,7 +441,7 @@ export default function ContextPage() {
     <div style={{ display: "flex", height: "calc(100vh - 56px)", overflow: "hidden", background: "var(--paper)" }}>
 
       {/* ── Book sidebar (hidden on mobile) ── */}
-      <aside className="ctx-aside">
+      <aside className="ctx-aside" data-tutorial-id="context-sidebar">
         {/* Search */}
         <div style={{ padding: "12px 12px 8px", borderBottom: "1px solid var(--hairline)" }}>
           <div style={{ position: "relative" }}>
@@ -558,7 +558,7 @@ export default function ContextPage() {
         <div className="ctx-content-split">
 
           {/* Section nav (vertical on desktop, horizontal scroll on mobile) */}
-          <nav className="ctx-secnav">
+          <nav className="ctx-secnav" data-tutorial-id="context-secnav">
             {visibleSections.map(s => {
               const Icon = SECTION_ICONS[s];
               return (
