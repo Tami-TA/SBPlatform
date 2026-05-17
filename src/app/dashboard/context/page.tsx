@@ -395,6 +395,17 @@ export default function ContextPage() {
 
   const book = useMemo(() => ALL_BOOKS_CONTEXT.find(b => b.id === selectedId), [selectedId]);
 
+  // Only show the Family Trees section when the book has real parentId relationships
+  const hasGenealogy = useMemo(
+    () => !!book && book.genealogy.nodes.filter(n => n.parentId).length >= 2,
+    [book]
+  );
+
+  const visibleSections = useMemo(
+    () => (hasGenealogy ? SECTION_IDS : SECTION_IDS.filter(s => s !== "genealogy")),
+    [hasGenealogy]
+  );
+
   const filteredOT = useMemo(() => {
     const q = search.toLowerCase();
     return !q ? OT_BOOKS_CONTEXT : OT_BOOKS_CONTEXT.filter(b =>
@@ -548,7 +559,7 @@ export default function ContextPage() {
 
           {/* Section nav (vertical on desktop, horizontal scroll on mobile) */}
           <nav className="ctx-secnav">
-            {SECTION_IDS.map(s => {
+            {visibleSections.map(s => {
               const Icon = SECTION_ICONS[s];
               return (
                 <button

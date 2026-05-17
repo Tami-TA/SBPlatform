@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { getUserNotifications } from "@/lib/firestore";
 import { getInitials } from "@/lib/utils";
 import type { Notification } from "@/types";
+import { TutorialModal } from "@/components/TutorialModal";
 
 function IcoStar({ className }: { className?: string }) {
   return (
@@ -69,6 +70,14 @@ function IcoSettings({ className }: { className?: string }) {
   );
 }
 
+function IcoHelp({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
+      <circle cx="12" cy="12" r="9"/>
+      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r=".5" fill="currentColor"/>
+    </svg>
+  );
+}
 function IcoBell({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
@@ -123,9 +132,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { firebaseUser } = useAuthStore();
   const router   = useRouter();
   const pathname = usePathname();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [notifOpen,   setNotifOpen]   = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
+  const [sidebarOpen,   setSidebarOpen]   = useState(false);
+  const [notifOpen,     setNotifOpen]     = useState(false);
+  const [profileOpen,   setProfileOpen]   = useState(false);
+  const [tutorialOpen,  setTutorialOpen]  = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const notifRef   = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -139,6 +149,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     if (!user) return;
     getUserNotifications(user.uid).then(setNotifications).catch(() => {});
+  }, [user]);
+
+  // Auto-open tutorial for first-time users
+  useEffect(() => {
+    if (!user) return;
+    try {
+      if (!localStorage.getItem("tutorial_v1_seen")) setTutorialOpen(true);
+    } catch { /* private browsing */ }
   }, [user]);
 
   useEffect(() => {
@@ -226,6 +244,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <IcoSettings />
           <span>Settings</span>
         </Link>
+        <button
+          onClick={() => { setSidebarOpen(false); setTutorialOpen(true); }}
+          className="nav-item"
+          style={{ width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
+        >
+          <IcoHelp />
+          <span>Help Tour</span>
+        </button>
 
         {/* Footer: streak pill */}
         <div style={{ marginTop: "auto", borderTop: "1px solid var(--hairline)", paddingTop: 12 }}>
@@ -385,6 +411,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {children}
         </main>
       </div>
+
+      <TutorialModal open={tutorialOpen} onClose={() => setTutorialOpen(false)} />
     </div>
   );
 }
