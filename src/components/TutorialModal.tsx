@@ -13,7 +13,7 @@ interface Step {
 const STEPS: Step[] = [
   {
     badge: "Welcome",
-    title: "Welcome to Selah",
+    title: "Welcome to Bible Study Tracker",
     body: "Your all-in-one platform for reading, studying, and sharing Scripture — with friends, in groups, or on your own. This quick tour will show you everything.",
     bullets: [],
     icon: (

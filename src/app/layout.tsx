@@ -27,12 +27,12 @@ const fontMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Selah — Bible Study Together",
+  title: "Scripture — Bible Study Tracker",
   description:
     "Track your Bible reading, build streaks, join study groups, and grow in faith together.",
   icons: { icon: "/favicon.ico" },
   openGraph: {
-    title: "Selah — Bible Study Together",
+    title: "Scripture — Bible Study Tracker",
     description: "Your daily Bible companion",
     type: "website",
   },

@@ -131,7 +131,7 @@ export default function SetupPage() {
 
       const profile = await getUserProfile(firebaseUser.uid);
       setUser(profile);
-      toast.success("Welcome to Selah!");
+      toast.success("Welcome to Bible Study Tracker!");
       router.replace("/dashboard");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -159,7 +159,7 @@ export default function SetupPage() {
           <div style={{ width: 38, height: 38, borderRadius: 10, background: "var(--accent-btn)", display: "grid", placeItems: "center", flexShrink: 0 }}>
             <BookOpen size={18} color="white" />
           </div>
-          <span style={{ fontSize: 15, fontWeight: 600, color: "var(--ink-1)" }}>Selah</span>
+          <span style={{ fontSize: 15, fontWeight: 600, color: "var(--ink-1)" }}>Bible Study Tracker</span>
         </div>
 
         <h2 style={{ fontSize: 22, fontWeight: 600, color: "var(--ink-1)", margin: "0 0 4px", letterSpacing: "-0.01em" }}>
