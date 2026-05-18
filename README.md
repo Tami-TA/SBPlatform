@@ -1,4 +1,4 @@
-# Bible Study Tracker
+# Selah
 
 A full-stack social Bible study platform built with Next.js 16, Firebase, and SQLite. Read Scripture, annotate verses, study in groups, track reading streaks, and explore historical context — all in one place.
 

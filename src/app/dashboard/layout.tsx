@@ -217,7 +217,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             background: "var(--accent-btn)", color: "white",
             display: "grid", placeItems: "center", flexShrink: 0,
           }}><IcoStar /></div>
-          <span style={{ fontSize: 12.5, fontWeight: 600, letterSpacing: "-0.01em", color: "var(--ink-1)", lineHeight: 1.2 }}>Bible Study Tracker</span>
+          <span style={{ fontSize: 12.5, fontWeight: 600, letterSpacing: "-0.01em", color: "var(--ink-1)", lineHeight: 1.2 }}>Selah</span>
           <button onClick={() => setSidebarOpen(false)} className="lg:hidden ml-auto" style={{ color: "var(--ink-3)", background: "none", border: "none", cursor: "pointer", padding: 2 }}>
             <IcoX />
           </button>

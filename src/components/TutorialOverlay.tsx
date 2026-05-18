@@ -22,7 +22,7 @@ const STEPS: TourStep[] = [
     page: "/dashboard",
     placement: "center",
     badge: "Welcome",
-    title: "Welcome to Bible Study Tracker",
+    title: "Welcome to Selah",
     body: "Your all-in-one platform for reading, studying, and sharing Scripture. Let's take a guided tour — we'll navigate through every part of the app together!",
   },
   {
@@ -118,7 +118,7 @@ const STEPS: TourStep[] = [
     placement: "center",
     badge: "Done!",
     title: "You're all set!",
-    body: "You've seen every major feature of Bible Study Tracker. The Help Tour button in the sidebar replays this walkthrough anytime. Happy studying!",
+    body: "You've seen every major feature of Selah. The Help Tour button in the sidebar replays this walkthrough anytime. Happy studying!",
   },
 ];
 
