@@ -17,6 +17,7 @@ import {
   markGroupPlanDayComplete,
   stopPersonalPlan,
   deleteGroupPlan,
+  assignBrowsedPlanToGroup,
 } from "@/lib/firestore";
 import type { ReadingPlan, UserPlanProgress, Group, GroupPlanProgress } from "@/types";
 import {
@@ -48,6 +49,8 @@ const DEFAULT_FORM: PlanForm = {
 const OT_BOOKS = BIBLE_BOOKS.filter((b) => b.testament === "OT");
 const NT_BOOKS = BIBLE_BOOKS.filter((b) => b.testament === "NT");
 
+const HUES = [30, 100, 170, 240, 300];
+
 const BOOK_PRESETS = [
   { label: "NT", books: NT_BOOKS.map((b) => b.id) },
   { label: "Gospels", books: ["MAT", "MRK", "LUK", "JHN"] },
@@ -75,6 +78,12 @@ export default function PlansPage() {
   const [deleting,         setDeleting]          = useState<string | null>(null);
   const [stoppingPlan,     setStoppingPlan]      = useState<string | null>(null);
   const [deletingGrpPlan,  setDeletingGrpPlan]   = useState<string | null>(null);
+
+  // Assign-to-group modal
+  const [showAssignModal,  setShowAssignModal]  = useState(false);
+  const [assignPlan,       setAssignPlan]       = useState<null | { name: string; description?: string; duration: number; tags?: string[]; selectedBooks?: string[] }>(null);
+  const [selectedGroupId,  setSelectedGroupId]  = useState("");
+  const [assigning,        setAssigning]        = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -297,6 +306,27 @@ export default function PlansPage() {
     }
   }
 
+  async function handleAssignToGroup() {
+    if (!user || !assignPlan || !selectedGroupId) return;
+    setAssigning(true);
+    try {
+      await assignBrowsedPlanToGroup(assignPlan, selectedGroupId, user.uid);
+      const gPlans = await getGroupReadingPlans(selectedGroupId);
+      setGroupPlans(prev => [...prev.filter(p => p.groupId !== selectedGroupId), ...gPlans]);
+      setShowAssignModal(false);
+      setAssignPlan(null);
+      setSelectedGroupId("");
+      toast.success(`"${assignPlan.name}" assigned to group!`);
+    } catch (err) {
+      const code = (err as { code?: string }).code;
+      if (code === "already-exists") toast.error("Plan already assigned to this group");
+      else if (code === "permission-denied") toast.error("Only group admins can assign plans");
+      else toast.error("Failed to assign plan");
+    } finally {
+      setAssigning(false);
+    }
+  }
+
   function openEdit(plan: ReadingPlan) {
     setEditingPlan(plan);
     setForm({ name: plan.name, description: plan.description || "", duration: plan.duration, isPublic: plan.isPublic, selectedBooks: plan.selectedBooks || [], assignTo: "personal", targetGroupId: "" });
@@ -476,6 +506,118 @@ export default function PlansPage() {
                 className="btn-ghost flex-1">Cancel</button>
               <button onClick={handleSavePlan} disabled={saving || !form.name.trim()} className="btn-primary flex-1">
                 {saving ? <Loader2 size={16} className="animate-spin" /> : editingPlan ? "Save Changes" : "Create Plan"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Assign to Group modal */}
+      {showAssignModal && assignPlan && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 50,
+          background: "oklch(0% 0 0 / 0.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16,
+        }}>
+          <div className="card" style={{ width: "100%", maxWidth: 440, padding: 24, maxHeight: "85vh", display: "flex", flexDirection: "column" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+              <h3 style={{ fontSize: 15, fontWeight: 600, color: "var(--ink-1)", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+                <Users size={15} style={{ color: "var(--accent-ink)" }} /> Assign to Group
+              </h3>
+              <button onClick={() => setShowAssignModal(false)} disabled={assigning}
+                style={{ color: "var(--ink-3)", background: "none", border: "none", cursor: "pointer" }}>
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Plan banner */}
+            <div style={{ background: "var(--accent-soft)", border: "1px solid var(--accent-border)", borderRadius: 10, padding: "10px 14px", marginBottom: 18 }}>
+              <p style={{ fontSize: 13.5, fontWeight: 500, color: "var(--ink-1)", margin: "0 0 2px" }}>{assignPlan.name}</p>
+              <p style={{ fontSize: 12, color: "var(--ink-3)", margin: 0 }}>{assignPlan.duration} days{assignPlan.description ? ` · ${assignPlan.description}` : ""}</p>
+            </div>
+
+            {/* Group list */}
+            <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+              {myGroups.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "24px 0", color: "var(--ink-3)" }}>
+                  <p style={{ fontSize: 13, margin: 0 }}>You haven't joined any groups yet.</p>
+                  <Link href="/dashboard/groups" onClick={() => setShowAssignModal(false)}
+                    style={{ fontSize: 13, color: "var(--accent-ink)", marginTop: 8, display: "block" }}>
+                    Browse Groups →
+                  </Link>
+                </div>
+              ) : (
+                <>
+                  {myGroups.map(g => {
+                    const isAdminHere   = g.adminIds.includes(user?.uid ?? "");
+                    const alreadyHas    = groupPlans.some(p => p.groupId === g.id && p.name === assignPlan.name);
+                    const selectable    = isAdminHere && !alreadyHas;
+                    const selected      = selectedGroupId === g.id;
+                    const hue           = HUES[g.id.charCodeAt(0) % HUES.length];
+                    return (
+                      <div
+                        key={g.id}
+                        onClick={() => selectable && setSelectedGroupId(g.id)}
+                        style={{
+                          padding: "10px 14px", borderRadius: 10, border: "1px solid",
+                          borderColor: selected ? "var(--accent-border)" : "var(--hairline)",
+                          background: selected ? "var(--accent-soft)" : selectable ? "var(--paper)" : "var(--paper-2)",
+                          cursor: selectable ? "pointer" : "default",
+                          opacity: selectable ? 1 : 0.55,
+                          display: "flex", alignItems: "center", gap: 10,
+                          transition: "border-color 120ms, background 120ms",
+                        }}
+                      >
+                        <div style={{
+                          width: 32, height: 32, borderRadius: 7, flexShrink: 0,
+                          background: `oklch(88% 0.04 ${hue})`,
+                          display: "grid", placeItems: "center", fontSize: 11, fontWeight: 600,
+                          color: `oklch(40% 0.06 ${hue})`,
+                        }}>
+                          {g.name.slice(0, 2).toUpperCase()}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontSize: 13, fontWeight: 500, color: "var(--ink-1)", margin: "0 0 1px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.name}</p>
+                          <p style={{ fontSize: 11, color: "var(--ink-4)", margin: 0 }}>
+                            {alreadyHas ? "Already assigned" : !isAdminHere ? "Admin access required" : `${g.memberIds.length} member${g.memberIds.length !== 1 ? "s" : ""}`}
+                          </p>
+                        </div>
+                        <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 6 }}>
+                          {alreadyHas
+                            ? <span className="badge" style={{ fontSize: 11 }}>Assigned</span>
+                            : isAdminHere
+                              ? <span className="badge-accent" style={{ fontSize: 11 }}>Admin</span>
+                              : <Lock size={12} style={{ color: "var(--ink-4)" }} />}
+                          {selected && <Check size={14} style={{ color: "var(--accent-ink)" }} />}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {!myGroups.some(g => g.adminIds.includes(user?.uid ?? "")) && (
+                    <p style={{ fontSize: 12, color: "var(--ink-3)", textAlign: "center", padding: "8px 0" }}>
+                      You must be a group admin to assign plans.
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", borderTop: "1px solid var(--hairline)", paddingTop: 16 }}>
+              <button onClick={() => setShowAssignModal(false)} disabled={assigning} className="btn btn-sm">Cancel</button>
+              <button
+                onClick={handleAssignToGroup}
+                disabled={!selectedGroupId || assigning}
+                style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  padding: "6px 16px", borderRadius: 8, border: "none",
+                  background: selectedGroupId && !assigning ? "var(--accent-btn)" : "var(--paper-3)",
+                  color: selectedGroupId && !assigning ? "white" : "var(--ink-4)",
+                  fontSize: 13, fontWeight: 500, fontFamily: "var(--font-ui)",
+                  cursor: selectedGroupId && !assigning ? "pointer" : "default",
+                  transition: "background 120ms",
+                }}
+              >
+                {assigning ? <Loader2 size={13} className="animate-spin" /> : <Users size={13} />}
+                {assigning ? "Assigning…" : "Assign to Group"}
               </button>
             </div>
           </div>
@@ -767,18 +909,29 @@ export default function PlansPage() {
               {PRESET_READING_PLANS.map((plan) => {
                 const alreadyStarted = myProgress.some((p) => p.planName === plan.name);
                 return (
-                  <div key={plan.name} className="card card-tinted" style={{ padding: 16 }}>
+                  <div key={plan.name} className="card card-tinted" style={{ padding: 16, display: "flex", flexDirection: "column" }}>
                     <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10 }}>
                       <div style={{ fontFamily: "var(--font-serif)", fontSize: 16, color: "var(--ink-1)", flex: 1 }}>{plan.name}</div>
                       <span className="badge-accent" style={{ marginLeft: 8, flexShrink: 0 }}>{plan.duration}d</span>
                     </div>
-                    <p style={{ fontSize: 12, color: "var(--ink-3)", marginBottom: 12, lineHeight: 1.55 }}>{plan.description}</p>
-                    <button onClick={() => handleStartPlan(plan)} disabled={alreadyStarted || starting === plan.name}
-                      className={alreadyStarted ? "btn" : "btn-primary"} style={{ width: "100%", justifyContent: "center" }}>
-                      {starting === plan.name ? <Loader2 size={14} className="animate-spin" />
-                        : alreadyStarted ? <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Check size={12} /> In Progress</span>
-                        : "Start Plan"}
-                    </button>
+                    <p style={{ fontSize: 12, color: "var(--ink-3)", marginBottom: 12, lineHeight: 1.55, flex: 1 }}>{plan.description}</p>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <button onClick={() => handleStartPlan(plan)} disabled={alreadyStarted || starting === plan.name}
+                        className={alreadyStarted ? "btn" : "btn-primary"} style={{ flex: 1, justifyContent: "center", fontSize: 12.5 }}>
+                        {starting === plan.name ? <Loader2 size={13} className="animate-spin" />
+                          : alreadyStarted ? <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Check size={11} /> Started</span>
+                          : "Start"}
+                      </button>
+                      <button
+                        onClick={() => { setAssignPlan({ name: plan.name, description: plan.description, duration: plan.duration, tags: plan.tags }); setSelectedGroupId(""); setShowAssignModal(true); }}
+                        disabled={myGroups.length === 0}
+                        title={myGroups.length === 0 ? "Join a group first" : "Assign to a group"}
+                        className="btn"
+                        style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12.5, flexShrink: 0 }}
+                      >
+                        <Users size={12} /> Group
+                      </button>
+                    </div>
                   </div>
                 );
               })}
@@ -791,14 +944,25 @@ export default function PlansPage() {
               </h2>
               <div className="space-y-3">
                 {publicPlans.map((plan) => (
-                  <div key={plan.id} className="card p-4 flex items-center justify-between">
-                    <div>
-                      <h4 className="font-medium text-foreground">{plan.name}</h4>
+                  <div key={plan.id} className="card p-4 flex items-center justify-between gap-4">
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <h4 className="font-medium text-foreground truncate">{plan.name}</h4>
                       <p className="text-xs text-muted-foreground">{plan.duration} days · {plan.completionCount} completed</p>
                     </div>
-                    <button onClick={() => handleStartPlan({ ...plan, description: plan.description || "", tags: plan.tags || [] })} className="btn-ghost text-xs px-4 py-2">
-                      Start
-                    </button>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                      <button onClick={() => handleStartPlan({ ...plan, description: plan.description || "", tags: plan.tags || [] })} className="btn-ghost text-xs px-3 py-1.5">
+                        Start
+                      </button>
+                      <button
+                        onClick={() => { setAssignPlan({ name: plan.name, description: plan.description, duration: plan.duration, tags: plan.tags, selectedBooks: plan.selectedBooks }); setSelectedGroupId(""); setShowAssignModal(true); }}
+                        disabled={myGroups.length === 0}
+                        title={myGroups.length === 0 ? "Join a group first" : "Assign to a group"}
+                        className="btn"
+                        style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12 }}
+                      >
+                        <Users size={12} /> Assign to Group
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

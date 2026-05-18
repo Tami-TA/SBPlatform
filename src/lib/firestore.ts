@@ -714,6 +714,47 @@ export async function deleteGroupPlan(planId: string, groupId: string): Promise<
   await batch.commit();
 }
 
+export async function assignBrowsedPlanToGroup(
+  plan: { name: string; description?: string; duration: number; tags?: string[]; selectedBooks?: string[] },
+  groupId: string,
+  callerUid: string
+): Promise<string> {
+  const { db, fs } = await fdb();
+
+  const groupSnap = await fs.getDoc(fs.doc(db, "groups", groupId));
+  if (!groupSnap.exists()) throw Object.assign(new Error("Group not found"), { code: "not-found" });
+  const group = groupSnap.data() as Group;
+  if (!group.adminIds.includes(callerUid)) {
+    throw Object.assign(new Error("Only group admins can assign plans"), { code: "permission-denied" });
+  }
+
+  const dup = await fs.getDocs(
+    fs.query(
+      fs.collection(db, "readingPlans"),
+      fs.where("groupId", "==", groupId),
+      fs.where("name", "==", plan.name),
+      fs.limit(1)
+    )
+  );
+  if (!dup.empty) throw Object.assign(new Error("Already assigned to this group"), { code: "already-exists" });
+
+  const ref = await fs.addDoc(fs.collection(db, "readingPlans"), {
+    name: plan.name,
+    description: plan.description || "",
+    duration: plan.duration,
+    isPublic: false,
+    createdBy: callerUid,
+    groupId,
+    days: [],
+    memberIds: [],
+    tags: plan.tags || [],
+    ...(plan.selectedBooks?.length ? { selectedBooks: plan.selectedBooks } : {}),
+    completionCount: 0,
+    createdAt: fs.serverTimestamp(),
+  });
+  return ref.id;
+}
+
 // ── Group deletion ────────────────────────────────────────────────────────────
 
 export async function deleteGroup(groupId: string, callerUid: string): Promise<void> {
