@@ -25,6 +25,7 @@ A full-stack social Bible study platform built with Next.js 16, Firebase, and SQ
 - Real-time group chat with accurate relative timestamps
 - Shared reading plans with per-member progress tracking
 - Admin controls — promote/demote members, remove users
+- Admins can permanently delete a group; cleanup removes all messages, plans, progress records, invites, and every member's `groupIds` reference in a single batched operation
 
 ### Friends
 - Search users by username and send friend requests
@@ -32,9 +33,12 @@ A full-stack social Bible study platform built with Next.js 16, Firebase, and SQ
 - Invite friends directly into groups
 
 ### Study Plans
-- Browse community reading plans or create custom ones
-- Assign plans to groups; track completion per member
-- Personal and group plan views with progress indicators
+- Browse preset and community reading plans or create fully custom ones
+- **Assign any browsed plan to a group in one click** — opens a group picker showing admin/member status and duplicate detection
+- Only group admins can assign plans; members see the option but cannot confirm
+- Personal plans track daily progress with a day-grid visualization
+- Group plans show per-member completion percentages and a shared progress bar
+- Admins can delete a group plan and all associated progress in one action
 
 ### Context Tab
 - Historical overview, author info, and time period for all 66 Bible books
@@ -197,19 +201,27 @@ Translation IDs used internally:
 
 **Design token system** — colors, spacing, and typography are driven by CSS custom properties (`--paper`, `--ink-1..4`, `--accent-btn`, `--hairline`, etc.) so all 10 themes update without component changes.
 
+**Group deletion with full cleanup** — deleting a group runs sequential batched writes (≤ 400 ops each) to remove the messages subcollection, then all top-level documents that reference the group (`groupReadingLogs`, `groupInvites`, `readingPlans`, `groupPlanProgress`), then strips the `groupId` from every member's user document, and finally deletes the group document itself. Admin status is verified server-side before any write runs.
+
+**Plan assignment from Browse** — assigning a preset or community plan to a group creates a new `readingPlans` document with the `groupId` set. A server-side query checks for an existing plan with the same name in the same group before writing, so duplicates are impossible even with concurrent clicks. Admin status is enforced at the Firestore function level independently of the UI gate.
+
 ---
 
 ## Firestore Collections
 
 ```
 users/{uid}
+usernames/{username}
 groups/{groupId}
 groups/{groupId}/messages/{messageId}
 friendRequests/{requestId}
+groupInvites/{inviteId}
+groupReadingLogs/{logId}
 annotations/{annotationId}
 highlights/{highlightId}
 bookmarks/{bookmarkId}
-readingPlans/{planId}
+readingPlans/{planId}            # groupId field present when assigned to a group
 userPlanProgress/{progressId}
+groupPlanProgress/{progressId}   # composite key: {groupId}_{planId}_{userId}
 notifications/{notificationId}
 ```
