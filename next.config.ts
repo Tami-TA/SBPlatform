@@ -1,5 +1,10 @@
 import type { NextConfig } from "next";
 
+if (process.env.NODE_ENV === "development") {
+  const { setupDevPlatform } = await import("@cloudflare/next-on-pages/next-dev");
+  await setupDevPlatform();
+}
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
@@ -8,8 +13,6 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "avatars.githubusercontent.com" },
     ],
   },
-  // better-sqlite3 is a native module — exclude from bundler
-  serverExternalPackages: ["better-sqlite3"],
 };
 
 export default nextConfig;

@@ -14,6 +14,8 @@
 
 import type { NextRequest } from "next/server";
 
+export const runtime = "edge";
+
 // Map app translation IDs → bible-api.com translation slugs
 const TRANSLATION_MAP: Record<string, string> = {
   KJV:   "kjv",
@@ -71,7 +73,6 @@ export async function GET(request: NextRequest) {
     try {
       const url = `https://bible-api.com/${encodeURIComponent(query)}?translation=${apiTranslation}`;
       const res = await fetch(url, {
-        next: { revalidate: 3600 },
         headers: { "User-Agent": "BibleStudyApp/1.0 (+https://github.com)" },
       });
       if (!res.ok) return Response.json({ available: true, translation, searchResults: [] });
@@ -109,7 +110,6 @@ export async function GET(request: NextRequest) {
   try {
     const url = `https://bible-api.com/${slug}+${chapter}?translation=${apiTranslation}`;
     const res = await fetch(url, {
-      next: { revalidate: 86400 }, // cache 24h on Vercel
       headers: { "User-Agent": "BibleStudyApp/1.0 (+https://github.com)" },
     });
 

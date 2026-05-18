@@ -1,7 +1,7 @@
 /**
  * GET /api/bible/search
  *
- * Full-text verse search backed by the local SQLite bible.eng.db.
+ * Full-text verse search backed by Cloudflare D1 (bible-eng database).
  * Supports multi-word queries using AND-logic LIKE matching.
  *
  * Query params:
@@ -11,8 +11,9 @@
  */
 
 import type { NextRequest } from "next/server";
-import Database from "better-sqlite3";
-import path from "path";
+import { getRequestContext } from "@cloudflare/next-on-pages";
+
+export const runtime = "edge";
 
 const DB_TRANSLATION_MAP: Record<string, string> = {
   KJV:   "eng_kjv",
@@ -24,8 +25,6 @@ const DB_TRANSLATION_MAP: Record<string, string> = {
   DBY:   "eng_dby",
   BSB:   "BSB",
 };
-
-const DB_PATH = path.join(process.cwd(), "data", "bible.eng.db");
 
 type VerseRow = { bookId: string; chapterNumber: number; number: number; text: string };
 
@@ -41,43 +40,35 @@ export async function GET(request: NextRequest) {
   }
 
   const dbTranslation = DB_TRANSLATION_MAP[translation] ?? DB_TRANSLATION_MAP.KJV;
+  const words = query.split(/\s+/).filter((w) => w.length >= 2);
+  if (words.length === 0) {
+    return Response.json({ available: true, translation, searchResults: [] });
+  }
 
-  let db: InstanceType<typeof Database> | null = null;
   try {
-    db = new Database(DB_PATH, { readonly: true });
-
-    // Each word must appear somewhere in the verse text (AND logic)
-    const words = query.split(/\s+/).filter((w) => w.length >= 2);
-    if (words.length === 0) {
-      return Response.json({ available: true, translation, searchResults: [] });
-    }
+    const { env } = getRequestContext<CloudflareEnv>();
+    const db = env.BIBLE_DB;
 
     const conditions = words.map(() => "text LIKE ?").join(" AND ");
-    const params: unknown[] = [dbTranslation, ...words.map((w) => `%${w}%`), limit];
+    const sql = `SELECT bookId, chapterNumber, number, text
+                 FROM ChapterVerse
+                 WHERE translationId = ? AND ${conditions}
+                 LIMIT ?`;
+    const params: (string | number)[] = [dbTranslation, ...words.map((w) => `%${w}%`), limit];
 
-    const rows = db
-      .prepare(
-        `SELECT bookId, chapterNumber, number, text
-         FROM ChapterVerse
-         WHERE translationId = ? AND ${conditions}
-         LIMIT ?`
-      )
-      .all(...params) as VerseRow[];
+    const result = await db.prepare(sql).bind(...params).all<VerseRow>();
 
-    const results = rows.map((r) => ({
+    const searchResults = result.results.map((r) => ({
       bookId:  r.bookId,
       chapter: r.chapterNumber,
       verse:   r.number,
-      // Strip the KJV pilcrow paragraph marker if present
-      text: r.text.replace(/^¶\s*/, ""),
+      text:    r.text.replace(/^¶\s*/, ""),
     }));
 
-    return Response.json({ available: true, translation, searchResults: results });
+    return Response.json({ available: true, translation, searchResults });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";
-    console.error("[bible/search] Error:", msg);
+    console.error("[bible/search] D1 error:", msg);
     return Response.json({ available: false, error: msg, searchResults: [] }, { status: 500 });
-  } finally {
-    db?.close();
   }
 }

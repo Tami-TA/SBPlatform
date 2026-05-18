@@ -3,6 +3,8 @@
  * Returns all translations supported by bible-api.com.
  */
 
+export const runtime = "edge";
+
 export async function GET() {
   const translations = [
     { id: "KJV",   name: "King James Version",              abbreviation: "KJV",   available: true },
