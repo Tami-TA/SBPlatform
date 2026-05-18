@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { X, ChevronRight, ChevronLeft } from "lucide-react";
 
@@ -58,12 +58,12 @@ const STEPS: TourStep[] = [
     body: "Navigate books and chapters, switch between translations (KJV, ASV, WEB…), and open the search to find any verse by phrase.",
   },
   {
+    // No targetId — centered modal to avoid targeting the full-height scroll container
     page: "/dashboard/bible",
-    targetId: "bible-chapter",
-    placement: "top",
+    placement: "center",
     badge: "5 · Bible",
     title: "Highlights & Annotations",
-    body: "Tap any verse to highlight it in 5 colors, bookmark it, or write a private annotation. Your notes are visible only to you.",
+    body: "Tap any verse to highlight it in 5 colors, bookmark it, or write a private annotation. Your notes are only visible to you.",
   },
   {
     page: "/dashboard/friends",
@@ -128,52 +128,102 @@ export function TutorialOverlay({ open, onClose }: { open: boolean; onClose: () 
   const [step,       setStep]       = useState(0);
   const [spotRect,   setSpotRect]   = useState<SpotRect | null>(null);
   const [navigating, setNavigating] = useState(false);
+
+  // Keep a stable ref to the current step index so effects don't need
+  // the `cur` object (a new reference each render) as a dependency.
+  const stepRef = useRef(step);
+  stepRef.current = step;
+
   const router   = useRouter();
   const pathname = usePathname();
 
-  const cur    = STEPS[step];
-  const isLast = step === STEPS.length - 1;
-  const isCenter = cur.placement === "center" || !cur.targetId;
+  const cur      = STEPS[step];
+  const isLast   = step === STEPS.length - 1;
+  const isCenter = !cur?.targetId || cur.placement === "center";
 
-  // Navigate when step requires a different page
+  // ── Effect 1: navigate to the correct page when the step changes ─────────────
   useEffect(() => {
-    if (!open || !cur) return;
-    if (pathname !== cur.page) {
+    if (!open) return;
+    const s = STEPS[stepRef.current];
+    if (!s) return;
+    if (pathname !== s.page) {
       setNavigating(true);
       setSpotRect(null);
-      router.push(cur.page);
+      router.push(s.page);
     }
+  // pathname intentionally omitted — we only want this to fire on step/open change
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, open]);
 
-  // Detect navigation completion
+  // ── Effect 2: detect when navigation has finished ────────────────────────────
   useEffect(() => {
     if (!open) return;
-    if (cur && pathname === cur.page) setNavigating(false);
-  }, [pathname, open, cur]);
+    const s = STEPS[stepRef.current];
+    if (s && pathname === s.page) setNavigating(false);
+  // `step` (via stepRef) is intentionally read by ref — only pathname/open trigger this
+  }, [pathname, open]);
 
-  // Find target element after page settles
+  // ── Effect 3: find the spotlight target once the page has settled ─────────────
   useEffect(() => {
-    if (!open || !cur || navigating) return;
-    if (pathname !== cur.page) return;
-    if (isCenter) { setSpotRect(null); return; }
+    if (!open || navigating) return;
+    const s = STEPS[stepRef.current];
+    if (!s || pathname !== s.page || !s.targetId) { setSpotRect(null); return; }
 
-    const find = () => {
-      const el = document.querySelector<HTMLElement>(`[data-tutorial-id="${cur.targetId}"]`);
+    let cancelled = false;
+    let t1: ReturnType<typeof setTimeout>;
+    let t2: ReturnType<typeof setTimeout>;
+    let t3: ReturnType<typeof setTimeout>;
+
+    const measureAndSet = () => {
+      if (cancelled) return false;
+      const el = document.querySelector<HTMLElement>(`[data-tutorial-id="${s.targetId}"]`);
       if (!el) return false;
       const r = el.getBoundingClientRect();
-      setSpotRect({ top: r.top - PAD, left: r.left - PAD, width: r.width + PAD * 2, height: r.height + PAD * 2 });
+      // Skip if element has no visible area (not yet laid out)
+      if (r.width === 0 && r.height === 0) return false;
+
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+
+      // Clamp spotlight rect so panes never have negative dimensions
+      const top    = Math.max(0,  r.top  - PAD);
+      const left   = Math.max(0,  r.left - PAD);
+      const right  = Math.min(vw, r.right  + PAD);
+      const bottom = Math.min(vh, r.bottom + PAD);
+      const width  = Math.max(0, right  - left);
+      const height = Math.max(0, bottom - top);
+
+      // If the element covers most of the viewport, fall back to centered tooltip
+      const coverage = (width * height) / (vw * vh);
+      if (coverage > 0.6) { setSpotRect(null); return true; }
+
+      setSpotRect({ top, left, width, height });
       return true;
     };
 
-    if (!find()) {
-      const t1 = setTimeout(() => { if (!find()) setTimeout(find, 600); }, 200);
-      return () => clearTimeout(t1);
+    if (!measureAndSet()) {
+      t1 = setTimeout(() => {
+        if (!measureAndSet()) {
+          t2 = setTimeout(() => {
+            if (!measureAndSet()) {
+              // Give up — show tooltip without spotlight rather than freezing
+              t3 = setTimeout(() => { if (!cancelled) setSpotRect(null); }, 800);
+            }
+          }, 500);
+        }
+      }, 250);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, pathname, open, navigating, isCenter]);
 
-  // Reset on close
+    return () => {
+      cancelled = true;
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, pathname, open, navigating]);
+
+  // ── Effect 4: reset everything on close ─────────────────────────────────────
   useEffect(() => {
     if (!open) { setStep(0); setSpotRect(null); setNavigating(false); }
   }, [open]);
@@ -191,22 +241,33 @@ export function TutorialOverlay({ open, onClose }: { open: boolean; onClose: () 
 
   return (
     <>
-      {/* Backdrop / spotlight */}
-      {!isCenter && spotRect ? (
+      {/* Backdrop + spotlight ------------------------------------------------- */}
+      {!isCenter && spotRect && spotRect.width > 0 && spotRect.height > 0 ? (
         <>
-          {/* 4 dark panes framing the spotlight window */}
-          <div style={{ position:"fixed", inset:0, top:0, left:0, right:0, height: spotRect.top, zIndex:9990, background:"oklch(0% 0 0 / 0.55)", pointerEvents:"none" }} />
-          <div style={{ position:"fixed", top: spotRect.top + spotRect.height, left:0, right:0, bottom:0, zIndex:9990, background:"oklch(0% 0 0 / 0.55)", pointerEvents:"none" }} />
-          <div style={{ position:"fixed", top: spotRect.top, left:0, width: spotRect.left, height: spotRect.height, zIndex:9990, background:"oklch(0% 0 0 / 0.55)", pointerEvents:"none" }} />
-          <div style={{ position:"fixed", top: spotRect.top, left: spotRect.left + spotRect.width, right:0, height: spotRect.height, zIndex:9990, background:"oklch(0% 0 0 / 0.55)", pointerEvents:"none" }} />
-          {/* Accent ring around target */}
-          <div style={{ position:"fixed", top: spotRect.top, left: spotRect.left, width: spotRect.width, height: spotRect.height, borderRadius:10, border:"2px solid var(--accent-btn)", boxShadow:"0 0 0 3px oklch(0.65 0.18 250 / 0.3)", zIndex:9991, pointerEvents:"none", transition:"all 250ms ease" }} />
+          {/* Top pane */}
+          {spotRect.top > 0 && (
+            <div style={{ position:"fixed", top:0, left:0, right:0, height: spotRect.top, zIndex:9990, background:"oklch(0% 0 0 / 0.55)", pointerEvents:"none" }} />
+          )}
+          {/* Bottom pane */}
+          {spotRect.top + spotRect.height < window.innerHeight && (
+            <div style={{ position:"fixed", top: spotRect.top + spotRect.height, left:0, right:0, bottom:0, zIndex:9990, background:"oklch(0% 0 0 / 0.55)", pointerEvents:"none" }} />
+          )}
+          {/* Left pane */}
+          {spotRect.left > 0 && (
+            <div style={{ position:"fixed", top: spotRect.top, left:0, width: spotRect.left, height: spotRect.height, zIndex:9990, background:"oklch(0% 0 0 / 0.55)", pointerEvents:"none" }} />
+          )}
+          {/* Right pane */}
+          {spotRect.left + spotRect.width < window.innerWidth && (
+            <div style={{ position:"fixed", top: spotRect.top, left: spotRect.left + spotRect.width, right:0, height: spotRect.height, zIndex:9990, background:"oklch(0% 0 0 / 0.55)", pointerEvents:"none" }} />
+          )}
+          {/* Accent ring */}
+          <div style={{ position:"fixed", top: spotRect.top, left: spotRect.left, width: spotRect.width, height: spotRect.height, borderRadius:10, border:"2px solid var(--accent-btn)", boxShadow:"0 0 0 3px oklch(0.65 0.18 250 / 0.3)", zIndex:9991, pointerEvents:"none", transition:"top 200ms ease, left 200ms ease, width 200ms ease, height 200ms ease" }} />
         </>
       ) : (
         <div style={{ position:"fixed", inset:0, zIndex:9990, background:"oklch(0% 0 0 / 0.52)", backdropFilter:"blur(3px)", WebkitBackdropFilter:"blur(3px)" }} />
       )}
 
-      {/* Tooltip card */}
+      {/* Tooltip card --------------------------------------------------------- */}
       <TooltipCard
         cur={cur}
         step={step}
@@ -327,10 +388,13 @@ function tooltipPosition(
   rect: SpotRect | null,
   isCenter: boolean,
 ): React.CSSProperties {
-  if (isCenter || !rect) return { top: "50%", left: "50%", transform: "translate(-50%, -50%)" };
+  // Center if explicitly requested, no rect, or element covered most of viewport
+  if (isCenter || !rect || rect.width === 0) {
+    return { top: "50%", left: "50%", transform: "translate(-50%, -50%)" };
+  }
 
-  const W = typeof window !== "undefined" ? window.innerWidth : 1200;
-  const H = typeof window !== "undefined" ? window.innerHeight : 800;
+  const W  = window.innerWidth;
+  const H  = window.innerHeight;
   const cx = rect.left + rect.width  / 2;
   const cy = rect.top  + rect.height / 2;
   const clampX = (x: number) => Math.max(16, Math.min(W - TW - 16, x));
@@ -338,21 +402,19 @@ function tooltipPosition(
 
   if (placement === "bottom") {
     const top = rect.top + rect.height + GAP;
-    return top + TH > H - 16
-      ? { bottom: H - rect.top + GAP, left: clampX(cx - TW / 2) }
-      : { top, left: clampX(cx - TW / 2) };
+    if (top + TH > H - 16) return { bottom: Math.max(GAP, H - rect.top + GAP), left: clampX(cx - TW / 2) };
+    return { top, left: clampX(cx - TW / 2) };
   }
   if (placement === "top") {
-    const bottom = H - rect.top + GAP;
-    return bottom + TH > H - 16
-      ? { top: rect.top + rect.height + GAP, left: clampX(cx - TW / 2) }
-      : { bottom, left: clampX(cx - TW / 2) };
+    const tooltipBottom = H - rect.top + GAP;
+    // If tooltip would overflow upward, flip to below
+    if (rect.top - TH - GAP < 16) return { top: rect.top + rect.height + GAP, left: clampX(cx - TW / 2) };
+    return { bottom: tooltipBottom, left: clampX(cx - TW / 2) };
   }
   if (placement === "right") {
     const left = rect.left + rect.width + GAP;
-    return left + TW > W - 16
-      ? { top: clampY(cy - TH / 2), right: W - rect.left + GAP }
-      : { top: clampY(cy - TH / 2), left };
+    if (left + TW > W - 16) return { top: clampY(cy - TH / 2), right: W - rect.left + GAP };
+    return { top: clampY(cy - TH / 2), left };
   }
   if (placement === "left") {
     return { top: clampY(cy - TH / 2), right: W - rect.left + GAP };
