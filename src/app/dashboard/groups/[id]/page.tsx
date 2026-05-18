@@ -9,13 +9,13 @@ import {
   logGroupReading, getGroupReadingLogs,
   inviteFriendToGroup, getUserProfile,
   getGroupReadingPlans, startGroupPlanProgress, getGroupPlanProgress, markGroupPlanDayComplete,
-  promoteToAdmin, demoteAdmin, removeGroupMember,
+  promoteToAdmin, demoteAdmin, removeGroupMember, deleteGroup,
 } from "@/lib/firestore";
 import type { Group, GroupMessage, User, GroupReadingLog, ReadingPlan, GroupPlanProgress } from "@/types";
 import {
   ArrowLeft, Send, BookOpen, Users, MessageCircle, Heart, Loader2,
   BookMarked, Copy, Check, Lock, Globe, UserPlus, X,
-  CheckCircle2, Circle, Shield, ShieldOff, UserMinus,
+  CheckCircle2, Circle, Shield, ShieldOff, UserMinus, Trash2,
 } from "lucide-react";
 import { timeAgo, getInitials } from "@/lib/utils";
 import toast from "react-hot-toast";
@@ -81,6 +81,11 @@ export default function GroupDetailPage() {
   const [promotingId, setPromotingId] = useState<string | null>(null);
   const [demotingId,  setDemotingId]  = useState<string | null>(null);
   const [removingId,  setRemovingId]  = useState<string | null>(null);
+
+  // Group deletion
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleting,          setDeleting]          = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -234,6 +239,21 @@ export default function GroupDetailPage() {
       }
     } finally {
       setRemovingId(null);
+    }
+  }
+
+  async function handleDeleteGroup() {
+    if (!user || !id || deleteConfirmText !== "DELETE") return;
+    setDeleting(true);
+    try {
+      await deleteGroup(id, user.uid);
+      toast.success("Group deleted");
+      router.push("/dashboard/groups");
+    } catch (err) {
+      const code = (err as { code?: string }).code;
+      if (code === "permission-denied") toast.error("Only admins can delete this group");
+      else toast.error("Failed to delete group");
+      setDeleting(false);
     }
   }
 
@@ -500,13 +520,26 @@ export default function GroupDetailPage() {
               )}
 
               {isAdmin && (
-                <button
-                  onClick={() => setShowInvite(true)}
-                  className="btn btn-sm"
-                  style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 6 }}
-                >
-                  <UserPlus size={12} /> Invite Friends
-                </button>
+                <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 10 }}>
+                  <button
+                    onClick={() => setShowInvite(true)}
+                    className="btn btn-sm"
+                    style={{ display: "flex", alignItems: "center", gap: 6 }}
+                  >
+                    <UserPlus size={12} /> Invite Friends
+                  </button>
+                  <button
+                    onClick={() => { setDeleteConfirmText(""); setShowDeleteConfirm(true); }}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 6,
+                      padding: "5px 12px", borderRadius: 7, border: "1px solid oklch(57.7% 0.245 27.3 / 0.35)",
+                      background: "oklch(57.7% 0.245 27.3 / 0.08)", color: "oklch(57.7% 0.245 27.3)",
+                      fontSize: 12.5, fontWeight: 500, cursor: "pointer", fontFamily: "var(--font-ui)",
+                    }}
+                  >
+                    <Trash2 size={12} /> Delete Group
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -692,6 +725,70 @@ export default function GroupDetailPage() {
           </div>
         )}
       </div>
+
+      {/* ── Delete group confirmation modal ── */}
+      {showDeleteConfirm && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 50,
+          background: "oklch(0% 0 0 / 0.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16,
+        }}>
+          <div className="card" style={{ width: "100%", maxWidth: 420, padding: 24 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 600, color: "oklch(57.7% 0.245 27.3)", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+                <Trash2 size={16} /> Delete Group
+              </h3>
+              <button onClick={() => setShowDeleteConfirm(false)} disabled={deleting} style={{ color: "var(--ink-3)", background: "none", border: "none", cursor: "pointer" }}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <p style={{ fontSize: 13.5, color: "var(--ink-2)", lineHeight: 1.6, margin: "0 0 8px" }}>
+              This will permanently delete <strong style={{ color: "var(--ink-1)" }}>{group.name}</strong> and all its messages, plans, and member data. This cannot be undone.
+            </p>
+            <p style={{ fontSize: 13, color: "var(--ink-3)", margin: "0 0 16px" }}>
+              Type <strong style={{ color: "var(--ink-1)", fontFamily: "var(--font-mono, monospace)" }}>DELETE</strong> to confirm.
+            </p>
+
+            <input
+              type="text"
+              value={deleteConfirmText}
+              onChange={e => setDeleteConfirmText(e.target.value)}
+              placeholder="Type DELETE"
+              className="input-field"
+              style={{ width: "100%", marginBottom: 16, boxSizing: "border-box" }}
+              autoComplete="off"
+              spellCheck={false}
+            />
+
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+                className="btn btn-sm"
+                style={{ fontFamily: "var(--font-ui)" }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteGroup}
+                disabled={deleteConfirmText !== "DELETE" || deleting}
+                style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  padding: "6px 16px", borderRadius: 8, border: "none",
+                  background: deleteConfirmText === "DELETE" && !deleting
+                    ? "oklch(57.7% 0.245 27.3)"
+                    : "oklch(57.7% 0.245 27.3 / 0.35)",
+                  color: "white", fontSize: 13, fontWeight: 500, cursor: deleteConfirmText === "DELETE" && !deleting ? "pointer" : "default",
+                  fontFamily: "var(--font-ui)", transition: "background 120ms",
+                }}
+              >
+                {deleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                {deleting ? "Deleting…" : "Delete Group"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Invite friends panel ── */}
       {showInvite && (

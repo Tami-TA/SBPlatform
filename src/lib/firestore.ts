@@ -714,6 +714,52 @@ export async function deleteGroupPlan(planId: string, groupId: string): Promise<
   await batch.commit();
 }
 
+// ── Group deletion ────────────────────────────────────────────────────────────
+
+export async function deleteGroup(groupId: string, callerUid: string): Promise<void> {
+  const { db, fs } = await fdb();
+
+  const groupSnap = await fs.getDoc(fs.doc(db, "groups", groupId));
+  if (!groupSnap.exists()) throw Object.assign(new Error("Group not found"), { code: "not-found" });
+  const group = groupSnap.data() as Group;
+  if (!group.adminIds.includes(callerUid)) {
+    throw Object.assign(new Error("Only admins can delete this group"), { code: "permission-denied" });
+  }
+
+  // Messages subcollection
+  const messagesSnap = await fs.getDocs(fs.collection(db, `groups/${groupId}/messages`));
+  if (!messagesSnap.empty) {
+    const b = fs.writeBatch(db);
+    messagesSnap.docs.forEach(d => b.delete(d.ref));
+    await b.commit();
+  }
+
+  // Top-level collections referencing this group
+  const [logsSnap, invitesSnap, plansSnap, planProgSnap] = await Promise.all([
+    fs.getDocs(fs.query(fs.collection(db, "groupReadingLogs"),  fs.where("groupId", "==", groupId))),
+    fs.getDocs(fs.query(fs.collection(db, "groupInvites"),      fs.where("groupId", "==", groupId))),
+    fs.getDocs(fs.query(fs.collection(db, "readingPlans"),      fs.where("groupId", "==", groupId))),
+    fs.getDocs(fs.query(fs.collection(db, "groupPlanProgress"), fs.where("groupId", "==", groupId))),
+  ]);
+  const relatedDocs = [...logsSnap.docs, ...invitesSnap.docs, ...plansSnap.docs, ...planProgSnap.docs];
+  for (let i = 0; i < relatedDocs.length; i += 400) {
+    const b = fs.writeBatch(db);
+    relatedDocs.slice(i, i + 400).forEach(d => b.delete(d.ref));
+    await b.commit();
+  }
+
+  // Remove groupId from every member's groupIds array
+  for (let i = 0; i < group.memberIds.length; i += 400) {
+    const b = fs.writeBatch(db);
+    group.memberIds.slice(i, i + 400).forEach(uid =>
+      b.update(fs.doc(db, "users", uid), { groupIds: fs.arrayRemove(groupId) })
+    );
+    await b.commit();
+  }
+
+  await fs.deleteDoc(fs.doc(db, "groups", groupId));
+}
+
 // ── Group admin actions ───────────────────────────────────────────────────────
 
 export async function promoteToAdmin(groupId: string, uid: string): Promise<void> {
