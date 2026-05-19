@@ -232,7 +232,7 @@ export default function LandingPage() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { icon: BookOpen, title: "7+ Translations", desc: "KJV, NIV, ESV, AMP, NKJV and more" },
+            { icon: BookOpen, title: "3 Translations", desc: "KJV, NIV, and AMP" },
             { icon: Flame, title: "Streak Tracking", desc: "Daily habits and milestone badges" },
             { icon: Users, title: "Study Groups", desc: "Read and discuss with others" },
             { icon: Sparkles, title: "AI Insights", desc: "Context, cross-references, and commentary" },

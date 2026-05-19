@@ -46,7 +46,7 @@ const STEPS: Step[] = [
     title: "Powerful Bible Reader",
     body: "Everything you need for deep personal study.",
     bullets: [
-      "Switch between KJV, ASV, WEB, and other translations",
+      "Switch between KJV, NIV, and AMP translations",
       "Highlight verses in 5 colors and save bookmarks",
       "Write private annotations only you can see",
       'Full-text search — try “love one another” or “faith”',

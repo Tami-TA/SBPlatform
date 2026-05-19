@@ -2,25 +2,17 @@
  * GET /api/bible/search
  *
  * Full-text verse search via scripture.api.bible.
- * No local database required.
  *
  * Query params:
  *   q           — search phrase (required, min 2 chars)
- *   translation — e.g. "KJV" (default)
+ *   translation — e.g. "KJV", "NIV", "AMP" (default KJV)
  *   limit       — max results, capped at 50 (default 20)
  */
 
 import type { NextRequest } from "next/server";
+import { SCRIPTURE_API_BASE, resolveBibleId } from "@/lib/scripture-api";
 
 export const runtime = "edge";
-
-const BIBLE_API_BASE = "https://api.scripture.api.bible/v1";
-
-// scripture.api.bible Bible IDs for supported translations
-const BIBLE_ID_MAP: Record<string, string> = {
-  KJV: "de4e12af7f28f599-02",
-  ASV: "06125adad2d5898a-01",
-};
 
 type ApiVerse = {
   id: string;
@@ -44,10 +36,13 @@ export async function GET(request: NextRequest) {
     return Response.json({ available: false, error: "Bible API key not configured", searchResults: [] }, { status: 503 });
   }
 
-  const bibleId = BIBLE_ID_MAP[translation] ?? BIBLE_ID_MAP.KJV;
+  const bibleId = await resolveBibleId(translation, apiKey);
+  if (!bibleId) {
+    return Response.json({ available: false, error: `Unknown translation: ${translation}`, searchResults: [] }, { status: 404 });
+  }
 
   try {
-    const url = `${BIBLE_API_BASE}/bibles/${bibleId}/search?query=${encodeURIComponent(query)}&limit=${limit}&sort=relevance`;
+    const url = `${SCRIPTURE_API_BASE}/bibles/${bibleId}/search?query=${encodeURIComponent(query)}&limit=${limit}&sort=relevance`;
     const res = await fetch(url, { headers: { "api-key": apiKey } });
 
     if (!res.ok) {
@@ -58,11 +53,10 @@ export async function GET(request: NextRequest) {
     const verses = data.data?.verses ?? [];
 
     const searchResults = verses.map((v) => {
-      // verse ID format: "GEN.1.1"
       const parts = v.id.split(".");
       const chapter = parseInt(parts[1] ?? "1", 10);
       const verse   = parseInt(parts[2] ?? "1", 10);
-      const text    = v.text.replace(/<[^>]+>/g, "").trim();
+      const text    = v.text.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
       return { bookId: v.bookId, chapter, verse, text };
     });
 

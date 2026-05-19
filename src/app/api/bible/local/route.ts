@@ -1,61 +1,41 @@
 /**
  * GET /api/bible/local
  *
- * Proxies to bible-api.com (free, no key required).
- * Keeps the same response shape so the frontend needs no changes.
+ * Loads chapters / verses via scripture.api.bible.
+ * (Kept the route name for backwards compatibility with existing fetch calls.)
  *
  * Query params:
- *   translation — e.g. "KJV"
- *   book        — 3-letter book ID, e.g. "GEN"
+ *   translation — e.g. "KJV" | "NIV" | "AMP"
+ *   book        — 3-letter OSIS book ID, e.g. "GEN"
  *   chapter     — chapter number
  *   verse       — verse number (optional)
- *   q           — free-text search query (optional)
  */
 
 import type { NextRequest } from "next/server";
+import { SCRIPTURE_API_BASE, resolveBibleId } from "@/lib/scripture-api";
 
 export const runtime = "edge";
 
-// Map app translation IDs → bible-api.com translation slugs
-const TRANSLATION_MAP: Record<string, string> = {
-  KJV:   "kjv",
-  ASV:   "asv",
-  WEB:   "web",
-  WEBBE: "webbe",
-  YLT:   "ylt",
-  BBE:   "bbe",
-  DBY:   "darby",
-  OEB:   "oeb-us",
+type ChapterContent = {
+  data?: {
+    id: string;
+    content: string;
+  };
 };
 
-// Map 3-letter book IDs → bible-api.com URL slugs
-const BOOK_SLUG: Record<string, string> = {
-  GEN: "genesis",         EXO: "exodus",          LEV: "leviticus",
-  NUM: "numbers",         DEU: "deuteronomy",      JOS: "joshua",
-  JDG: "judges",          RUT: "ruth",             "1SA": "1+samuel",
-  "2SA": "2+samuel",      "1KI": "1+kings",        "2KI": "2+kings",
-  "1CH": "1+chronicles",  "2CH": "2+chronicles",   EZR: "ezra",
-  NEH: "nehemiah",        EST: "esther",            JOB: "job",
-  PSA: "psalms",          PRO: "proverbs",          ECC: "ecclesiastes",
-  SNG: "song+of+solomon", ISA: "isaiah",            JER: "jeremiah",
-  LAM: "lamentations",    EZK: "ezekiel",           DAN: "daniel",
-  HOS: "hosea",           JOL: "joel",              AMO: "amos",
-  OBA: "obadiah",         JON: "jonah",             MIC: "micah",
-  NAM: "nahum",           HAB: "habakkuk",          ZEP: "zephaniah",
-  HAG: "haggai",          ZEC: "zechariah",         MAL: "malachi",
-  MAT: "matthew",         MRK: "mark",              LUK: "luke",
-  JHN: "john",            ACT: "acts",              ROM: "romans",
-  "1CO": "1+corinthians", "2CO": "2+corinthians",   GAL: "galatians",
-  EPH: "ephesians",       PHP: "philippians",        COL: "colossians",
-  "1TH": "1+thessalonians", "2TH": "2+thessalonians",
-  "1TI": "1+timothy",     "2TI": "2+timothy",       TIT: "titus",
-  PHM: "philemon",        HEB: "hebrews",            JAS: "james",
-  "1PE": "1+peter",       "2PE": "2+peter",          "1JN": "1+john",
-  "2JN": "2+john",        "3JN": "3+john",           JUD: "jude",
-  REV: "revelation",
-};
-
-type ApiVerse = { book_id: string; chapter: number; verse: number; text: string };
+function parseVerses(content: string): { verse: number; text: string }[] {
+  const verses: { verse: number; text: string }[] = [];
+  // scripture.api.bible text format with include-verse-numbers=true wraps
+  // verse numbers in square brackets, e.g. "[1] In the beginning... [2] ..."
+  const regex = /\[(\d+)\]\s*([^[]+)/g;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(content)) !== null) {
+    const verse = parseInt(match[1], 10);
+    const text = match[2].replace(/\s+/g, " ").trim();
+    if (text) verses.push({ verse, text });
+  }
+  return verses;
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
@@ -64,34 +44,6 @@ export async function GET(request: NextRequest) {
   const bookId       = (searchParams.get("book") ?? "").toUpperCase();
   const chapterParam = searchParams.get("chapter");
   const verseParam   = searchParams.get("verse");
-  const query        = searchParams.get("q");
-
-  const apiTranslation = TRANSLATION_MAP[translation] ?? "kjv";
-
-  // Search mode
-  if (query) {
-    try {
-      const url = `https://bible-api.com/${encodeURIComponent(query)}?translation=${apiTranslation}`;
-      const res = await fetch(url, {
-        headers: { "User-Agent": "BibleStudyApp/1.0 (+https://github.com)" },
-      });
-      if (!res.ok) return Response.json({ available: true, translation, searchResults: [] });
-      const data = await res.json() as { verses?: ApiVerse[] };
-      const verses: ApiVerse[] = data.verses ?? [];
-      return Response.json({
-        available: true,
-        translation,
-        searchResults: verses.map((v) => ({
-          bookId: v.book_id,
-          chapter: v.chapter,
-          verse: v.verse,
-          text: v.text.trim(),
-        })),
-      });
-    } catch {
-      return Response.json({ available: true, translation, searchResults: [] });
-    }
-  }
 
   if (!bookId || !chapterParam) {
     return Response.json({ available: false, error: "Missing book or chapter" }, { status: 400 });
@@ -102,41 +54,39 @@ export async function GET(request: NextRequest) {
     return Response.json({ available: false, error: "Invalid chapter" }, { status: 400 });
   }
 
-  const slug = BOOK_SLUG[bookId];
-  if (!slug) {
-    return Response.json({ available: false, error: `Unknown book ID: ${bookId}` });
+  const apiKey = process.env.BIBLE_API_KEY ?? "";
+  if (!apiKey) {
+    return Response.json({ available: false, error: "Bible API key not configured" }, { status: 503 });
   }
 
-  try {
-    const url = `https://bible-api.com/${slug}+${chapter}?translation=${apiTranslation}`;
-    const res = await fetch(url, {
-      headers: { "User-Agent": "BibleStudyApp/1.0 (+https://github.com)" },
-    });
+  const bibleId = await resolveBibleId(translation, apiKey);
+  if (!bibleId) {
+    return Response.json({ available: false, error: `Unknown translation: ${translation}` }, { status: 404 });
+  }
 
+  const chapterId = `${bookId}.${chapter}`;
+  const url = `${SCRIPTURE_API_BASE}/bibles/${bibleId}/chapters/${chapterId}` +
+    `?content-type=text&include-verse-numbers=true&include-notes=false&include-titles=false&include-chapter-numbers=false&include-verse-spans=false`;
+
+  try {
+    const res = await fetch(url, { headers: { "api-key": apiKey } });
     if (!res.ok) {
-      console.error(`[bible/local] bible-api.com error ${res.status} for ${bookId} ${chapter} (${translation})`);
       return Response.json({ available: false, error: `Bible API returned ${res.status}` });
     }
 
-    const data = await res.json() as { verses?: ApiVerse[]; error?: string };
+    const data = await res.json() as ChapterContent;
+    const content = data.data?.content ?? "";
+    const allVerses = parseVerses(content);
 
-    if (data.error) {
-      console.error(`[bible/local] API error:`, data.error);
-      return Response.json({ available: false, error: data.error });
-    }
-
-    const verses: ApiVerse[] = data.verses ?? [];
-
-    // Single verse mode
     if (verseParam !== null) {
       const verseNum = parseInt(verseParam, 10);
-      const match = verses.filter((v) => v.verse === verseNum);
+      const match = allVerses.filter((v) => v.verse === verseNum);
       return Response.json({
         available: true,
         translation,
         book: bookId,
         chapter,
-        verses: match.map((v) => ({ verse: v.verse, text: v.text.trim() })),
+        verses: match,
       });
     }
 
@@ -145,7 +95,7 @@ export async function GET(request: NextRequest) {
       translation,
       book: bookId,
       chapter,
-      verses: verses.map((v) => ({ verse: v.verse, text: v.text.trim() })),
+      verses: allVerses,
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";

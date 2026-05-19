@@ -2,8 +2,3 @@ name = "bible-study-tracker"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = ".vercel/output/static"
-
-[[d1_databases]]
-binding = "BIBLE_DB"
-database_name = "bible-eng"
-database_id = "3956bf1b-3ba7-42e1-a567-665e7b181b45"
