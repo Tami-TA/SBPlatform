@@ -122,7 +122,7 @@ export default function GroupBiblePage() {
     setLoadingVerses(true);
     setVerses([]);
     fetch(`/api/bible/local?translation=${translation}&book=${bookId}&chapter=${chapter}`)
-      .then(r => r.json())
+      .then(r => r.json() as Promise<{ available?: boolean; verses?: { verse: number; text: string }[] }>)
       .then(data => {
         if (data.available) setVerses(data.verses ?? []);
       })

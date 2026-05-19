@@ -51,7 +51,7 @@ export default function BiblePage() {
 
   useEffect(() => {
     fetch("/api/bible/translations")
-      .then((r) => r.json())
+      .then((r) => r.json() as Promise<{ translations?: Array<{ id: string; name: string }> }>)
       .then((data) => {
         if (Array.isArray(data.translations) && data.translations.length > 0) {
           setAvailableTranslations(data.translations);
