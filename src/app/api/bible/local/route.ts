@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
         headers: { "User-Agent": "BibleStudyApp/1.0 (+https://github.com)" },
       });
       if (!res.ok) return Response.json({ available: true, translation, searchResults: [] });
-      const data = await res.json();
+      const data = await res.json() as { verses?: ApiVerse[] };
       const verses: ApiVerse[] = data.verses ?? [];
       return Response.json({
         available: true,
@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
       return Response.json({ available: false, error: `Bible API returned ${res.status}` });
     }
 
-    const data = await res.json();
+    const data = await res.json() as { verses?: ApiVerse[]; error?: string };
 
     if (data.error) {
       console.error(`[bible/local] API error:`, data.error);
