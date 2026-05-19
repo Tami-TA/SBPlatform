@@ -1,8 +1,8 @@
 /**
  * GET /api/bible/search
  *
- * Full-text verse search backed by Cloudflare D1 (bible-eng database).
- * Supports multi-word queries using AND-logic LIKE matching.
+ * Full-text verse search via scripture.api.bible.
+ * No local database required.
  *
  * Query params:
  *   q           — search phrase (required, min 2 chars)
@@ -11,22 +11,22 @@
  */
 
 import type { NextRequest } from "next/server";
-import { getRequestContext } from "@cloudflare/next-on-pages";
 
 export const runtime = "edge";
 
-const DB_TRANSLATION_MAP: Record<string, string> = {
-  KJV:   "eng_kjv",
-  ASV:   "eng_asv",
-  WEB:   "ENGWEBP",
-  WEBBE: "eng_webpb",
-  YLT:   "eng_ylt",
-  BBE:   "eng_bbe",
-  DBY:   "eng_dby",
-  BSB:   "BSB",
+const BIBLE_API_BASE = "https://api.scripture.api.bible/v1";
+
+// scripture.api.bible Bible IDs for supported translations
+const BIBLE_ID_MAP: Record<string, string> = {
+  KJV: "de4e12af7f28f599-02",
+  ASV: "06125adad2d5898a-01",
 };
 
-type VerseRow = { bookId: string; chapterNumber: number; number: number; text: string };
+type ApiVerse = {
+  id: string;
+  bookId: string;
+  text: string;
+};
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
@@ -39,36 +39,37 @@ export async function GET(request: NextRequest) {
     return Response.json({ available: true, translation, searchResults: [] });
   }
 
-  const dbTranslation = DB_TRANSLATION_MAP[translation] ?? DB_TRANSLATION_MAP.KJV;
-  const words = query.split(/\s+/).filter((w) => w.length >= 2);
-  if (words.length === 0) {
-    return Response.json({ available: true, translation, searchResults: [] });
+  const apiKey = process.env.BIBLE_API_KEY ?? "";
+  if (!apiKey) {
+    return Response.json({ available: false, error: "Bible API key not configured", searchResults: [] }, { status: 503 });
   }
 
+  const bibleId = BIBLE_ID_MAP[translation] ?? BIBLE_ID_MAP.KJV;
+
   try {
-    const { env } = getRequestContext<CloudflareEnv>();
-    const db = env.BIBLE_DB;
+    const url = `${BIBLE_API_BASE}/bibles/${bibleId}/search?query=${encodeURIComponent(query)}&limit=${limit}&sort=relevance`;
+    const res = await fetch(url, { headers: { "api-key": apiKey } });
 
-    const conditions = words.map(() => "text LIKE ?").join(" AND ");
-    const sql = `SELECT bookId, chapterNumber, number, text
-                 FROM ChapterVerse
-                 WHERE translationId = ? AND ${conditions}
-                 LIMIT ?`;
-    const params: (string | number)[] = [dbTranslation, ...words.map((w) => `%${w}%`), limit];
+    if (!res.ok) {
+      return Response.json({ available: false, error: `Bible API returned ${res.status}`, searchResults: [] }, { status: 502 });
+    }
 
-    const result = await db.prepare(sql).bind(...params).all<VerseRow>();
+    const data = await res.json() as { data?: { verses?: ApiVerse[] } };
+    const verses = data.data?.verses ?? [];
 
-    const searchResults = result.results.map((r) => ({
-      bookId:  r.bookId,
-      chapter: r.chapterNumber,
-      verse:   r.number,
-      text:    r.text.replace(/^¶\s*/, ""),
-    }));
+    const searchResults = verses.map((v) => {
+      // verse ID format: "GEN.1.1"
+      const parts = v.id.split(".");
+      const chapter = parseInt(parts[1] ?? "1", 10);
+      const verse   = parseInt(parts[2] ?? "1", 10);
+      const text    = v.text.replace(/<[^>]+>/g, "").trim();
+      return { bookId: v.bookId, chapter, verse, text };
+    });
 
     return Response.json({ available: true, translation, searchResults });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";
-    console.error("[bible/search] D1 error:", msg);
+    console.error("[bible/search] API error:", msg);
     return Response.json({ available: false, error: msg, searchResults: [] }, { status: 500 });
   }
 }
