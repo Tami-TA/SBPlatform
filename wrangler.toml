@@ -6,4 +6,4 @@ pages_build_output_dir = ".vercel/output/static"
 [[d1_databases]]
 binding = "BIBLE_DB"
 database_name = "bible-eng"
-database_id = "YOUR_D1_DATABASE_ID"   # replace after: wrangler d1 create bible-eng
+database_id = "3956bf1b-3ba7-42e1-a567-665e7b181b45"
