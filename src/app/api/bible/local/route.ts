@@ -113,7 +113,11 @@ export async function GET(request: NextRequest) {
     if (!res.ok) {
       const errText = await res.text().catch(() => "");
       console.error(`[bible/local] ${res.status} for ${chapterId} (${translation}):`, errText);
-      return Response.json({ available: false, error: `Bible API returned ${res.status}` });
+      const keyHint = apiKey ? `key starts with ${apiKey.slice(0, 4)}, length ${apiKey.length}` : "no key";
+      return Response.json({
+        available: false,
+        error: `Bible API returned ${res.status}. ${errText.slice(0, 200)} (${keyHint})`,
+      });
     }
 
     const data = await res.json() as { data?: { content?: string } };
