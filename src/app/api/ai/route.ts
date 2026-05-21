@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 
-export const runtime = "edge";
-
 const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json() as { type: string; context: Record<string, string> };
+    const body = await req.json();
     const { type, context } = body;
 
     if (!type) {

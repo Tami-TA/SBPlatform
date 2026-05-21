@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export const runtime = "edge";
-
 const BIBLE_API_BASE = "https://api.scripture.api.bible/v1";
 
 export async function GET(req: NextRequest) {
@@ -18,6 +16,7 @@ export async function GET(req: NextRequest) {
 
     const res = await fetch(url, {
       headers: { "api-key": apiKey },
+      next: { revalidate: 86400 },
     });
 
     if (!res.ok) {

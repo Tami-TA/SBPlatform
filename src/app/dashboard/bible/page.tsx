@@ -51,7 +51,7 @@ export default function BiblePage() {
 
   useEffect(() => {
     fetch("/api/bible/translations")
-      .then((r) => r.json() as Promise<{ translations?: Array<{ id: string; name: string }> }>)
+      .then((r) => r.json())
       .then((data) => {
         if (Array.isArray(data.translations) && data.translations.length > 0) {
           setAvailableTranslations(data.translations);
@@ -106,11 +106,13 @@ export default function BiblePage() {
     setToolbarPos(null);
     try {
       const data = await fetchChapter(selectedBook, selectedChapter, translation);
+      if (!data) {
+        setLoadError(`No verses found for ${translation} — ${selectedBook} ${selectedChapter}. Try a different translation.`);
+      }
       setChapter(data);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
-      setLoadError(msg);
-      setChapter(null);
+      setLoadError(`Failed to load chapter: ${msg}`);
     } finally {
       setLoading(false);
     }

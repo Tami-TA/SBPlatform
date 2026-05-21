@@ -107,7 +107,15 @@ export interface GroupMessage {
   verseRef?: VerseReference;
 }
 
-export type BibleTranslation = "KJV" | "NIV" | "AMP";
+export type BibleTranslation =
+  | "KJV"
+  | "ASV"
+  | "WEB"
+  | "WEBBE"
+  | "YLT"
+  | "BBE"
+  | "DBY"
+  | "OEB";
 
 export interface BibleBook {
   id: string;

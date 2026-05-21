@@ -8,6 +8,8 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "avatars.githubusercontent.com" },
     ],
   },
+  // better-sqlite3 is a native module — exclude from bundler
+  serverExternalPackages: ["better-sqlite3"],
 };
 
 export default nextConfig;

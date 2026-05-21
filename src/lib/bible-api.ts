@@ -18,36 +18,32 @@ export async function fetchChapter(
   chapter: number,
   translation: BibleTranslation = "KJV"
 ): Promise<BibleChapter | null> {
-  const url = `${LOCAL_API}?translation=${translation}&book=${bookId}&chapter=${chapter}`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`Bible API ${res.status}: ${body || res.statusText}`);
-  }
+  try {
+    const url = `${LOCAL_API}?translation=${translation}&book=${bookId}&chapter=${chapter}`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
 
-  const data = await res.json() as {
-    available?: boolean;
-    error?: string;
-    verses?: { verse: number; text: string }[];
-  };
-  if (!data.available) {
-    throw new Error(data.error ?? "Chapter not available");
-  }
-  if (!data.verses?.length) {
-    throw new Error(`No verses returned for ${translation} ${bookId} ${chapter}`);
-  }
+    const data = await res.json();
+    if (!data.available) {
+      console.error("[fetchChapter] API error:", data.error);
+      return null;
+    }
+    if (!data.verses?.length) return null;
 
-  const verses: BibleVerse[] = data.verses.map((v: { verse: number; text: string }) => ({
-    id: `${bookId}.${chapter}.${v.verse}`,
-    bookId,
-    bookName: bookName(bookId),
-    chapter,
-    verse: v.verse,
-    text: v.text,
-    translation,
-  }));
+    const verses: BibleVerse[] = data.verses.map((v: { verse: number; text: string }) => ({
+      id: `${bookId}.${chapter}.${v.verse}`,
+      bookId,
+      bookName: bookName(bookId),
+      chapter,
+      verse: v.verse,
+      text: v.text,
+      translation,
+    }));
 
-  return { bookId, bookName: bookId, chapter, verses, translation };
+    return { bookId, bookName: bookId, chapter, verses, translation };
+  } catch {
+    return null;
+  }
 }
 
 export async function searchBible(
@@ -60,10 +56,7 @@ export async function searchBible(
     const res = await fetch(url);
     if (!res.ok) return [];
 
-    const data = await res.json() as {
-      available?: boolean;
-      searchResults?: { bookId: string; chapter: number; verse: number; text: string }[];
-    };
+    const data = await res.json();
     const results = data.searchResults ?? [];
     if (!data.available || !results.length) return [];
 
@@ -92,10 +85,7 @@ export async function fetchVerse(
     const res = await fetch(url);
     if (!res.ok) return null;
 
-    const data = await res.json() as {
-      available?: boolean;
-      verses?: { verse: number; text: string }[];
-    };
+    const data = await res.json();
     if (!data.available || !data.verses?.length) return null;
 
     return {
@@ -116,9 +106,7 @@ export async function getAvailableTranslations(): Promise<Array<{ id: string; na
   try {
     const res = await fetch(TRANSLATIONS_API, { cache: "force-cache" });
     if (!res.ok) return [];
-    const data = await res.json() as {
-      translations?: Array<{ id: string; name: string; available: boolean }>;
-    };
+    const data = await res.json();
     return data.translations || [];
   } catch {
     return [];

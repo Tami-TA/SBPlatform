@@ -1,78 +1,59 @@
 /**
  * GET /api/bible/local
  *
- * Loads chapters / verses via scripture.api.bible.
+ * Proxies to bible-api.com (free, no key required).
+ * Keeps the same response shape so the frontend needs no changes.
  *
  * Query params:
- *   translation — "KJV" | "NIV" | "AMP"
- *   book        — 3-letter OSIS book ID, e.g. "GEN"
+ *   translation — e.g. "KJV"
+ *   book        — 3-letter book ID, e.g. "GEN"
  *   chapter     — chapter number
- *   verse       — verse number (optional, returns single verse)
+ *   verse       — verse number (optional)
+ *   q           — free-text search query (optional)
  */
 
 import type { NextRequest } from "next/server";
-import { SCRIPTURE_API_BASE, resolveBibleId } from "@/lib/scripture-api";
 
-export const runtime = "edge";
+// Map app translation IDs → bible-api.com translation slugs
+const TRANSLATION_MAP: Record<string, string> = {
+  KJV:   "kjv",
+  ASV:   "asv",
+  WEB:   "web",
+  WEBBE: "webbe",
+  YLT:   "ylt",
+  BBE:   "bbe",
+  DBY:   "darby",
+  OEB:   "oeb-us",
+};
 
-function decodeEntities(s: string): string {
-  return s
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(parseInt(n, 10)));
-}
+// Map 3-letter book IDs → bible-api.com URL slugs
+const BOOK_SLUG: Record<string, string> = {
+  GEN: "genesis",         EXO: "exodus",          LEV: "leviticus",
+  NUM: "numbers",         DEU: "deuteronomy",      JOS: "joshua",
+  JDG: "judges",          RUT: "ruth",             "1SA": "1+samuel",
+  "2SA": "2+samuel",      "1KI": "1+kings",        "2KI": "2+kings",
+  "1CH": "1+chronicles",  "2CH": "2+chronicles",   EZR: "ezra",
+  NEH: "nehemiah",        EST: "esther",            JOB: "job",
+  PSA: "psalms",          PRO: "proverbs",          ECC: "ecclesiastes",
+  SNG: "song+of+solomon", ISA: "isaiah",            JER: "jeremiah",
+  LAM: "lamentations",    EZK: "ezekiel",           DAN: "daniel",
+  HOS: "hosea",           JOL: "joel",              AMO: "amos",
+  OBA: "obadiah",         JON: "jonah",             MIC: "micah",
+  NAM: "nahum",           HAB: "habakkuk",          ZEP: "zephaniah",
+  HAG: "haggai",          ZEC: "zechariah",         MAL: "malachi",
+  MAT: "matthew",         MRK: "mark",              LUK: "luke",
+  JHN: "john",            ACT: "acts",              ROM: "romans",
+  "1CO": "1+corinthians", "2CO": "2+corinthians",   GAL: "galatians",
+  EPH: "ephesians",       PHP: "philippians",        COL: "colossians",
+  "1TH": "1+thessalonians", "2TH": "2+thessalonians",
+  "1TI": "1+timothy",     "2TI": "2+timothy",       TIT: "titus",
+  PHM: "philemon",        HEB: "hebrews",            JAS: "james",
+  "1PE": "1+peter",       "2PE": "2+peter",          "1JN": "1+john",
+  "2JN": "2+john",        "3JN": "3+john",           JUD: "jude",
+  REV: "revelation",
+};
 
-function parseVerses(content: string): { verse: number; text: string }[] {
-  const clean = (s: string) =>
-    decodeEntities(s.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
-
-  // Strategy 1 — HTML with data-number spans (scripture.api.bible default)
-  if (content.includes('data-number="')) {
-    const verses: { verse: number; text: string }[] = [];
-    // Split on every verse span so we get one chunk per verse
-    const chunks = content.split(/(?=<span[^>]*data-number=")/);
-    for (const chunk of chunks) {
-      const m = chunk.match(/data-number="(\d+)"/);
-      if (!m) continue;
-      const n = parseInt(m[1], 10);
-      // Remove the verse-number span itself, then strip remaining tags
-      const body = chunk.replace(/<span[^>]*data-number="\d+"[^>]*>[\s\S]*?<\/span>/, "");
-      const text = clean(body);
-      if (text && n > 0) verses.push({ verse: n, text });
-    }
-    if (verses.length > 0) return verses;
-  }
-
-  // Strategy 2 — [N] bracket format (text content-type)
-  if (content.includes("[1]") || content.includes("[2]")) {
-    const verses: { verse: number; text: string }[] = [];
-    const re = /\[(\d+)\]\s*([^[]+)/g;
-    let m: RegExpExecArray | null;
-    while ((m = re.exec(content)) !== null) {
-      const text = clean(m[2]);
-      if (text) verses.push({ verse: parseInt(m[1], 10), text });
-    }
-    if (verses.length > 0) return verses;
-  }
-
-  // Strategy 3 — bare leading numbers "1 text 2 text" (some text modes)
-  {
-    const verses: { verse: number; text: string }[] = [];
-    const re = /(?:^|\n)\s*(\d{1,3})\s+([^\n\d][^\n]*)/gm;
-    let m: RegExpExecArray | null;
-    while ((m = re.exec(content)) !== null) {
-      const text = clean(m[2]);
-      if (text) verses.push({ verse: parseInt(m[1], 10), text });
-    }
-    if (verses.length > 0) return verses;
-  }
-
-  return [];
-}
+type ApiVerse = { book_id: string; chapter: number; verse: number; text: string };
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
@@ -81,6 +62,35 @@ export async function GET(request: NextRequest) {
   const bookId       = (searchParams.get("book") ?? "").toUpperCase();
   const chapterParam = searchParams.get("chapter");
   const verseParam   = searchParams.get("verse");
+  const query        = searchParams.get("q");
+
+  const apiTranslation = TRANSLATION_MAP[translation] ?? "kjv";
+
+  // Search mode
+  if (query) {
+    try {
+      const url = `https://bible-api.com/${encodeURIComponent(query)}?translation=${apiTranslation}`;
+      const res = await fetch(url, {
+        next: { revalidate: 3600 },
+        headers: { "User-Agent": "BibleStudyApp/1.0 (+https://github.com)" },
+      });
+      if (!res.ok) return Response.json({ available: true, translation, searchResults: [] });
+      const data = await res.json();
+      const verses: ApiVerse[] = data.verses ?? [];
+      return Response.json({
+        available: true,
+        translation,
+        searchResults: verses.map((v) => ({
+          bookId: v.book_id,
+          chapter: v.chapter,
+          verse: v.verse,
+          text: v.text.trim(),
+        })),
+      });
+    } catch {
+      return Response.json({ available: true, translation, searchResults: [] });
+    }
+  }
 
   if (!bookId || !chapterParam) {
     return Response.json({ available: false, error: "Missing book or chapter" }, { status: 400 });
@@ -91,53 +101,42 @@ export async function GET(request: NextRequest) {
     return Response.json({ available: false, error: "Invalid chapter" }, { status: 400 });
   }
 
-  const apiKey = process.env.BIBLE_API_KEY ?? "";
-  if (!apiKey) {
-    return Response.json({ available: false, error: "Bible API key not configured" }, { status: 503 });
+  const slug = BOOK_SLUG[bookId];
+  if (!slug) {
+    return Response.json({ available: false, error: `Unknown book ID: ${bookId}` });
   }
-
-  const bibleId = await resolveBibleId(translation, apiKey);
-  if (!bibleId) {
-    return Response.json({ available: false, error: `Translation not available: ${translation}` }, { status: 404 });
-  }
-
-  const chapterId = `${bookId}.${chapter}`;
-  // Request HTML (default) — more structured than text for verse extraction
-  const url =
-    `${SCRIPTURE_API_BASE}/bibles/${bibleId}/chapters/${chapterId}` +
-    `?content-type=html&include-verse-numbers=true&include-notes=false` +
-    `&include-titles=false&include-chapter-numbers=false&include-verse-spans=false`;
 
   try {
-    const res = await fetch(url, { headers: { "api-key": apiKey } });
+    const url = `https://bible-api.com/${slug}+${chapter}?translation=${apiTranslation}`;
+    const res = await fetch(url, {
+      next: { revalidate: 86400 }, // cache 24h on Vercel
+      headers: { "User-Agent": "BibleStudyApp/1.0 (+https://github.com)" },
+    });
+
     if (!res.ok) {
-      const errText = await res.text().catch(() => "");
-      console.error(`[bible/local] ${res.status} for ${chapterId} (${translation}):`, errText);
-      const keyHint = apiKey ? `key starts with ${apiKey.slice(0, 4)}, length ${apiKey.length}` : "no key";
-      return Response.json({
-        available: false,
-        error: `Bible API returned ${res.status}. ${errText.slice(0, 200)} (${keyHint})`,
-      });
+      console.error(`[bible/local] bible-api.com error ${res.status} for ${bookId} ${chapter} (${translation})`);
+      return Response.json({ available: false, error: `Bible API returned ${res.status}` });
     }
 
-    const data = await res.json() as { data?: { content?: string } };
-    const content = data.data?.content ?? "";
-    if (!content) {
-      return Response.json({ available: false, error: `Empty content from Bible API for ${chapterId} (${translation})` });
-    }
-    const allVerses = parseVerses(content);
-    if (!allVerses.length) {
-      return Response.json({ available: false, error: `Could not parse verses from Bible API response for ${chapterId} (${translation}). Content preview: ${content.slice(0, 120)}` });
+    const data = await res.json();
+
+    if (data.error) {
+      console.error(`[bible/local] API error:`, data.error);
+      return Response.json({ available: false, error: data.error });
     }
 
+    const verses: ApiVerse[] = data.verses ?? [];
+
+    // Single verse mode
     if (verseParam !== null) {
       const verseNum = parseInt(verseParam, 10);
+      const match = verses.filter((v) => v.verse === verseNum);
       return Response.json({
         available: true,
         translation,
         book: bookId,
         chapter,
-        verses: allVerses.filter((v) => v.verse === verseNum),
+        verses: match.map((v) => ({ verse: v.verse, text: v.text.trim() })),
       });
     }
 
@@ -146,7 +145,7 @@ export async function GET(request: NextRequest) {
       translation,
       book: bookId,
       chapter,
-      verses: allVerses,
+      verses: verses.map((v) => ({ verse: v.verse, text: v.text.trim() })),
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";

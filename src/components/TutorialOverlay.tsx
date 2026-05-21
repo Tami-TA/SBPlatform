@@ -55,7 +55,7 @@ const STEPS: TourStep[] = [
     placement: "bottom",
     badge: "4 · Bible",
     title: "Bible Reader Controls",
-    body: "Navigate books and chapters, switch between translations (KJV, NIV, AMP), and open the search to find any verse by phrase.",
+    body: "Navigate books and chapters, switch between translations (KJV, ASV, WEB…), and open the search to find any verse by phrase.",
   },
   {
     // No targetId — centered modal to avoid targeting the full-height scroll container

@@ -1,5 +1,4 @@
 "use client";
-export const runtime = "edge";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -123,7 +122,7 @@ export default function GroupBiblePage() {
     setLoadingVerses(true);
     setVerses([]);
     fetch(`/api/bible/local?translation=${translation}&book=${bookId}&chapter=${chapter}`)
-      .then(r => r.json() as Promise<{ available?: boolean; verses?: { verse: number; text: string }[] }>)
+      .then(r => r.json())
       .then(data => {
         if (data.available) setVerses(data.verses ?? []);
       })

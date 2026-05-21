@@ -44,9 +44,7 @@ export function AIPanel({ verse, onClose }: AIPanelProps) {
       });
 
       if (!res.ok) throw new Error("AI unavailable");
-      const data = await res.json() as {
-        result?: string | Array<{ reference: string; connection: string; theme: string }>;
-      };
+      const data = await res.json();
 
       if (action === "related_verses" && Array.isArray(data.result)) {
         setRelatedVerses(data.result);
