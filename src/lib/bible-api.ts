@@ -18,36 +18,36 @@ export async function fetchChapter(
   chapter: number,
   translation: BibleTranslation = "KJV"
 ): Promise<BibleChapter | null> {
-  try {
-    const url = `${LOCAL_API}?translation=${translation}&book=${bookId}&chapter=${chapter}`;
-    const res = await fetch(url);
-    if (!res.ok) return null;
-
-    const data = await res.json() as {
-      available?: boolean;
-      error?: string;
-      verses?: { verse: number; text: string }[];
-    };
-    if (!data.available) {
-      console.error("[fetchChapter] API error:", data.error);
-      return null;
-    }
-    if (!data.verses?.length) return null;
-
-    const verses: BibleVerse[] = data.verses.map((v: { verse: number; text: string }) => ({
-      id: `${bookId}.${chapter}.${v.verse}`,
-      bookId,
-      bookName: bookName(bookId),
-      chapter,
-      verse: v.verse,
-      text: v.text,
-      translation,
-    }));
-
-    return { bookId, bookName: bookId, chapter, verses, translation };
-  } catch {
-    return null;
+  const url = `${LOCAL_API}?translation=${translation}&book=${bookId}&chapter=${chapter}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`Bible API ${res.status}: ${body || res.statusText}`);
   }
+
+  const data = await res.json() as {
+    available?: boolean;
+    error?: string;
+    verses?: { verse: number; text: string }[];
+  };
+  if (!data.available) {
+    throw new Error(data.error ?? "Chapter not available");
+  }
+  if (!data.verses?.length) {
+    throw new Error(`No verses returned for ${translation} ${bookId} ${chapter}`);
+  }
+
+  const verses: BibleVerse[] = data.verses.map((v: { verse: number; text: string }) => ({
+    id: `${bookId}.${chapter}.${v.verse}`,
+    bookId,
+    bookName: bookName(bookId),
+    chapter,
+    verse: v.verse,
+    text: v.text,
+    translation,
+  }));
+
+  return { bookId, bookName: bookId, chapter, verses, translation };
 }
 
 export async function searchBible(

@@ -106,13 +106,11 @@ export default function BiblePage() {
     setToolbarPos(null);
     try {
       const data = await fetchChapter(selectedBook, selectedChapter, translation);
-      if (!data) {
-        setLoadError(`No verses found for ${translation} — ${selectedBook} ${selectedChapter}. Try a different translation.`);
-      }
       setChapter(data);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
-      setLoadError(`Failed to load chapter: ${msg}`);
+      setLoadError(msg);
+      setChapter(null);
     } finally {
       setLoading(false);
     }

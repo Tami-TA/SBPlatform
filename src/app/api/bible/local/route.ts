@@ -118,7 +118,13 @@ export async function GET(request: NextRequest) {
 
     const data = await res.json() as { data?: { content?: string } };
     const content = data.data?.content ?? "";
+    if (!content) {
+      return Response.json({ available: false, error: `Empty content from Bible API for ${chapterId} (${translation})` });
+    }
     const allVerses = parseVerses(content);
+    if (!allVerses.length) {
+      return Response.json({ available: false, error: `Could not parse verses from Bible API response for ${chapterId} (${translation}). Content preview: ${content.slice(0, 120)}` });
+    }
 
     if (verseParam !== null) {
       const verseNum = parseInt(verseParam, 10);
